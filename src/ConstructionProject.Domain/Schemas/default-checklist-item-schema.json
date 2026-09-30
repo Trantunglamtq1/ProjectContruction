@@ -1,0 +1,36 @@
+{
+  "display": "form",
+  "components": [
+    {
+      "label": "Tiêu chí nghiệm thu",
+      "key": "criteriaTitle",
+      "type": "textfield",
+      "input": true,
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Tiêu chuẩn áp dụng (TCVN / BS)",
+      "key": "appliedStandard",
+      "type": "textfield",
+      "input": true
+    },
+    {
+      "label": "Tình trạng xác nhận",
+      "key": "verificationStatus",
+      "type": "radio",
+      "values": [
+        { "label": "Đạt", "value": "pass" },
+        { "label": "Không đạt", "value": "fail" }
+      ],
+      "input": true
+    },
+    {
+      "label": "Kỹ sư giám sát xác nhận",
+      "key": "verifiedBy",
+      "type": "textfield",
+      "input": true
+    }
+  ]
+}
