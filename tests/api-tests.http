@@ -1,0 +1,87 @@
+### Biến môi trường
+@baseUrl = http://localhost:5092
+
+### 1. Đăng nhập Admin mặc định
+# @name loginAdmin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin",
+  "password": "Admin@123"
+}
+
+### Lưu token của Admin
+@adminToken = {{loginAdmin.response.body.token}}
+
+### 2. Gọi API Drawings khi KHÔNG có Token (Mong đợi: 401 Unauthorized)
+GET {{baseUrl}}/api/drawings
+
+### 3. Đăng ký tài khoản Kỹ sư mới
+# @name registerUser
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "kysu_demo_01",
+  "email": "kysu_demo_01@construction.local",
+  "password": "Password@123",
+  "fullName": "Kỹ Sư Demo Hiện Trường"
+}
+
+### Lưu ID của user mới
+@newUserId = {{registerUser.response.body.id}}
+
+### 4. Đăng nhập user mới (khi chưa có Role)
+# @name loginNewUser
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "kysu_demo_01",
+  "password": "Password@123"
+}
+
+@userToken = {{loginNewUser.response.body.token}}
+
+### 5. User thường gọi API Admin (Mong đợi: 403 Forbidden)
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{userToken}}
+
+### 6. Admin lấy danh sách Roles
+GET {{baseUrl}}/api/users/roles
+Authorization: Bearer {{adminToken}}
+
+### 7. Admin lấy danh sách Users
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{adminToken}}
+
+### 8. Admin gán Role Submitter cho Kỹ sư mới
+# Role Submitter ID: 22222222-2222-2222-2222-222222222222
+PUT {{baseUrl}}/api/users/{{newUserId}}/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "roleId": "22222222-2222-2222-2222-222222222222"
+}
+
+### 9. Kỹ sư đăng nhập lại để nhận Token có chứa Role Submitter
+# @name reloginUser
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "kysu_demo_01",
+  "password": "Password@123"
+}
+
+@submitterToken = {{reloginUser.response.body.token}}
+
+### 10. Xem thông tin cá nhân và Role hiện tại qua /me
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{submitterToken}}
+
+### 11. Kỹ sư gọi xem danh sách bản vẽ với Bearer Token
+GET {{baseUrl}}/api/drawings
+Authorization: Bearer {{submitterToken}}
