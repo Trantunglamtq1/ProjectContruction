@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ConstructionProject.API.Controllers;
 
 public record AssignRoleRequest(Guid? RoleId);
+public record UpdateUserStatusRequest(bool IsActive);
 
 [ApiController]
 [Route("api/[controller]")]
@@ -62,6 +63,25 @@ public class UsersController : ControllerBase
         CancellationToken cancellationToken)
     {
         var command = new AssignRoleCommand(id, request.RoleId);
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// [Admin Only] Vô hiệu hóa hoặc kích hoạt lại tài khoản người dùng
+    /// </summary>
+    [HttpPatch("{id:guid}/status")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateStatus(
+        Guid id, 
+        [FromBody] UpdateUserStatusRequest request, 
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateUserStatusCommand(id, request.IsActive);
         var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
     }

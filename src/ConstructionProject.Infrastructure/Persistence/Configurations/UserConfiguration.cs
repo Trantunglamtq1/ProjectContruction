@@ -34,6 +34,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(255);
 
+        builder.Property(u => u.IsActive)
+            .IsRequired()
+            .HasDefaultValue(true);
+
         // RoleId có thể null (tài khoản mới đăng ký chưa có Role)
         builder.HasOne(u => u.Role)
             .WithMany(r => r.Users)
@@ -51,6 +55,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                 FullName = "Quản Trị Viên Hệ Thống",
                 PasswordHash = "$2a$11$Xj2h81DT5aEkE3uD6miA8ufY8KvoeIKsDogkWOtsL5ibJtTJRGvyC",
                 RoleId = RoleConstants.AdminRoleId,
+                IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );
