@@ -52,6 +52,11 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
             throw new UnauthorizedAccessException("Tên đăng nhập hoặc mật khẩu không chính xác.");
         }
 
+        if (!user.IsActive)
+        {
+            throw new UnauthorizedAccessException("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ Quản trị viên.");
+        }
+
         var roleName = user.Role?.Name;
         var (token, expiresAt) = _jwtTokenGenerator.GenerateToken(user, roleName);
 
@@ -67,6 +72,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
                 FullName = user.FullName,
                 RoleId = user.RoleId,
                 RoleName = roleName,
+                IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt
             }
         };

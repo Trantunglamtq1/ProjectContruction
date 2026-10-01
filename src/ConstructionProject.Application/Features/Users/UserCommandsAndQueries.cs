@@ -32,6 +32,7 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, List<UserDto>
                 FullName = u.FullName,
                 RoleId = u.RoleId,
                 RoleName = u.Role != null ? u.Role.Name : null,
+                IsActive = u.IsActive,
                 CreatedAt = u.CreatedAt
             })
             .ToListAsync(cancellationToken);
@@ -65,7 +66,7 @@ public class GetRolesQueryHandler : IRequestHandler<GetRolesQuery, List<RoleDto>
     }
 }
 
-// Command: Admin gán Role cho User
+// Command: Admin gán hoặc đổi Role cho User
 public record AssignRoleCommand(
     Guid UserId,
     Guid? RoleId
@@ -83,14 +84,21 @@ public class AssignRoleCommandValidator : AbstractValidator<AssignRoleCommand>
 public class AssignRoleCommandHandler : IRequestHandler<AssignRoleCommand, UserDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public AssignRoleCommandHandler(IApplicationDbContext context)
+    public AssignRoleCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<UserDto> Handle(AssignRoleCommand request, CancellationToken cancellationToken)
     {
+        if (_currentUserService.UserId.HasValue && _currentUserService.UserId.Value == request.UserId)
+        {
+            throw new InvalidOperationException("Quản trị viên không thể tự thay đổi vai trò của chính mình để tránh khóa tài khoản.");
+        }
+
         var user = await _context.Users
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
@@ -127,6 +135,66 @@ public class AssignRoleCommandHandler : IRequestHandler<AssignRoleCommand, UserD
             FullName = user.FullName,
             RoleId = user.RoleId,
             RoleName = newRoleName,
+            IsActive = user.IsActive,
+            CreatedAt = user.CreatedAt
+        };
+    }
+}
+
+// Command: Admin vô hiệu hóa hoặc kích hoạt tài khoản người dùng
+public record UpdateUserStatusCommand(
+    Guid UserId,
+    bool IsActive
+) : IRequest<UserDto>;
+
+public class UpdateUserStatusCommandValidator : AbstractValidator<UpdateUserStatusCommand>
+{
+    public UpdateUserStatusCommandValidator()
+    {
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("UserId không được để trống.");
+    }
+}
+
+public class UpdateUserStatusCommandHandler : IRequestHandler<UpdateUserStatusCommand, UserDto>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
+
+    public UpdateUserStatusCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+    {
+        _context = context;
+        _currentUserService = currentUserService;
+    }
+
+    public async Task<UserDto> Handle(UpdateUserStatusCommand request, CancellationToken cancellationToken)
+    {
+        if (_currentUserService.UserId.HasValue && _currentUserService.UserId.Value == request.UserId && !request.IsActive)
+        {
+            throw new InvalidOperationException("Quản trị viên không thể tự vô hiệu hóa tài khoản của chính mình.");
+        }
+
+        var user = await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"Không tìm thấy người dùng với Id = {request.UserId}.");
+        }
+
+        user.IsActive = request.IsActive;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new UserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            FullName = user.FullName,
+            RoleId = user.RoleId,
+            RoleName = user.Role?.Name,
+            IsActive = user.IsActive,
             CreatedAt = user.CreatedAt
         };
     }
@@ -168,6 +236,7 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, U
             FullName = user.FullName,
             RoleId = user.RoleId,
             RoleName = user.Role?.Name,
+            IsActive = user.IsActive,
             CreatedAt = user.CreatedAt
         };
     }

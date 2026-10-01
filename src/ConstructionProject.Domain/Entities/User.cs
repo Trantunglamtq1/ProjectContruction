@@ -13,6 +13,7 @@ public class User
 
     // FK tới Role, nullable - null nghĩa là tài khoản đăng ký xong chưa được Admin gán Role
     public Guid? RoleId { get; set; }
+    public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation tới Role

@@ -77,6 +77,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, UserDto>
             PasswordHash = _passwordHasher.HashPassword(request.Password),
             // Theo đặc tả: Tài khoản mới tạo ra có RoleId = null (chưa có quyền nghiệp vụ nào)
             RoleId = null,
+            IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -91,6 +92,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, UserDto>
             FullName = user.FullName,
             RoleId = null,
             RoleName = null,
+            IsActive = true,
             CreatedAt = user.CreatedAt
         };
     }

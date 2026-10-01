@@ -25,6 +25,12 @@ bld/
 src/ConstructionProject.API/uploads/
 uploads/
 
+## Frontend dependencies & build
+node_modules/
+dist/
+dist-ssr/
+*.local
+
 ## OS generated files
 .DS_Store
 Thumbs.db
