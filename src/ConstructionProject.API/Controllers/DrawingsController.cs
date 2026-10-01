@@ -2,6 +2,7 @@ using ConstructionProject.Application.Common.Interfaces;
 using ConstructionProject.Application.DTOs;
 using ConstructionProject.Application.Features.Drawings.Commands;
 using ConstructionProject.Application.Features.Drawings.Queries;
+using ConstructionProject.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +17,6 @@ public class UploadDrawingForm
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class DrawingsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -34,13 +34,15 @@ public class DrawingsController : ControllerBase
     }
 
     /// <summary>
-    /// Upload bản vẽ xây dựng định dạng PDF (Yêu cầu Role Submitter hoặc Admin)
+    /// Upload bản vẽ xây dựng định dạng PDF (Chỉ cho phép Role Submitter; Admin và các role khác không được phép)
     /// </summary>
     [HttpPost("upload")]
+    [Authorize(Roles = RoleConstants.Submitter)]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(DrawingFileDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UploadDrawing(
         [FromForm] UploadDrawingForm form,
         CancellationToken cancellationToken = default)
@@ -75,14 +77,16 @@ public class DrawingsController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách tất cả các bản vẽ đã upload
+    /// Lấy danh sách tất cả các bản vẽ đã upload (Chỉ cho phép Submitter, Reviewer, Approver; Admin không can thiệp)
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = $"{RoleConstants.Submitter},{RoleConstants.Reviewer},{RoleConstants.Approver}")]
     [ProducesResponseType(typeof(List<DrawingFileDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetDrawings(CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetDrawings([FromQuery] string? search, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetDrawingFilesQuery(), cancellationToken);
+        var result = await _mediator.Send(new GetDrawingFilesQuery(search), cancellationToken);
         return Ok(result);
     }
 
@@ -90,8 +94,10 @@ public class DrawingsController : ControllerBase
     /// Lấy thông tin chi tiết một bản vẽ kèm danh sách các Object đã khoanh vùng
     /// </summary>
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = $"{RoleConstants.Submitter},{RoleConstants.Reviewer},{RoleConstants.Approver}")]
     [ProducesResponseType(typeof(DrawingFileDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDrawingById(Guid id, CancellationToken cancellationToken)
     {
@@ -104,19 +110,72 @@ public class DrawingsController : ControllerBase
     }
 
     /// <summary>
-    /// Tải / Xem trực tiếp file PDF bản vẽ (dùng cho pdf.js Viewport)
+    /// Lấy thông tin chi tiết một bản vẽ theo tên file (chấp nhận cả tên file gốc hoặc StoredFileName)
+    /// </summary>
+    [HttpGet("by-name/{fileName}")]
+    [Authorize(Roles = $"{RoleConstants.Submitter},{RoleConstants.Reviewer},{RoleConstants.Approver}")]
+    [ProducesResponseType(typeof(DrawingFileDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDrawingByName(string fileName, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetDrawingFileByNameQuery(fileName), cancellationToken);
+        if (result == null)
+        {
+            return NotFound(new { message = $"Không tìm thấy bản vẽ với tên file = '{fileName}'." });
+        }
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Xóa một bản vẽ (Chỉ dành riêng cho Submitter; không thể xóa nếu đã có đơn nghiệm thu liên kết)
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = RoleConstants.Submitter)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteDrawing(Guid id, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new DeleteDrawingFileCommand(id), cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Tải / Xem trực tiếp file PDF bản vẽ (chấp nhận cả tên file gốc hoặc StoredFileName có Guid)
     /// </summary>
     [HttpGet("files/{fileName}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetDrawingFileStream(string fileName, CancellationToken cancellationToken)
     {
+        // 1. Thử lấy trực tiếp từ FileStorage
         var fileData = await _fileStorage.GetFileAsync(fileName, cancellationToken);
+
+        // 2. Nếu không tìm thấy trực tiếp, tra cứu DB để lấy fileUrl/StoredFileName chính xác
         if (fileData == null)
         {
-            return NotFound(new { message = "Không tìm thấy file bản vẽ trên hệ thống lưu trữ." });
+            var drawing = await _mediator.Send(new GetDrawingFileByNameQuery(fileName), cancellationToken);
+            if (drawing != null && !string.IsNullOrEmpty(drawing.FileUrl))
+            {
+                var storedName = Path.GetFileName(drawing.FileUrl);
+                fileData = await _fileStorage.GetFileAsync(storedName, cancellationToken);
+            }
         }
 
-        Response.Headers.Append("Content-Disposition", $"inline; filename=\"{fileData.Value.fileName}\"");
+        if (fileData == null)
+        {
+            return NotFound(new { message = $"Không tìm thấy file bản vẽ '{fileName}' trên hệ thống lưu trữ." });
+        }
+
+        var ext = Path.GetExtension(fileData.Value.fileName);
+        var baseName = Path.GetFileNameWithoutExtension(fileData.Value.fileName);
+        var asciiSafeName = System.Text.RegularExpressions.Regex.Replace(baseName, @"[^\u0020-\u007E]", "_") + ext;
+        var utf8EncodedName = Uri.EscapeDataString(fileData.Value.fileName);
+
+        Response.Headers.Append("Content-Disposition", $"inline; filename=\"{asciiSafeName}\"; filename*=UTF-8''{utf8EncodedName}");
         return File(fileData.Value.stream, fileData.Value.contentType, enableRangeProcessing: true);
     }
 }

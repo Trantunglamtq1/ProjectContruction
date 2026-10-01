@@ -2,6 +2,7 @@ using ConstructionProject.Application.Common.Interfaces;
 using ConstructionProject.Application.DTOs;
 using ConstructionProject.Application.Features.Objects.Commands;
 using ConstructionProject.Application.Features.Objects.Queries;
+using ConstructionProject.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,6 @@ public record CreateObjectRequest(
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class ObjectsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -31,12 +31,14 @@ public class ObjectsController : ControllerBase
     }
 
     /// <summary>
-    /// Tạo mới một Object từ vùng khoanh marker trên Viewport bản vẽ
+    /// Tạo mới một Object từ vùng khoanh marker trên Viewport bản vẽ (Chỉ dành riêng cho Submitter)
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = RoleConstants.Submitter)]
     [ProducesResponseType(typeof(ObjectDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateObject(
         [FromBody] CreateObjectRequest request, 
         CancellationToken cancellationToken)
@@ -59,11 +61,13 @@ public class ObjectsController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách Object (hỗ trợ lọc theo DrawingFileId)
+    /// Lấy danh sách Object (Chỉ dành cho các bên tham gia quy trình: Submitter, Reviewer, Approver)
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = $"{RoleConstants.Submitter},{RoleConstants.Reviewer},{RoleConstants.Approver}")]
     [ProducesResponseType(typeof(List<ObjectDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetObjects(
         [FromQuery] Guid? drawingFileId, 
         CancellationToken cancellationToken)
@@ -73,11 +77,13 @@ public class ObjectsController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy thông tin chi tiết của một Object theo Id
+    /// Lấy thông tin chi tiết của một Object theo Id (Submitter, Reviewer, Approver)
     /// </summary>
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = $"{RoleConstants.Submitter},{RoleConstants.Reviewer},{RoleConstants.Approver}")]
     [ProducesResponseType(typeof(ObjectDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetObjectById(Guid id, CancellationToken cancellationToken)
     {
