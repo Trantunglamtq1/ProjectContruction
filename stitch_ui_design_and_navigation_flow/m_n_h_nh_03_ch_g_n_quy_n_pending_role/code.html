@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ConstrutInspect - Chờ gán quyền (Pending Role)</title>
+<!-- Tailwind CSS via CDN with form & container-query plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Public Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary": "#505e67",
+            "outline-variant": "#c1c6d7",
+            "on-surface-variant": "#414755",
+            "tertiary-fixed-dim": "#bac8d3",
+            "status-error": "#FF4D4F",
+            "secondary-fixed-dim": "#b3c5ff",
+            "on-secondary-container": "#fefcff",
+            "secondary": "#0053d0",
+            "on-tertiary": "#ffffff",
+            "status-neutral": "#8C8C8C",
+            "on-error-container": "#93000a",
+            "tertiary-container": "#697680",
+            "secondary-container": "#306ded",
+            "primary-fixed-dim": "#afc6ff",
+            "primary-container": "#006ef2",
+            "inverse-surface": "#2f3031",
+            "surface-dim": "#dbdad9",
+            "on-secondary-fixed-variant": "#003fa3",
+            "status-success": "#52C41A",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "primary-fixed": "#d9e2ff",
+            "on-tertiary-container": "#fcfcff",
+            "on-secondary-fixed": "#001849",
+            "outline": "#727786",
+            "surface-container-low": "#f4f3f3",
+            "inverse-primary": "#afc6ff",
+            "surface-container-lowest": "#ffffff",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "error": "#ba1a1a",
+            "background": "#faf9f9",
+            "surface-white": "#FFFFFF",
+            "on-tertiary-fixed": "#101d25",
+            "primary": "#0057c2",
+            "on-secondary": "#ffffff",
+            "text-primary": "#1F2937",
+            "secondary-fixed": "#dae1ff",
+            "on-error": "#ffffff",
+            "text-secondary": "#595959",
+            "on-primary-fixed-variant": "#004398",
+            "surface": "#faf9f9",
+            "on-primary-fixed": "#001a43",
+            "on-primary-container": "#fefcff",
+            "surface-container-highest": "#e3e2e2",
+            "surface-variant": "#e3e2e2",
+            "viewport-overlay-stroke": "#1677FF",
+            "on-surface": "#1b1c1c",
+            "border-subtle": "#E4E7ED",
+            "on-background": "#1b1c1c",
+            "surface-container": "#efeded",
+            "inverse-on-surface": "#f2f0f0",
+            "tertiary-fixed": "#d6e4ef",
+            "status-warning": "#FAAD14",
+            "surface-tint": "#0059c7",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "border-strong": "#D9D9D9",
+            "canvas-background": "#F5F7FA",
+            "surface-container-high": "#e9e8e8",
+            "surface-bright": "#faf9f9"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "1.5rem",
+            "gutter-lg": "1.5rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"],
+            "display": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "headline-sm": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "display-mobile": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "headline-lg": ["Public Sans"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "display-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-canvas-background text-text-primary min-h-screen flex flex-col font-body-md antialiased selection:bg-primary-fixed selection:text-primary">
+<!-- Minimal Ant Design Desktop Top Header (Zero SideNav as required by Global Route Guard when RoleId is null) -->
+<header class="bg-surface-container-lowest border-b border-border-subtle sticky top-0 z-40 px-space-lg h-14 flex items-center justify-between shadow-none">
+<!-- Brand Identity Anchor -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary font-bold shadow-sm">
+<span class="material-symbols-outlined text-[20px]" data-icon="architecture">architecture</span>
+</div>
+<div>
+<span class="font-headline-sm text-headline-sm font-bold text-primary tracking-tight">ConstrutInspect</span>
+<span class="hidden sm:inline-block ml-2 text-[10px] font-label-sm uppercase bg-surface-container text-text-secondary px-1.5 py-0.5 rounded border border-border-subtle">QA/QC Enterprise</span>
+</div>
+</div>
+<div class="h-4 w-px bg-border-subtle hidden md:block"></div>
+<span class="hidden md:flex items-center gap-1.5 font-caption text-caption text-text-secondary">
+<span class="w-2 h-2 rounded-full bg-status-warning animate-pulse"></span>
+        Hệ thống Quản lý Nghiệm thu &amp; Giám sát Công trình
+      </span>
+</div>
+<!-- User Profile & Action Bar (Restricted State) -->
+<div class="flex items-center gap-space-md">
+<!-- Tag Ant Design Trạng thái Tài khoản -->
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2.5 py-0.5 rounded bg-surface-container-low text-text-secondary border border-border-strong font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-status-warning"></span>
+          Chưa gán quyền (RoleId = null)
+        </span>
+</div>
+<div class="h-4 w-px bg-border-subtle"></div>
+<!-- User Info Brief -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold font-headline-sm text-xs border border-primary-fixed-dim">
+          KS
+        </div>
+<div class="hidden lg:flex flex-col text-left leading-tight">
+<span class="font-headline-sm text-xs font-semibold text-text-primary">Nguyễn Văn Kỹ Sư</span>
+<span class="font-label-sm text-[10px] text-text-secondary">ky.su@constructcorp.vn</span>
+</div>
+</div>
+<!-- Logout Action -->
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-border-subtle hover:border-status-error hover:text-status-error text-text-secondary font-body-sm text-body-sm transition-all duration-150 bg-surface-container-lowest" onclick="handleLogout()" title="Đăng xuất khỏi phiên làm việc">
+<span class="material-symbols-outlined text-[16px]" data-icon="logout">logout</span>
+<span class="hidden sm:inline">Đăng xuất</span>
+</button>
+</div>
+</header>
+<!-- Route Guard Lock Banner Notice -->
+<div class="bg-[#FFFBE6] border-b border-[#FFE58F] px-space-lg py-2 flex items-center justify-between text-xs text-[#D48806] font-body-sm">
+<div class="max-w-7xl mx-auto w-full flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-status-warning flex-shrink-0" data-icon="lock">lock</span>
+<span>
+<strong>Cảnh báo bảo mật Route Guard:</strong> Bạn đang ở chế độ hạn chế (Route: <code class="font-label-sm bg-white/70 px-1 py-0.2 rounded border border-[#FFE58F]">/pending-approval</code>). Toàn bộ quyền truy cập trực tiếp vào các phân hệ <code class="font-label-sm bg-white/70 px-1 py-0.2 rounded border border-[#FFE58F]">/drawings</code>, <code class="font-label-sm bg-white/70 px-1 py-0.2 rounded border border-[#FFE58F]">/inspections</code>, <code class="font-label-sm bg-white/70 px-1 py-0.2 rounded border border-[#FFE58F]">/checklists</code> đều bị khóa cho đến khi Quản trị viên chỉ định vai trò hợp lệ.
+      </span>
+</div>
+</div>
+<!-- Main Viewport Canvas (Centered Ant Design Result Screen Pattern) -->
+<main class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8 flex flex-col justify-center items-center">
+<!-- Large Result Card Container with Crisp Elevation Level 1 Border -->
+<div class="w-full bg-surface-container-lowest border border-border-subtle rounded-lg shadow-sm p-6 md:p-10 transition-all duration-200">
+<!-- Ant Design Result Component Structure (status="info") -->
+<div class="text-center max-w-2xl mx-auto mb-8">
+<!-- Visual Status Icon -->
+<div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#E6F4FF] text-[#1677FF] mb-5 border border-[#91CAFF] shadow-inner">
+<span class="material-symbols-outlined text-[44px]" data-icon="hourglass_top">hourglass_top</span>
+</div>
+<!-- Result Title & Description -->
+<h1 class="font-headline-lg text-headline-lg font-bold text-text-primary tracking-tight mb-2">
+          Tài khoản đang chờ Admin gán quyền
+        </h1>
+<p class="font-body-md text-body-md text-text-secondary leading-relaxed">
+          Yêu cầu cấp quyền tài khoản của bạn đã được ghi nhận vào hệ thống ConstrutInspect. Vui lòng liên hệ Quản trị viên (Admin) dự án hoặc người phụ trách kỹ thuật để được phân quyền <span class="font-semibold text-text-primary">Submitter</span>, <span class="font-semibold text-text-primary">Reviewer</span> hoặc <span class="font-semibold text-text-primary">Approver</span>.
+        </p>
+</div>
+<!-- Bento Grid Split Layout: User Descriptions Box + Next Steps Roadmap -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start mb-8">
+<!-- Left: Ant Design Descriptions Box (Summary Info) - 7 cols -->
+<div class="md:col-span-7 bg-[#FAFAFA] border border-border-subtle rounded p-5">
+<div class="flex items-center justify-between pb-3 mb-3 border-b border-border-subtle">
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="badge">badge</span>
+              Thông tin đăng ký cán bộ
+            </h3>
+<span class="font-label-sm text-[10px] text-status-warning bg-[#FFFBE6] px-2 py-0.5 rounded border border-[#FFE58F] font-semibold">
+              CHỜ ĐỐI SOÁT
+            </span>
+</div>
+<dl class="grid grid-cols-1 sm:grid-cols-2 gap-y-3.5 gap-x-4 text-xs">
+<div>
+<dt class="font-caption text-text-secondary font-normal mb-0.5">Họ và tên cán bộ:</dt>
+<dd class="font-headline-sm text-xs font-semibold text-text-primary">Nguyễn Văn Kỹ Sư</dd>
+</div>
+<div>
+<dt class="font-caption text-text-secondary font-normal mb-0.5">Tên đăng nhập (Username):</dt>
+<dd class="font-label-sm text-label-sm text-primary font-semibold">nguyen.vanky</dd>
+</div>
+<div class="sm:col-span-2">
+<dt class="font-caption text-text-secondary font-normal mb-0.5">Email xác nhận:</dt>
+<dd class="font-label-sm text-label-sm text-text-primary">ky.su@constructcorp.vn</dd>
+</div>
+<div>
+<dt class="font-caption text-text-secondary font-normal mb-0.5">Thời điểm khởi tạo:</dt>
+<dd class="font-label-sm text-label-sm text-text-secondary">26/02/2025 09:15:30</dd>
+</div>
+<div>
+<dt class="font-caption text-text-secondary font-normal mb-0.5">Mã yêu cầu (Request ID):</dt>
+<dd class="font-label-sm text-label-sm font-bold text-text-primary tracking-wide">REQ-AUTH-2025-0842</dd>
+</div>
+<div class="sm:col-span-2 pt-2 border-t border-dashed border-border-subtle flex items-center justify-between">
+<div>
+<dt class="font-caption text-text-secondary font-normal">Trạng thái Role hiện tại:</dt>
+<dd class="font-label-sm text-label-sm text-status-error font-semibold mt-0.5 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-error"></span>
+                  RoleId = null (Chưa được gán)
+                </dd>
+</div>
+<span class="text-[11px] font-body-sm text-text-secondary italic">Phân hệ: Dự án Metro Line 2</span>
+</div>
+</dl>
+</div>
+<!-- Right: Ant Design Steps Timeline (Vertical Execution Path) - 5 cols -->
+<div class="md:col-span-5 bg-surface-container-lowest border border-border-subtle rounded p-5">
+<h3 class="font-headline-sm text-headline-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="alt_route">alt_route</span>
+            Quy trình kích hoạt tài khoản
+          </h3>
+<div class="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border-subtle">
+<!-- Step 1: Hoàn thành -->
+<div class="relative group">
+<span class="absolute -left-6 top-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-[#F6FFED] border border-[#B7EB8F] text-status-success shadow-xs">
+<span class="material-symbols-outlined text-[13px] font-bold" data-icon="check">check</span>
+</span>
+<div>
+<p class="font-headline-sm text-xs font-semibold text-status-success">Bước 1: Đăng ký thành công</p>
+<p class="font-caption text-[11px] text-text-secondary mt-0.5">Xác thực tài khoản và ghi nhận mã bảo mật trên hệ thống QA/QC.</p>
+</div>
+</div>
+<!-- Step 2: Đang chờ (Current Active Step) -->
+<div class="relative group">
+<span class="absolute -left-6 top-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-[#FFFBE6] border border-[#FFE58F] text-status-warning shadow-xs animate-pulse">
+<span class="w-2 h-2 rounded-full bg-status-warning"></span>
+</span>
+<div>
+<div class="flex items-center gap-1.5">
+<p class="font-headline-sm text-xs font-semibold text-primary">Bước 2: Admin đối soát &amp; gán quyền</p>
+<span class="text-[9px] font-label-sm bg-[#E6F4FF] text-primary px-1 py-0.2 rounded border border-[#91CAFF]">ĐANG XỬ LÝ</span>
+</div>
+<p class="font-caption text-[11px] text-text-secondary mt-0.5">Quản trị viên xét duyệt thông tin tại Màn hình 04 (Phân quyền &amp; Kiểm soát).</p>
+</div>
+</div>
+<!-- Step 3: Chưa tới -->
+<div class="relative opacity-60">
+<span class="absolute -left-6 top-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-surface-container border border-border-strong text-text-secondary text-[10px] font-bold">
+                3
+              </span>
+<div>
+<p class="font-headline-sm text-xs font-semibold text-text-primary">Bước 3: Nhận thông báo kích hoạt</p>
+<p class="font-caption text-[11px] text-text-secondary mt-0.5">Tự động mở khóa phân hệ Bản vẽ kỹ thuật &amp; Biên bản nghiệm thu.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Button Group (Ant Design Standards) -->
+<div class="flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-border-subtle">
+<!-- Primary Ant Design Button: Reload Status -->
+<button class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded bg-primary hover:bg-[#004398] text-white font-body-md text-sm font-semibold transition-all duration-150 shadow-xs focus:ring-2 focus:ring-primary/20 active:scale-95" id="btnReload" onclick="checkStatusSimulation()">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh" id="reloadIcon">refresh</span>
+<span>Tải lại trang (Kiểm tra trạng thái)</span>
+</button>
+<!-- Default Secondary Button: Contact Hotline/Email -->
+<button class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded bg-surface-container-lowest hover:bg-surface-container text-text-primary border border-border-strong font-body-md text-sm transition-all duration-150" onclick="openContactModal()">
+<span class="material-symbols-outlined text-[18px] text-text-secondary" data-icon="support_agent">support_agent</span>
+<span>Liên hệ Quản trị viên dự án</span>
+</button>
+<!-- Danger/Ghost Button: Logout -->
+<button class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded text-status-error hover:bg-[#FFF2F0] border border-transparent font-body-md text-sm transition-all duration-150" onclick="handleLogout()">
+<span class="material-symbols-outlined text-[18px]" data-icon="power_settings_new">power_settings_new</span>
+<span>Đăng xuất tài khoản</span>
+</button>
+</div>
+</div>
+<!-- Live Toast Notification Container for Micro-interaction -->
+<div class="hidden mt-4 px-4 py-2.5 rounded bg-surface-container-lowest border border-border-subtle shadow-md items-center gap-3 transition-all duration-300" id="toastNotification">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="info">info</span>
+<span class="text-xs text-text-primary font-body-sm" id="toastMessage">Đang đồng bộ trạng thái phân quyền từ máy chủ...</span>
+</div>
+</main>
+<!-- Prototype Switcher & Screen Navigation Drawer (Docked Bottom Anchor) -->
+<footer class="mt-auto bg-surface-container-lowest border-t border-border-subtle px-4 py-3">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+<div class="flex items-center gap-2 text-text-secondary font-caption">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="layers">layers</span>
+<span class="font-semibold text-text-primary">ConstrutInspect Navigation Suite:</span>
+<span>Chuyển đổi màn hình mẫu kiểm thử</span>
+</div>
+<!-- Quick Switcher Tabs to other views in the Inspection Ecosystem -->
+<div class="flex flex-wrap items-center gap-1.5 font-label-sm">
+<span class="text-text-secondary mr-1">Màn hình:</span>
+<button class="px-2.5 py-1 rounded bg-surface-container-low hover:bg-surface-container border border-border-subtle text-text-secondary transition-colors" onclick="switchScreen('01')" title="Màn hình 01: Đăng nhập &amp; Đăng ký">
+          Màn 01: Đăng nhập
+        </button>
+<button class="px-2.5 py-1 rounded bg-surface-container-low hover:bg-surface-container border border-border-subtle text-text-secondary transition-colors" onclick="switchScreen('02')" title="Màn hình 02: Xác thực OTP / Kích hoạt">
+          Màn 02: Xác thực OTP
+        </button>
+<!-- Current Screen Badge -->
+<span class="px-2.5 py-1 rounded bg-primary-fixed text-primary font-bold border border-primary-fixed-dim flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+          Màn 03: Chờ gán quyền (Hiện tại)
+        </span>
+<button class="px-2.5 py-1 rounded bg-surface-container-low hover:bg-primary hover:text-white border border-border-subtle text-text-primary font-medium transition-colors flex items-center gap-1" onclick="switchScreen('04')" title="Màn hình 04: Quản trị người dùng &amp; Phân quyền Admin">
+<span>Màn 04: Admin gán quyền</span>
+<span class="material-symbols-outlined text-[13px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-low hover:bg-surface-container border border-border-subtle text-text-secondary transition-colors" onclick="switchScreen('05')" title="Màn hình 05: Bản vẽ kỹ thuật &amp; Marker BIM">
+          Màn 05: Bản vẽ &amp; Marker
+        </button>
+</div>
+</div>
+</footer>
+<!-- Contact Modal (Dialog Overlay Level 3) -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-[1px] p-4" id="contactModal">
+<div class="bg-surface-container-lowest rounded-lg border border-border-strong shadow-2xl max-w-md w-full p-6 animate-scale-up">
+<div class="flex items-center justify-between pb-3 border-b border-border-subtle mb-4">
+<h3 class="font-headline-sm text-headline-sm font-bold text-text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="contact_support">contact_support</span>
+          Liên hệ Hỗ trợ Kỹ thuật &amp; Quản trị
+        </h3>
+<button class="text-text-secondary hover:text-text-primary" onclick="closeContactModal()">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mb-4 leading-relaxed">
+        Để rút ngắn thời gian kích hoạt quyền kiểm định, bạn có thể gửi trực tiếp Mã yêu cầu <strong class="text-text-primary font-label-sm">REQ-AUTH-2025-0842</strong> cho cán bộ phụ trách:
+      </p>
+<div class="space-y-3 font-body-sm text-xs">
+<div class="p-3 bg-[#FAFAFA] rounded border border-border-subtle flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[20px] mt-0.5" data-icon="engineering">engineering</span>
+<div>
+<p class="font-semibold text-text-primary">Ban Chỉ Huy Trưởng / Trưởng ban QA-QC</p>
+<p class="text-text-secondary">Trần Đình Quang - Phụ trách phân quyền dự án</p>
+<p class="font-label-sm text-primary mt-1">Hotline: 0988.123.456 (Ext: 104)</p>
+</div>
+</div>
+<div class="p-3 bg-[#FAFAFA] rounded border border-border-subtle flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[20px] mt-0.5" data-icon="mail">mail</span>
+<div>
+<p class="font-semibold text-text-primary">Trung tâm Hỗ trợ IT Hệ thống ConstrutInspect</p>
+<p class="text-text-secondary">Thời gian tiếp nhận: 07:30 - 18:00 (Thứ 2 - Thứ 7)</p>
+<p class="font-label-sm text-primary mt-1">support-qaqc@constructcorp.vn</p>
+</div>
+</div>
+</div>
+<div class="mt-6 flex justify-end">
+<button class="px-4 py-1.5 rounded bg-primary text-white font-body-md text-xs font-semibold hover:bg-[#004398] transition-colors" onclick="closeContactModal()">
+          Đã hiểu &amp; Đóng lại
+        </button>
+</div>
+</div>
+</div>
+<!-- Interactive Logic for Simulation & Feedback -->
+<script>
+    // Micro-interaction: Check Status Button Simulation
+    function checkStatusSimulation() {
+      const btn = document.getElementById('btnReload');
+      const icon = document.getElementById('reloadIcon');
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMessage');
+
+      // Add spin animation
+      icon.classList.add('animate-spin');
+      btn.disabled = true;
+      btn.classList.add('opacity-75');
+
+      // Show Toast
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      toastMsg.innerText = "Đang kiểm tra cơ sở dữ liệu phân quyền...";
+
+      setTimeout(() => {
+        icon.classList.remove('animate-spin');
+        btn.disabled = false;
+        btn.classList.remove('opacity-75');
+        
+        toastMsg.innerHTML = "<strong>Kết quả:</strong> Trạng thái vẫn là <code class='font-label-sm text-status-warning'>RoleId = null</code>. Vui lòng liên hệ Admin duyệt cấp quyền.";
+        
+        // Auto hide toast after 4s
+        setTimeout(() => {
+          toast.classList.add('hidden');
+          toast.classList.remove('flex');
+        }, 4000);
+      }, 1200);
+    }
+
+    // Modal Control
+    function openContactModal() {
+      document.getElementById('contactModal').classList.remove('hidden');
+    }
+
+    function closeContactModal() {
+      document.getElementById('contactModal').classList.add('hidden');
+    }
+
+    // Logout Handlers
+    function handleLogout() {
+      if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi phiên chờ duyệt này không?")) {
+        alert("Đã đăng xuất tài khoản an toàn.");
+        window.location.reload();
+      }
+    }
+
+    // Screen Switcher Placeholder Simulator
+    function switchScreen(screenId) {
+      const screenNames = {
+        '01': 'Màn hình 01: Đăng nhập & Đăng ký',
+        '02': 'Màn hình 02: Xác thực mã OTP',
+        '04': 'Màn hình 04: Quản trị người dùng & Phân quyền Admin (Dành cho Quản trị viên duyệt hồ sơ này)',
+        '05': 'Màn hình 05: Bản vẽ kỹ thuật & Marker BIM'
+      };
+      alert(`[Chuyển cảnh mẫu]: Điều hướng đến ${screenNames[screenId] || 'Màn hình khác'}.`);
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeContactModal();
+      }
+    });
+  </script>
+</body></html>

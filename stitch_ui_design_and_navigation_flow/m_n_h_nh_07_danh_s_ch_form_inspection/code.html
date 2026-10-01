@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ConstrutInspect - Danh sách Form Inspection</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface": "#1b1c1c",
+            "surface": "#faf9f9",
+            "error": "#ba1a1a",
+            "secondary": "#0053d0",
+            "primary-container": "#006ef2",
+            "background": "#faf9f9",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-fixed": "#101d25",
+            "on-secondary-fixed-variant": "#003fa3",
+            "outline": "#727786",
+            "surface-tint": "#0059c7",
+            "surface-container-low": "#f4f3f3",
+            "tertiary-fixed": "#d6e4ef",
+            "status-success": "#52C41A",
+            "on-primary-fixed": "#001a43",
+            "surface-white": "#FFFFFF",
+            "status-warning": "#FAAD14",
+            "inverse-primary": "#afc6ff",
+            "surface-container-highest": "#e3e2e2",
+            "on-tertiary": "#ffffff",
+            "on-error-container": "#93000a",
+            "primary-fixed": "#d9e2ff",
+            "tertiary-fixed-dim": "#bac8d3",
+            "surface-dim": "#dbdad9",
+            "surface-container": "#efeded",
+            "surface-container-high": "#e9e8e8",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "on-secondary-fixed": "#001849",
+            "text-primary": "#1F2937",
+            "on-background": "#1b1c1c",
+            "secondary-fixed": "#dae1ff",
+            "inverse-surface": "#2f3031",
+            "on-primary-container": "#fefcff",
+            "viewport-overlay-stroke": "#1677FF",
+            "primary-fixed-dim": "#afc6ff",
+            "surface-variant": "#e3e2e2",
+            "text-secondary": "#595959",
+            "on-secondary-container": "#fefcff",
+            "on-tertiary-container": "#fcfcff",
+            "error-container": "#ffdad6",
+            "inverse-on-surface": "#f2f0f0",
+            "canvas-background": "#F5F7FA",
+            "on-primary-fixed-variant": "#004398",
+            "status-neutral": "#8C8C8C",
+            "primary": "#1677FF",
+            "on-surface-variant": "#414755",
+            "tertiary": "#505e67",
+            "secondary-container": "#306ded",
+            "border-subtle": "#E4E7ED",
+            "surface-bright": "#faf9f9",
+            "secondary-fixed-dim": "#b3c5ff",
+            "on-secondary-white": "#ffffff",
+            "on-primary": "#ffffff",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "outline-variant": "#c1c6d7",
+            "tertiary-container": "#697680",
+            "status-error": "#FF4D4F",
+            "border-strong": "#D9D9D9"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "margin": "1.5rem",
+            "gutter": "1rem",
+            "margin-mobile": "1rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "1.5rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display-mobile": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"],
+            "headline-lg": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "headline-lg-mobile": ["Public Sans"],
+            "display": ["Public Sans"],
+            "headline-sm": ["Public Sans"]
+          },
+          "fontSize": {
+            "display-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+            "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+            "body-md": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+            "caption": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+            "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+            "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+            "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 18px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #c1c6d7;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-canvas-background text-text-primary min-h-screen flex flex-col font-body-md text-body-md antialiased">
+<!-- ================= TOP APP BAR (ANT DESIGN 64px HEADER) ================= -->
+<header class="bg-surface-container-lowest h-16 w-full border-b border-[#F0F0F0] px-space-lg flex items-center justify-between sticky top-0 z-50">
+<!-- Left: Brand + Breadcrumb -->
+<div class="flex items-center space-x-6">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-white shadow-sm">
+<span class="material-symbols-outlined text-[20px]" data-icon="architecture">architecture</span>
+</div>
+<span class="text-headline-sm font-headline-sm font-bold text-primary tracking-tight">ConstrutInspect</span>
+</div>
+<!-- Ant Design Breadcrumb -->
+<nav class="hidden md:flex items-center space-x-2 text-body-sm font-body-sm text-text-secondary">
+<span class="hover:text-primary cursor-pointer transition-colors">Trang chủ</span>
+<span class="text-status-neutral">/</span>
+<span class="hover:text-primary cursor-pointer transition-colors">Hồ sơ nghiệm thu</span>
+<span class="text-status-neutral">/</span>
+<span class="text-text-primary font-medium">Danh sách đợt kiểm tra (Inspections)</span>
+</nav>
+</div>
+<!-- Right: User Info & Actions -->
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2 text-text-secondary">
+<button class="p-1.5 rounded hover:bg-surface-container text-text-secondary transition-colors" title="Trợ giúp">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-text-secondary relative transition-colors" title="Thông báo">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-error"></span>
+</button>
+</div>
+<div class="h-4 w-px bg-border-subtle"></div>
+<!-- User Profile Cluster -->
+<div class="flex items-center space-x-3">
+<img class="w-8 h-8 rounded-full border border-border-subtle object-cover shadow-sm" data-alt="A focused Vietnamese civil site inspector wearing a white safety hardhat and high-visibility corporate vest smiling gently inside a clean modern construction management headquarters. Crisp studio light, highly detailed professional portrait with soft industrial background tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbrhMP98RZ_D_RkyKHWJzhKJvyrIGshk0qSPQbUt9PQcR6iZkqqDZh-Ee3AC4-ufHUJYU1MCpdIOjJaKMKvH6rVe6GGuJVJjs53UdLSc5zMeje7l0C9nztI2s278hUD0xgTN0728EHEYT0jBuivHgiGxSRhbywqxfqgLY59b_VV2C6V49iWxKp10i_rHowtom1ngVn9gfCKAhcPJR3e40XihhbWJpJUSJO5cnjjD7c8493yJg6Itk6"/>
+<div class="flex flex-col">
+<div class="flex items-center space-x-2">
+<span class="font-medium text-text-primary text-body-md">Lê Submitter</span>
+<span class="px-1.5 py-0.5 rounded text-label-sm font-label-sm bg-[#E6F4FF] text-[#1677FF] border border-[#91CAFF]">
+              Submitter
+            </span>
+</div>
+</div>
+<button class="text-body-sm font-body-sm text-text-secondary hover:text-status-error transition-colors pl-2">
+          Đăng xuất
+        </button>
+</div>
+</div>
+</header>
+<!-- ================= MAIN WORKSPACE (SIDEBAR + CONTENT) ================= -->
+<div class="flex flex-1 w-full min-h-[calc(100vh-64px)]">
+<!-- Ant Design Standard Sidebar (220px) -->
+<aside class="w-[220px] bg-surface-container-lowest border-r border-[#F0F0F0] flex flex-col justify-between py-4 select-none shrink-0">
+<div class="flex flex-col space-y-1 px-3">
+<div class="px-3 py-2 text-label-sm font-label-sm uppercase text-text-secondary font-semibold tracking-wider">
+          Menu Submitter
+        </div>
+<!-- Inactive Menu item: Bản vẽ -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded text-text-secondary hover:bg-surface-container hover:text-text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="architecture">architecture</span>
+<span class="font-body-md text-body-md">Bản vẽ</span>
+</a>
+<!-- Active Menu item: Inspection -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded bg-[#E6F4FF] text-[#1677FF] font-semibold border-r-2 border-[#1677FF] transition-all" href="#">
+<span class="material-symbols-outlined text-[20px] text-[#1677FF]" data-icon="fact_check">fact_check</span>
+<span class="font-body-md text-body-md">Inspection</span>
+</a>
+<div class="pt-4 px-3 py-1 text-label-sm font-label-sm uppercase text-text-secondary font-semibold tracking-wider">
+          Phân tích &amp; Báo cáo
+        </div>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded text-text-secondary hover:bg-surface-container hover:text-text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="timeline">timeline</span>
+<span class="font-body-md text-body-md">Tiến độ Elsa</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded text-text-secondary hover:bg-surface-container hover:text-text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="dynamic_form">dynamic_form</span>
+<span class="font-body-md text-body-md">Mẫu FormIO</span>
+</a>
+</div>
+<!-- Sidebar Footer -->
+<div class="px-3 border-t border-border-subtle pt-3 space-y-1">
+<div class="flex items-center gap-2 px-3 py-2 text-text-secondary text-body-sm font-body-sm hover:text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[18px]" data-icon="history">history</span>
+<span>Nhật ký Audit</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-2 text-text-secondary text-body-sm font-body-sm hover:text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[18px]" data-icon="support_agent">support_agent</span>
+<span>Hỗ trợ kỹ thuật</span>
+</div>
+</div>
+</aside>
+<!-- Content Area (Canvas: #F5F7FA, padding: 24px) -->
+<main class="flex-1 bg-canvas-background p-6 flex flex-col space-y-5 overflow-x-hidden">
+<!-- Page Header Banner -->
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+<div>
+<h1 class="text-headline-lg font-headline-lg text-text-primary tracking-tight">
+            Danh sách hồ sơ kiểm tra &amp; Nghiệm thu (Inspections)
+          </h1>
+<p class="text-body-md font-body-md text-text-secondary mt-1">
+            Quản lý toàn bộ biên bản kiểm tra kỹ thuật FormIO, theo dõi tiến độ phê duyệt qua Elsa Workflow
+          </p>
+</div>
+<!-- Primary Action for Submitter -->
+<div>
+<button class="inline-flex items-center gap-2 bg-[#1677FF] hover:bg-[#4096ff] text-white px-4 py-2 rounded text-body-md font-medium shadow-sm transition-colors focus:ring-2 focus:ring-[#1677FF]/30">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+<span>+ Tạo mới Inspection</span>
+</button>
+</div>
+</div>
+<!-- Quick Metrics Summary Bar (Engineering Quality Cockpit) -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+<div class="bg-surface-container-lowest border border-border-subtle rounded p-3 flex flex-col justify-between">
+<span class="text-label-sm font-label-sm text-text-secondary uppercase">Tổng số hồ sơ</span>
+<span class="text-headline-md font-headline-md text-text-primary mt-1">124</span>
+</div>
+<div class="bg-surface-container-lowest border border-border-subtle rounded p-3 flex flex-col justify-between border-l-4 border-l-[#8C8C8C]">
+<span class="text-label-sm font-label-sm text-text-secondary uppercase">Bản nháp (Draft)</span>
+<span class="text-headline-md font-headline-md text-status-neutral mt-1">14</span>
+</div>
+<div class="bg-surface-container-lowest border border-border-subtle rounded p-3 flex flex-col justify-between border-l-4 border-l-[#FAAD14]">
+<span class="text-label-sm font-label-sm text-text-secondary uppercase">Đang thẩm định</span>
+<span class="text-headline-md font-headline-md text-status-warning mt-1">38</span>
+</div>
+<div class="bg-surface-container-lowest border border-border-subtle rounded p-3 flex flex-col justify-between border-l-4 border-l-[#52C41A]">
+<span class="text-label-sm font-label-sm text-text-secondary uppercase">Đã phê duyệt</span>
+<span class="text-headline-md font-headline-md text-status-success mt-1">67</span>
+</div>
+<div class="bg-surface-container-lowest border border-border-subtle rounded p-3 flex flex-col justify-between border-l-4 border-l-[#FF4D4F]">
+<span class="text-label-sm font-label-sm text-text-secondary uppercase">Bị từ chối</span>
+<span class="text-headline-md font-headline-md text-status-error mt-1">5</span>
+</div>
+</div>
+<!-- Filter & Action Toolbar (Ant Design Toolbar Style) -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+<!-- Filters cluster -->
+<div class="flex flex-wrap items-center gap-3 flex-1">
+<!-- Select Lọc Trạng Thái -->
+<div class="relative min-w-[200px]">
+<div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-text-secondary">
+<span class="material-symbols-outlined text-[16px]" data-icon="filter_list">filter_list</span>
+</div>
+<select class="w-full pl-8 pr-8 py-1.5 text-body-md font-body-md bg-white border border-border-strong rounded focus:border-[#1677FF] focus:ring-1 focus:ring-[#1677FF] text-text-primary cursor-pointer outline-none">
+<option value="all">Tất cả trạng thái</option>
+<option value="draft">Draft (Bản nháp)</option>
+<option value="submitted">Submitted (Đã nộp)</option>
+<option value="under_review">UnderReview (Đang thẩm định)</option>
+<option value="approved">Approved (Đã phê duyệt)</option>
+<option value="rejected">Rejected (Từ chối)</option>
+</select>
+</div>
+<!-- Select Lọc Object (Searchable) -->
+<div class="relative min-w-[240px]">
+<div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-text-secondary">
+<span class="material-symbols-outlined text-[16px]" data-icon="category">category</span>
+</div>
+<select class="w-full pl-8 pr-8 py-1.5 text-body-md font-body-md bg-white border border-border-strong rounded focus:border-[#1677FF] focus:ring-1 focus:ring-[#1677FF] text-text-primary cursor-pointer outline-none">
+<option value="all">Tất cả đối tượng CAD/BIM</option>
+<option value="dam_d5">Dầm D5 - Nhịp 4-5</option>
+<option value="cot_c12">Cột bê tông C12 - Trục A3</option>
+<option value="san_sanh_e">Sàn Sảnh E</option>
+<option value="vach_thang_v1">Vách thang máy V1 - Lõi B</option>
+<option value="mong_m2">Móng băng M2 - Phân đoạn 1</option>
+</select>
+</div>
+<!-- Input.Search tìm kiếm mã hồ sơ hoặc người lập -->
+<div class="relative flex-1 min-w-[220px]">
+<div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-text-secondary">
+<span class="material-symbols-outlined text-[18px]" data-icon="search">search</span>
+</div>
+<input class="w-full pl-8 pr-8 py-1.5 text-body-md font-body-md bg-white border border-border-strong rounded focus:border-[#1677FF] focus:ring-1 focus:ring-[#1677FF] text-text-primary placeholder:text-text-secondary/70 outline-none" placeholder="Tìm kiếm mã hồ sơ hoặc người lập..." type="text"/>
+<button class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-text-secondary hover:text-text-primary">
+<span class="material-symbols-outlined text-[16px]" data-icon="cancel">cancel</span>
+</button>
+</div>
+</div>
+<!-- Reset & Export actions -->
+<div class="flex items-center space-x-2 shrink-0">
+<button class="px-3 py-1.5 border border-border-strong rounded hover:bg-canvas-background text-text-secondary text-body-md font-medium flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="restart_alt">restart_alt</span>
+<span>Đặt lại</span>
+</button>
+<button class="px-3 py-1.5 border border-border-strong rounded hover:bg-canvas-background text-text-secondary text-body-md font-medium flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+<span>Xuất Excel</span>
+</button>
+</div>
+</div>
+<!-- ================= ANT DESIGN DATA TABLE CONTAINER ================= -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded shadow-none overflow-hidden flex flex-col">
+<div class="overflow-x-auto custom-scroll">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#FAFAFA] border-b border-[#E4E7ED] text-label-sm font-label-sm text-[#595959] uppercase tracking-wider">
+<th class="py-3 px-4 w-[160px]">Mã số hồ sơ</th>
+<th class="py-3 px-4 min-w-[210px]">Đối tượng nghiệm thu (Object)</th>
+<th class="py-3 px-4 min-w-[210px]">Bản vẽ kỹ thuật nguồn</th>
+<th class="py-3 px-4 min-w-[190px]">Người tạo / Kỹ sư</th>
+<th class="py-3 px-4 min-w-[150px]">Ngày tạo / Ngày nộp</th>
+<th class="py-3 px-4 min-w-[140px] text-center">Trạng thái</th>
+<th class="py-3 px-4 min-w-[160px] text-right">Thao tác</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle text-body-md font-body-md text-text-primary">
+<!-- ROW 1: Draft (INS-2025-0589) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 font-label-md text-label-md">
+<a class="text-[#1677FF] hover:underline font-semibold flex items-center gap-1" href="/inspections/INS-2025-0589">
+                    INS-2025-0589
+                    <span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span>
+</a>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-text-primary">Dầm D5 - Nhịp 4-5</div>
+<div class="inline-flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[13px] text-text-secondary" data-icon="pin_drop">pin_drop</span>
+<span class="text-caption font-caption text-text-secondary">Trục B-C / Tầng 5</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-1.5 text-text-secondary hover:text-text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-status-error" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="text-body-sm font-body-sm truncate max-w-[190px]">MatBang_Tang5_BlockA.pdf</span>
+</div>
+<span class="text-caption font-caption text-text-secondary">Khổ A1 - Tỷ lệ 1:100</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-border-subtle object-cover" data-alt="Close up professional ID style portrait of a junior Vietnamese quality control civil engineer in a clean safety vest indoors with architectural schematic plans in soft focus. Clear neutral lighting and sharp detail." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxYfX8w_pl6tQcKdJeAlR3vr8RIUa32ZJw-oynv_2HYLEi5Xyqt9Pp8WfE7IVesN4PCB8M2F66Wf-NUd-eWMuJ_ijiziVKBErEIJ4an3pDstOilCGG1mXFS3630jpu8pjEH-Kedg36DkQkyHCkPt0QFMLPHZzCBBhAjtQjDmYrrqafJgKCkxqItEQxnfO9F29sUvn6C1WdrJyNymzEUFzh-7I7gQsRJI_s8P31KM1ceIsIS3Um2bA3"/>
+<div class="flex flex-col">
+<span class="font-medium text-body-sm">Lê Submitter</span>
+<span class="text-caption font-caption text-text-secondary">Kỹ sư QA/QC hiện trường</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-body-sm">18/05/2025</div>
+<div class="text-caption font-caption text-text-secondary">Bản ghi nháp (Chưa nộp)</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<!-- Tag default nền #F5F5F5, chữ #8C8C8C -->
+<span class="inline-block px-2.5 py-0.5 rounded text-label-sm font-label-sm uppercase bg-[#F5F5F5] text-[#8C8C8C] border border-[#D9D9D9]">
+                    Draft
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<!-- Actions for Draft: Sửa (#1677FF), Xóa (#FF4D4F kèm Popconfirm) -->
+<div class="inline-flex items-center justify-end space-x-2">
+<button class="text-[#1677FF] hover:text-[#4096ff] text-body-sm font-medium hover:underline inline-flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[15px]" data-icon="edit">edit</span>
+                      Sửa
+                    </button>
+<span class="text-border-subtle">|</span>
+<!-- Simulated Ant Design Popconfirm Trigger -->
+<div class="relative group inline-block">
+<button class="text-[#FF4D4F] hover:text-[#ff7875] text-body-sm font-medium hover:underline inline-flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[15px]" data-icon="delete">delete</span>
+                        Xóa
+                      </button>
+<!-- Popconfirm Tooltip Preview (Interactive on hover) -->
+<div class="hidden group-hover:block absolute right-0 bottom-full mb-2 w-64 bg-white border border-border-strong rounded shadow-lg p-3 z-30 text-left">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[#FAAD14] text-[18px] shrink-0" data-icon="warning">warning</span>
+<div>
+<div class="text-body-sm font-semibold text-text-primary">Xác nhận xóa biên bản này?</div>
+<div class="text-caption text-text-secondary mt-0.5">Hành động này không thể hoàn tác trong cơ sở dữ liệu.</div>
+</div>
+</div>
+<div class="flex justify-end gap-1.5 mt-2.5">
+<button class="px-2 py-0.5 text-caption rounded border border-border-strong hover:bg-canvas-background" type="button">Hủy</button>
+<button class="px-2 py-0.5 text-caption rounded bg-[#FF4D4F] text-white hover:bg-[#ff7875]" type="button">Xóa ngay</button>
+</div>
+<div class="absolute -bottom-1.5 right-4 w-3 h-3 bg-white border-b border-r border-border-strong rotate-45"></div>
+</div>
+</div>
+</div>
+</td>
+</tr>
+<!-- ROW 2: Submitted (INS-2025-0601) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 font-label-md text-label-md">
+<a class="text-[#1677FF] hover:underline font-semibold flex items-center gap-1" href="/inspections/INS-2025-0601">
+                    INS-2025-0601
+                    <span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span>
+</a>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-text-primary">Cột bê tông C12 - Trục A3</div>
+<div class="inline-flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[13px] text-text-secondary" data-icon="pin_drop">pin_drop</span>
+<span class="text-caption font-caption text-text-secondary">Cốt thép đai / Tầng 3</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-1.5 text-text-secondary hover:text-text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-status-error" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="text-body-sm font-body-sm truncate max-w-[190px]">ChiTiet_Cot_Tang3_Rev2.pdf</span>
+</div>
+<span class="text-caption font-caption text-text-secondary">Sheet S-301 - Marker #12</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-border-subtle object-cover" data-alt="Portrait of an experienced Vietnamese construction engineer with short hair, high-visibility orange vest over clean work shirt, industrial jobsite blueprint background, realistic bright daylight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1FBjtDRYbqtpsSydvdqt54QrBBrYrdGYPzUA9qKvr2N6PyGunCs9XGMX5xQMmF7hz6dxnFB01gD5yw790ZFE2wH3VLEuPQNkGdASt6hxW4NNJs2ikUhpaSttnEvylnxRDZEdI3SEKQAI1izDPhpi0KK26nipp0i3IKi-hKUSozdCzPv4fFGAicgPWqDf7SvjcFAR5pqwYpUGT_HfwZY37eFBKfKHoYGgGzGJWgyzFdh_bRc5zBr9I"/>
+<div class="flex flex-col">
+<span class="font-medium text-body-sm">Lê Submitter</span>
+<span class="text-caption font-caption text-text-secondary">Kỹ sư thi công chính</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-body-sm">17/05/2025</div>
+<div class="text-caption font-caption text-text-secondary">Đã gửi: 17/05 14:30</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<!-- Tag gold nền #FFF7E6, chữ #FAAD14 -->
+<span class="inline-block px-2.5 py-0.5 rounded text-label-sm font-label-sm uppercase bg-[#FFF7E6] text-[#FAAD14] border border-[#FFE58F]">
+                    Submitted
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<a class="text-[#1677FF] hover:text-[#4096ff] text-body-sm font-medium hover:underline inline-flex items-center gap-1" href="/inspections/INS-2025-0601">
+                    Xem chi tiết
+                    <span class="material-symbols-outlined text-[15px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</td>
+</tr>
+<!-- ROW 3: UnderReview (INS-2025-0604) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 font-label-md text-label-md">
+<a class="text-[#1677FF] hover:underline font-semibold flex items-center gap-1" href="/inspections/INS-2025-0604">
+                    INS-2025-0604
+                    <span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span>
+</a>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-text-primary">Sàn Sảnh E - Khu vực thông tầng</div>
+<div class="inline-flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[13px] text-text-secondary" data-icon="pin_drop">pin_drop</span>
+<span class="text-caption font-caption text-text-secondary">Độ võng cốp pha / Tầng 2</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-1.5 text-text-secondary hover:text-text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-status-error" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="text-body-sm font-body-sm truncate max-w-[190px]">KetCau_San_Sanh_E_04.pdf</span>
+</div>
+<span class="text-caption font-caption text-text-secondary">Marker Box #04 - Bounding OK</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-border-subtle object-cover" data-alt="Professional photo of a female Vietnamese structural surveyor with safety glasses around neck, smiling confidently in modern architectural technical trailer with monitors showing CAD drawings. Clean balanced enterprise lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD15iuSLZujE6tH2QYEme43_J0TUShPXLwgqpBQbna-siYCOdU_vWb1ndQjA1cU5pg8zcdQeO1PecfVR6XgYGgqZGdchmfWHRIoqXUzT0G8Jp-br8rYELSOF0o1lVUJJmjTwGxE7uzJRZ-hxP2QUFjfpDD1PZcKJByQ29xNcSA25CaT_raWyvPh4VKDSCxu_EGr5Sl9QTn5pbF5EjWkYYGl1QcIaokc0Wo5tgZ4qRwBVtrT5bc_TkQI"/>
+<div class="flex flex-col">
+<span class="font-medium text-body-sm">Trần Reviewer</span>
+<span class="text-caption font-caption text-text-secondary">Tư vấn giám sát (TVGS)</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-body-sm">16/05/2025</div>
+<div class="text-caption font-caption text-text-secondary">Chuyển TVGS: 16/05 09:15</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<!-- Tag gold nền #FFF7E6, chữ #FAAD14 -->
+<span class="inline-block px-2.5 py-0.5 rounded text-label-sm font-label-sm uppercase bg-[#FFF7E6] text-[#FAAD14] border border-[#FFE58F]">
+                    UnderReview
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<a class="text-[#1677FF] hover:text-[#4096ff] text-body-sm font-medium hover:underline inline-flex items-center gap-1" href="/inspections/INS-2025-0604">
+                    Xem chi tiết
+                    <span class="material-symbols-outlined text-[15px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</td>
+</tr>
+<!-- ROW 4: Approved (INS-2025-0570) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 font-label-md text-label-md">
+<a class="text-[#1677FF] hover:underline font-semibold flex items-center gap-1" href="/inspections/INS-2025-0570">
+                    INS-2025-0570
+                    <span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span>
+</a>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-text-primary">Móng băng M2 - Phân đoạn 1</div>
+<div class="inline-flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[13px] text-text-secondary" data-icon="pin_drop">pin_drop</span>
+<span class="text-caption font-caption text-text-secondary">Hố móng cọc khoan nhồi / Cốt -4.5m</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-1.5 text-text-secondary hover:text-text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-status-error" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="text-body-sm font-body-sm truncate max-w-[190px]">BanVe_Mong_GiaiDoan1_Final.pdf</span>
+</div>
+<span class="text-caption font-caption text-text-secondary">Đã đóng dấu phê duyệt số hóa</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-border-subtle object-cover" data-alt="Distinguished senior Vietnamese chief technical engineer in dark blue collared shirt standing in front of engineering blueprint board with subtle ambient lighting, authoritative and professional posture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXXj6S-au424y7LzUTL0nneaceyGHJcDO9JHRD2NxI3qrnV-WyOCdqICWtnGHJVqLkpIiugR9r78TOZjRq9O89zIIJTPhr9FvOjwUuasa2VTo178BUt-fVOdyK8azfcOhTPzMtqGXzqf36cAvRnLHmK8ngD4jnO-veQ6xeMofWMtjLNelcpUMThaeM8sv8nclaWRGtrMNgdDDHyhsGlRS-WOvVSZSVvNTIFEY8_unKLCCRfzF8ZK9c"/>
+<div class="flex flex-col">
+<span class="font-medium text-body-sm">Nguyễn Approver</span>
+<span class="text-caption font-caption text-text-secondary">Chủ nhiệm nghiệm thu CĐT</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-body-sm">12/05/2025</div>
+<div class="text-caption font-caption text-status-success font-medium">Phê duyệt: 13/05 16:40</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<!-- Tag green nền #F6FFED, chữ #52C41A -->
+<span class="inline-block px-2.5 py-0.5 rounded text-label-sm font-label-sm uppercase bg-[#F6FFED] text-[#52C41A] border border-[#B7EB8F]">
+                    Approved
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<a class="text-[#1677FF] hover:text-[#4096ff] text-body-sm font-medium hover:underline inline-flex items-center gap-1" href="/inspections/INS-2025-0570">
+                    Xem chi tiết
+                    <span class="material-symbols-outlined text-[15px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</td>
+</tr>
+<!-- ROW 5: Rejected (INS-2025-0552) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 font-label-md text-label-md">
+<a class="text-[#1677FF] hover:underline font-semibold flex items-center gap-1" href="/inspections/INS-2025-0552">
+                    INS-2025-0552
+                    <span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span>
+</a>
+</td>
+<td class="py-3.5 px-4">
+<div class="font-medium text-text-primary">Vách thang máy V1 - Lõi B</div>
+<div class="inline-flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[13px] text-text-secondary" data-icon="pin_drop">pin_drop</span>
+<span class="text-caption font-caption text-status-error font-medium">Sai lệch khoảng cách cốt thép</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-1.5 text-text-secondary hover:text-text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-status-error" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="text-body-sm font-body-sm truncate max-w-[190px]">LoiThangMay_Core_V1_Tang4.pdf</span>
+</div>
+<span class="text-caption font-caption text-text-secondary">Đính kèm 3 ảnh hiện trường lỗi</span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-border-subtle object-cover" data-alt="Portrait of a Vietnamese site inspector with safety glasses and yellow hardhat looking intently at camera with construction project structure blurred in bright background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHuSPoyGGvcn1cZEPdJWKZpMzalKI_tD_e5zrxvCHmy8pLtj0fNDx1pBGS_9ZXpGSTbCiglkdtg921XJbUtMAzNsZ-f3KGX-nPelBDvEK6_ZR8VDWkEsAJzTSin3HIJ8URvOUKnsbc6UuWTW5tPN_9qlXQfypK_fJzmaCJtjFNICCMaOyeswblgZxxT9yy2iVXghJRWmO4KXlIh-pWxnP1if_sUugTwUDv4zD6X8Yi1UVpmEtTWZc6"/>
+<div class="flex flex-col">
+<span class="font-medium text-body-sm">Vũ TVGS Trưởng</span>
+<span class="text-caption font-caption text-text-secondary">Trưởng đoàn kiểm tra</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<div class="text-body-sm">10/05/2025</div>
+<div class="text-caption font-caption text-status-error font-medium">Bác bỏ: 11/05 11:20</div>
+</td>
+<td class="py-3.5 px-4 text-center">
+<!-- Tag red nền #FFF1F0, chữ #FF4D4F -->
+<span class="inline-block px-2.5 py-0.5 rounded text-label-sm font-label-sm uppercase bg-[#FFF1F0] text-[#FF4D4F] border border-[#FFCCC7]">
+                    Rejected
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<a class="text-[#1677FF] hover:text-[#4096ff] text-body-sm font-medium hover:underline inline-flex items-center gap-1" href="/inspections/INS-2025-0552">
+                    Xem chi tiết
+                    <span class="material-symbols-outlined text-[15px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- ================= ANT DESIGN TABLE FOOTER PAGINATION ================= -->
+<div class="bg-white border-t border-border-subtle px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-body-sm font-body-sm text-text-secondary">
+<!-- Số lượng bản ghi -->
+<div class="flex items-center space-x-2">
+<span>Hiển thị <strong>1 - 5</strong> trên tổng số <strong>124</strong> bản ghi</span>
+<span class="text-border-subtle">|</span>
+<div class="flex items-center space-x-1">
+<span>Số dòng / trang:</span>
+<select class="border border-border-strong rounded px-1.5 py-0.5 text-body-sm bg-white text-text-primary focus:border-[#1677FF] outline-none">
+<option value="10">10</option>
+<option selected="" value="20">20</option>
+<option value="50">50</option>
+<option value="100">100</option>
+</select>
+</div>
+</div>
+<!-- Chuyển trang Ant Design Pagination cluster -->
+<div class="flex items-center space-x-1 select-none">
+<!-- Prev button -->
+<button class="w-8 h-8 flex items-center justify-center rounded border border-border-strong text-text-secondary hover:border-[#1677FF] hover:text-[#1677FF] disabled:opacity-40 disabled:cursor-not-allowed transition-colors" disabled="">
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_left">chevron_left</span>
+</button>
+<!-- Page 1 (Active) -->
+<button class="w-8 h-8 flex items-center justify-center rounded border border-[#1677FF] bg-[#1677FF] text-white font-semibold shadow-xs">
+              1
+            </button>
+<!-- Page 2 -->
+<button class="w-8 h-8 flex items-center justify-center rounded border border-border-strong text-text-primary hover:border-[#1677FF] hover:text-[#1677FF] transition-colors">
+              2
+            </button>
+<!-- Page 3 -->
+<button class="w-8 h-8 flex items-center justify-center rounded border border-border-strong text-text-primary hover:border-[#1677FF] hover:text-[#1677FF] transition-colors">
+              3
+            </button>
+<span class="px-1 text-text-secondary">•••</span>
+<!-- Page 7 -->
+<button class="w-8 h-8 flex items-center justify-center rounded border border-border-strong text-text-primary hover:border-[#1677FF] hover:text-[#1677FF] transition-colors">
+              7
+            </button>
+<!-- Next button -->
+<button class="w-8 h-8 flex items-center justify-center rounded border border-border-strong text-text-primary hover:border-[#1677FF] hover:text-[#1677FF] transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Jump to page input -->
+<div class="hidden lg:flex items-center ml-3 space-x-1 text-text-secondary">
+<span>Đến trang</span>
+<input class="w-10 h-8 border border-border-strong rounded text-center text-text-primary text-body-sm focus:border-[#1677FF] outline-none" type="text" value="1"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Elsa Workflow Status Diagram Info Accordion (Supporting Submitter / Reviewer Context) -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-[#E6F4FF] flex items-center justify-center text-[#1677FF] shrink-0">
+<span class="material-symbols-outlined text-[24px]" data-icon="account_tree">account_tree</span>
+</div>
+<div>
+<div class="font-semibold text-text-primary text-body-md">Quy chuẩn luồng kiểm duyệt Elsa Workflow (v2.4)</div>
+<div class="text-caption font-caption text-text-secondary">
+              Trình tự chuẩn: <strong>Submitter (Lập Form &amp; Marker)</strong> → <strong>Reviewer (TVGS Thẩm định)</strong> → <strong>Approver (CĐT Ký duyệt điện tử)</strong>.
+            </div>
+</div>
+</div>
+<div class="flex items-center gap-3 text-caption font-caption shrink-0">
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#8C8C8C]"></span> Draft</span>
+<span class="text-status-neutral">→</span>
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#FAAD14]"></span> Submitted</span>
+<span class="text-status-neutral">→</span>
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#FAAD14]"></span> UnderReview</span>
+<span class="text-status-neutral">→</span>
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#52C41A]"></span> Approved</span>
+</div>
+</div>
+</main>
+</div>
+<script>
+    // Lightweight interactions for table filter demonstration
+    document.addEventListener('DOMContentLoaded', () => {
+      // Clean interactions placeholder
+      const searchInput = document.querySelector('input[type="text"][placeholder*="Tìm kiếm"]');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const query = e.target.value.toLowerCase();
+          const rows = document.querySelectorAll('tbody tr');
+          rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+          });
+        });
+      }
+    });
+  </script>
+</body></html>

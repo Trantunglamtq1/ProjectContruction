@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Chi tiết Checklist &amp; Gắn Inspection - ConstrutInspect</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Public Sans & JetBrains Mono Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "status-success": "#52C41A",
+            "on-surface-variant": "#414755",
+            "border-strong": "#D9D9D9",
+            "surface-tint": "#0059c7",
+            "error": "#ba1a1a",
+            "on-tertiary": "#ffffff",
+            "outline": "#727786",
+            "on-secondary-fixed": "#001849",
+            "on-primary": "#ffffff",
+            "tertiary-fixed-dim": "#bac8d3",
+            "on-secondary-fixed-variant": "#003fa3",
+            "primary-fixed": "#d9e2ff",
+            "outline-variant": "#c1c6d7",
+            "surface-dim": "#dbdad9",
+            "inverse-surface": "#2f3031",
+            "primary-container": "#006ef2",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "surface-container-highest": "#e3e2e2",
+            "background": "#faf9f9",
+            "surface-container-lowest": "#ffffff",
+            "tertiary": "#505e67",
+            "surface-bright": "#faf9f9",
+            "secondary-fixed": "#dae1ff",
+            "on-tertiary-container": "#fcfcff",
+            "on-background": "#1b1c1c",
+            "inverse-primary": "#afc6ff",
+            "on-primary-container": "#fefcff",
+            "surface-container": "#efeded",
+            "viewport-overlay-stroke": "#1677FF",
+            "inverse-on-surface": "#f2f0f0",
+            "surface-variant": "#e3e2e2",
+            "status-neutral": "#8C8C8C",
+            "secondary-fixed-dim": "#b3c5ff",
+            "primary-fixed-dim": "#afc6ff",
+            "primary": "#0057c2",
+            "status-warning": "#FAAD14",
+            "secondary-container": "#306ded",
+            "surface-white": "#FFFFFF",
+            "on-primary-fixed-variant": "#004398",
+            "surface-container-high": "#e9e8e8",
+            "status-error": "#FF4D4F",
+            "on-secondary": "#ffffff",
+            "tertiary-container": "#697680",
+            "surface": "#faf9f9",
+            "on-secondary-container": "#fefcff",
+            "secondary": "#0053d0",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "on-primary-fixed": "#001a43",
+            "on-tertiary-fixed": "#101d25",
+            "text-primary": "#1F2937",
+            "canvas-background": "#F5F7FA",
+            "surface-container-low": "#f4f3f3",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "text-secondary": "#595959",
+            "tertiary-fixed": "#d6e4ef",
+            "border-subtle": "#E4E7ED",
+            "on-surface": "#1b1c1c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin-mobile": "1rem",
+            "gutter-lg": "1.5rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1.5rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "headline-lg-mobile": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "headline-lg": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "headline-sm": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "display-mobile": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "display-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-canvas-background text-text-primary font-body-md text-body-md antialiased min-h-screen flex flex-col selection:bg-primary-fixed selection:text-primary">
+<!-- ================= TOP APP BAR (Shared Component) ================= -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface border-b border-border-subtle dark:border-outline-variant flex justify-between items-center w-full px-space-lg h-14 z-50 sticky top-0 transition-colors duration-150 ease-in-out">
+<!-- Brand & Left Search -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="domain_verification">domain_verification</span>
+<span class="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary tracking-tight">ConstrutInspect</span>
+</div>
+<!-- Search Bar -->
+<div class="relative w-64 hidden lg:block">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-lg" data-icon="search">search</span>
+<input class="w-full h-8 pl-8 pr-3 text-caption font-caption bg-canvas-background border border-border-strong rounded focus:outline-none focus:border-primary transition-colors text-text-primary" placeholder="Tìm kiếm mã nghiệm thu, bản vẽ..." type="text"/>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-6 h-14 pt-3">
+<a class="text-text-secondary dark:text-outline-variant hover:text-text-primary dark:hover:text-inverse-on-surface text-body-md font-body-md transition-colors" href="#">Dự án</a>
+<a class="text-primary dark:text-inverse-primary font-semibold border-b-2 border-primary dark:border-inverse-primary pb-3 text-body-md font-body-md" href="#">Hồ sơ nghiệm thu</a>
+<a class="text-text-secondary dark:text-outline-variant hover:text-text-primary dark:hover:text-inverse-on-surface text-body-md font-body-md transition-colors" href="#">Bản vẽ &amp; BIM</a>
+<a class="text-text-secondary dark:text-outline-variant hover:text-text-primary dark:hover:text-inverse-on-surface text-body-md font-body-md transition-colors" href="#">Báo cáo QA/QC</a>
+</nav>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-1 text-text-secondary">
+<button class="p-1.5 rounded hover:bg-surface-container transition-colors relative" title="Thông báo">
+<span class="material-symbols-outlined text-xl" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-status-error rounded-full"></span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container transition-colors" title="Trợ giúp">
+<span class="material-symbols-outlined text-xl" data-icon="help">help</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container transition-colors" title="Cấu hình hệ thống">
+<span class="material-symbols-outlined text-xl" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="h-5 w-px bg-border-subtle mx-1"></div>
+<button class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-on-primary rounded text-caption font-caption font-semibold hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-base" data-icon="add">add</span>
+        Tạo yêu cầu nghiệm thu
+      </button>
+<!-- Profile Avatar -->
+<div class="flex items-center gap-2 pl-2">
+<img class="w-8 h-8 rounded-full border border-border-strong object-cover" data-alt="Chân dung cán bộ giám sát kiểm định chất lượng trong trang phục bảo hộ công trình kỹ thuật cao với nón bảo hộ trắng và phản quang, phong cách ánh sáng hiện đại chân thực trong không gian văn phòng điều hành công trường." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8GUWrShuDSS-CehUAmTnbDe6ckOB2He9FnzrLJpSsLohj9w0E7iAssDWH1lYOdHXvxl1KqRv_wKJOhTOZ1674Vtopxg1jFEbeXe3RLFqJP8ijbt-Sn2zmoAy4J2zh8D9hrNYDu_pfjsIrgLoXq9rVepJ49_Ja05rQpMhd6ju2LYt-ICMKDZavYmXdvNSUieg6YsxTSkrbpIA7qu0G-ThLofZJD0zYWVrsDvAVcHSO3DUKHdZ9CcrR"/>
+<div class="hidden xl:block text-left">
+<div class="text-caption font-caption font-semibold leading-tight">KS. Hoàng Nam</div>
+<div class="text-[10px] text-text-secondary">Lead QA/QC Reviewer</div>
+</div>
+</div>
+</div>
+</header>
+<!-- ================= MAIN LAYOUT WITH SIDEBAR ================= -->
+<div class="flex flex-1 overflow-hidden">
+<!-- SIDEBAR NAVIGATION (Shared Component) -->
+<aside class="bg-surface-container-lowest dark:bg-inverse-surface border-r border-border-subtle dark:border-outline-variant flex flex-col justify-between h-[calc(100vh-3.5rem)] w-64 sticky top-14 left-0 py-space-md px-space-sm z-40 shrink-0 select-none">
+<div class="flex flex-col gap-1">
+<!-- Sub-header branding info -->
+<div class="px-space-md pb-3 border-b border-border-subtle mb-2">
+<div class="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary leading-tight">ConstrutInspect</div>
+<div class="text-caption font-caption text-text-secondary">Hệ thống QA/QC Công trình</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background dark:hover:bg-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="dashboard">dashboard</span>
+<span class="text-body-md font-body-md">Tổng quan kiểm định</span>
+</a>
+<!-- Active tab: Danh mục nghiệm thu (Checklist) -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded bg-primary-fixed dark:bg-secondary-container text-primary dark:text-on-secondary-container font-semibold transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="fact_check">fact_check</span>
+<span class="text-body-md font-body-md">Danh mục nghiệm thu</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background dark:hover:bg-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="architecture">architecture</span>
+<span class="text-body-md font-body-md">Bản vẽ kỹ thuật &amp; Marker</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background dark:hover:bg-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="dynamic_form">dynamic_form</span>
+<span class="text-body-md font-body-md">Mẫu biên bản FormIO</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background dark:hover:bg-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="timeline">timeline</span>
+<span class="text-body-md font-body-md">Luồng phê duyệt Steps</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background dark:hover:bg-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="text-body-md font-body-md">Phân quyền &amp; Kiểm soát</span>
+</a>
+</nav>
+<!-- CTA Button in Sidebar -->
+<div class="mt-4 px-2">
+<button class="w-full py-2 px-3 border border-primary text-primary hover:bg-primary-fixed rounded flex items-center justify-center gap-2 text-caption font-caption font-semibold transition-colors">
+<span class="material-symbols-outlined text-base" data-icon="upload_file">upload_file</span>
+            Tải lên bản vẽ PDF
+          </button>
+</div>
+</div>
+<!-- Footer Tabs -->
+<div class="border-t border-border-subtle pt-2 flex flex-col gap-1">
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary hover:bg-canvas-background hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="history">history</span>
+<span class="text-body-md font-body-md">Nhật ký Audit</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary hover:bg-canvas-background hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="support_agent">support_agent</span>
+<span class="text-body-md font-body-md">Hỗ trợ kỹ thuật</span>
+</a>
+</div>
+</aside>
+<!-- ================= WORKSPACE CONTENT CANVAS ================= -->
+<main class="flex-1 overflow-y-auto px-6 py-5 bg-canvas-background flex flex-col justify-between">
+<div class="max-w-7xl w-full mx-auto space-y-5 pb-24">
+<!-- Top Flow Switcher Ribbon (Direct Spec Interaction) -->
+<div class="bg-surface-white border border-border-subtle rounded px-4 py-2 flex flex-wrap items-center justify-between text-caption font-caption shadow-sm">
+<div class="flex items-center gap-2 text-text-secondary">
+<span class="material-symbols-outlined text-primary text-base" data-icon="alt_route">alt_route</span>
+<span class="font-semibold text-text-primary">Chuyển đổi màn hình nghiệp vụ:</span>
+</div>
+<div class="flex flex-wrap items-center gap-1.5">
+<a class="px-2.5 py-1 rounded bg-canvas-background border border-border-subtle hover:border-primary text-text-secondary hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="map">map</span> Màn 05: Bản vẽ
+            </a>
+<a class="px-2.5 py-1 rounded bg-canvas-background border border-border-subtle hover:border-primary text-text-secondary hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="view_in_ar">view_in_ar</span> Màn 06: Viewport &amp; Marker
+            </a>
+<a class="px-2.5 py-1 rounded bg-canvas-background border border-border-subtle hover:border-primary text-text-secondary hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="edit_document">edit_document</span> Màn 08: Tạo Form FormIO
+            </a>
+<a class="px-2.5 py-1 rounded bg-canvas-background border border-border-subtle hover:border-primary text-text-secondary hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="approval">approval</span> Màn 09: Luồng phê duyệt
+            </a>
+<span class="px-2.5 py-1 rounded bg-primary text-on-primary font-semibold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="checklist">checklist</span> Màn 11: Chi tiết Checklist
+            </span>
+</div>
+</div>
+<!-- Breadcrumb Navigation -->
+<nav class="flex items-center gap-2 text-caption font-caption text-text-secondary">
+<a class="hover:text-primary transition-colors" href="#">Trang chủ</a>
+<span class="material-symbols-outlined text-xs text-outline" data-icon="chevron_right">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Checklist công trình</a>
+<span class="material-symbols-outlined text-xs text-outline" data-icon="chevron_right">chevron_right</span>
+<span class="text-text-primary font-semibold font-label-sm">Chi tiết Checklist CHK-2025-004</span>
+</nav>
+<!-- CARD HEADER CHECKLIST -->
+<section class="bg-surface-white border border-border-subtle rounded p-6 shadow-sm">
+<div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+<div class="space-y-3 flex-1">
+<!-- Header Badges & Code -->
+<div class="flex flex-wrap items-center gap-3">
+<span class="font-label-md text-label-md bg-canvas-background border border-border-strong px-2.5 py-0.5 rounded text-text-primary font-semibold">
+                  CHK-2025-004
+                </span>
+<!-- Tag InProgress (cam #FAAD14, spec compliant) -->
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#FFFBE6] border border-[#FFE58F] text-[#D48806]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#FAAD14] animate-pulse"></span>
+                  InProgress
+                </span>
+<span class="text-caption font-caption text-text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-base" data-icon="calendar_today">calendar_today</span>
+                  Khởi tạo: 26/02/2025 bởi KS. Hoàng Nam
+                </span>
+</div>
+<!-- Main Title -->
+<h1 class="text-headline-lg font-headline-lg text-text-primary">
+                Nghiệm thu hoàn thiện Cốt thép sàn &amp; Dầm tầng 5 Block A
+              </h1>
+<!-- Linked BIM/Architectural Object -->
+<div class="flex items-center gap-2 text-body-md font-body-md text-on-surface-variant bg-canvas-background p-2.5 rounded border border-border-subtle">
+<span class="material-symbols-outlined text-primary" data-icon="view_in_ar">view_in_ar</span>
+<span class="text-text-secondary">Object liên kết:</span>
+<span class="font-semibold text-text-primary">Dầm D5 - Nhịp 4-5 &amp; Sàn khu vực Sảnh E</span>
+<span class="mx-2 text-border-strong">|</span>
+<span class="text-caption font-caption font-label-sm text-outline">GUID: 8fa7c-2025-b4-d5-se</span>
+<a class="ml-auto text-primary hover:underline text-caption font-caption flex items-center gap-0.5" href="#">
+                  Xem trên Viewport
+                  <span class="material-symbols-outlined text-sm" data-icon="open_in_new">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- Ant Design Styled Progress Card (75% Done) -->
+<div class="lg:w-80 bg-canvas-background border border-border-subtle rounded p-4 flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="text-caption font-caption text-text-secondary font-semibold uppercase">Tiến độ tiêu chí bắt buộc</span>
+<span class="font-label-md text-label-md font-bold text-primary">75%</span>
+</div>
+<!-- Ant Design Progress Bar -->
+<div class="w-full bg-[#E4E7ED] h-2.5 rounded-full overflow-hidden mb-2">
+<div class="bg-primary h-full rounded-full transition-all duration-500 ease-out" style="width: 75%"></div>
+</div>
+<div class="flex items-center justify-between text-caption font-caption">
+<span class="text-status-success font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+                  3/4 tiêu chí đã Done
+                </span>
+<span class="text-status-warning font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="pending">pending</span>
+                  1 tiêu chí Pending
+                </span>
+</div>
+</div>
+</div>
+</section>
+<!-- BẢNG TABLE CHECKLIST ITEM -->
+<section class="bg-surface-white border border-border-subtle rounded shadow-sm overflow-hidden">
+<!-- Table Bar Header -->
+<div class="px-6 py-4 border-b border-border-subtle flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="ballot">ballot</span>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Danh mục các hạng mục kiểm tra</h2>
+<span class="ml-2 px-2 py-0.5 bg-canvas-background text-text-secondary border border-border-subtle rounded-full text-caption font-caption">4 tiêu chí</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<input class="h-8 pl-8 pr-3 text-caption font-caption bg-canvas-background border border-border-strong rounded focus:outline-none focus:border-primary w-48 transition-colors" placeholder="Lọc nội dung kiểm tra..." type="text"/>
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-base" data-icon="filter_alt">filter_alt</span>
+</div>
+<!-- AddChecklistItemCommand -->
+<button class="h-8 px-3 bg-surface-white border border-primary text-primary hover:bg-primary-fixed rounded text-caption font-caption font-semibold flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-base" data-icon="add">add</span>
+                Thêm tiêu chí mới
+              </button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#FAFAFA] border-b border-border-subtle text-[#595959] text-label-sm font-label-sm uppercase">
+<th class="py-3 px-4 w-12 text-center">STT</th>
+<th class="py-3 px-4">Tên tiêu chí kiểm tra</th>
+<th class="py-3 px-4 w-32">Bắt buộc</th>
+<th class="py-3 px-4 w-60">Form Inspection liên kết</th>
+<th class="py-3 px-4 w-36">Trạng thái mục</th>
+<th class="py-3 px-4 w-44 text-right">Thao tác</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle text-body-md font-body-md">
+<!-- ROW 1 -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 text-center font-label-md text-text-secondary">01</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-text-primary">Kiểm tra đường kính và khoảng cách cốt thép chịu lực</div>
+<div class="text-caption font-caption text-text-secondary mt-0.5">Tiêu chuẩn nghiệm thu: TCVN 4453:1995 Mục 6.2 - Sai số khoảng cách ±10mm</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#FFF2F0] border border-[#FFCCC7] text-[#FF4D4F]">
+                      Bắt buộc
+                    </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<a class="font-label-md text-label-md text-primary font-semibold hover:underline flex items-center gap-1" href="#">
+                        INS-2025-0589
+                        <span class="material-symbols-outlined text-xs" data-icon="open_in_new">open_in_new</span>
+</a>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#F6FFED] border border-[#B7EB8F] text-[#52C41A]">
+                        Approved
+                      </span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#F6FFED] border border-[#B7EB8F] text-[#52C41A]">
+<span class="material-symbols-outlined text-xs" data-icon="check">check</span>
+                      Done
+                    </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<button class="text-caption font-caption text-primary hover:underline font-semibold inline-flex items-center gap-1">
+                      Xem chi tiết
+                    </button>
+</td>
+</tr>
+<!-- ROW 2 -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 text-center font-label-md text-text-secondary">02</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-text-primary">Kiểm tra chiều dày lớp bê tông bảo vệ</div>
+<div class="text-caption font-caption text-text-secondary mt-0.5">Tiêu chuẩn: Cục kê bê tông cường độ cao đồng cấp, mật độ ≥ 4 cục/m²</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#FFF2F0] border border-[#FFCCC7] text-[#FF4D4F]">
+                      Bắt buộc
+                    </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<a class="font-label-md text-label-md text-primary font-semibold hover:underline flex items-center gap-1" href="#">
+                        INS-2025-0590
+                        <span class="material-symbols-outlined text-xs" data-icon="open_in_new">open_in_new</span>
+</a>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#F6FFED] border border-[#B7EB8F] text-[#52C41A]">
+                        Approved
+                      </span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#F6FFED] border border-[#B7EB8F] text-[#52C41A]">
+<span class="material-symbols-outlined text-xs" data-icon="check">check</span>
+                      Done
+                    </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<button class="text-caption font-caption text-primary hover:underline font-semibold inline-flex items-center gap-1">
+                      Xem chi tiết
+                    </button>
+</td>
+</tr>
+<!-- ROW 3 (Unlinked / Needs action) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors bg-[#FFFDF5]">
+<td class="py-3.5 px-4 text-center font-label-md text-text-secondary">03</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-text-primary">Kiểm tra vệ sinh cốp pha trước khi đổ</div>
+<div class="text-caption font-caption text-text-secondary mt-0.5">Xịt rửa vụn rác, xỉ hàn qua lỗ chờ đáy dầm; làm kín mạch ngừng</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#FFF2F0] border border-[#FFCCC7] text-[#FF4D4F]">
+                      Bắt buộc
+                    </span>
+</td>
+<td class="py-3.5 px-4">
+<span class="text-caption font-caption italic text-text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-status-warning" data-icon="warning">warning</span>
+                      Chưa gắn
+                    </span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#FAFAFA] border border-[#D9D9D9] text-[#595959]">
+<span class="material-symbols-outlined text-xs" data-icon="hourglass_empty">hourglass_empty</span>
+                      Pending
+                    </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<button class="px-2.5 py-1 bg-primary text-on-primary rounded text-caption font-caption font-semibold hover:bg-primary-container transition-colors inline-flex items-center gap-1" id="openModalBtn">
+<span class="material-symbols-outlined text-sm" data-icon="link">link</span>
+                      + Gắn Form Inspection
+                    </button>
+</td>
+</tr>
+<!-- ROW 4 (Done optional criteria) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 text-center font-label-md text-text-secondary">04</td>
+<td class="py-3.5 px-4">
+<div class="font-semibold text-text-primary">Kiểm tra đặt sẵn ống kỹ thuật MEP âm sàn</div>
+<div class="text-caption font-caption text-text-secondary mt-0.5">Ống sleeve luồn dây điện thoại, ống thoát sàn theo bản vẽ kết hợp MEP-REV03</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-canvas-background border border-border-strong text-text-secondary">
+                      Tùy chọn
+                    </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<a class="font-label-md text-label-md text-primary font-semibold hover:underline flex items-center gap-1" href="#">
+                        INS-2025-0592
+                        <span class="material-symbols-outlined text-xs" data-icon="open_in_new">open_in_new</span>
+</a>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#F6FFED] border border-[#B7EB8F] text-[#52C41A]">
+                        Approved
+                      </span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#F6FFED] border border-[#B7EB8F] text-[#52C41A]">
+<span class="material-symbols-outlined text-xs" data-icon="check">check</span>
+                      Done
+                    </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<button class="text-caption font-caption text-primary hover:underline font-semibold inline-flex items-center gap-1">
+                      Xem chi tiết
+                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 bg-[#FAFAFA] border-t border-border-subtle text-caption font-caption text-text-secondary flex items-center justify-between">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-outline" data-icon="lock">lock</span>
+              Quy tắc hệ thống: Các tiêu chí đánh dấu 'Bắt buộc' phải hoàn thành liên kết Form Inspection có trạng thái 'Approved' trước khi đóng Checklist.
+            </span>
+<span class="font-label-sm text-label-sm">Đồng bộ FormIO v4.17</span>
+</div>
+</section>
+</div>
+</main>
+</div>
+<!-- ================= STICKY FOOTER WORKFLOW ACTION BAR ================= -->
+<footer class="fixed bottom-0 left-0 right-0 z-40 bg-surface-white border-t border-border-subtle py-3 px-6 shadow-md">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+<div class="flex items-center gap-2 text-caption font-caption text-text-secondary">
+<span class="material-symbols-outlined text-status-warning text-lg" data-icon="info">info</span>
+<span>Hồ sơ đang chờ xử lý liên kết tiêu chí bắt buộc thứ 3. Quyền hạn hiện tại: <strong class="text-text-primary">QA/QC Site Reviewer</strong>.</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 border border-border-strong text-text-primary hover:bg-canvas-background rounded text-caption font-caption font-semibold transition-colors">
+          Xuất PDF Phiếu nghiệm thu
+        </button>
+<!-- DISABLED BUTTON WITH TOOLTIP (SPEC COMPLIANT) -->
+<div class="relative group">
+<button class="px-5 py-2 bg-gray-200 text-gray-400 border border-gray-300 rounded text-caption font-caption font-semibold cursor-not-allowed flex items-center gap-2" disabled="">
+<span class="material-symbols-outlined text-base" data-icon="task_alt">task_alt</span>
+            Đóng Checklist (Hoàn tất nghiệm thu)
+          </button>
+<!-- Ant Design Tooltip Hover Box -->
+<div class="absolute bottom-full right-0 mb-2 hidden group-hover:flex flex-col items-center w-72 pointer-events-none z-50">
+<div class="bg-inverse-surface text-inverse-on-surface text-caption font-caption px-3 py-2 rounded shadow-xl text-center leading-tight">
+              Còn 1 tiêu chí bắt buộc chưa Done, không thể đóng Checklist theo quy định.
+            </div>
+<div class="w-2 h-2 bg-inverse-surface rotate-45 -mt-1"></div>
+</div>
+</div>
+</div>
+</div>
+</footer>
+<!-- ================= MODAL MÔ PHỎNG: GẮN FORM INSPECTION CHO TIÊU CHÍ ================= -->
+<div class="fixed inset-0 bg-black/45 z-50 flex items-center justify-center p-4" id="modalOverlay">
+<div class="bg-surface-white w-full max-w-lg rounded shadow-2xl border border-border-strong overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+<!-- Modal Header -->
+<div class="px-6 py-4 border-b border-border-subtle flex items-center justify-between bg-canvas-background">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="link">link</span>
+<h3 class="text-headline-sm font-headline-sm text-text-primary">Gắn Form Inspection cho tiêu chí</h3>
+</div>
+<button class="text-text-secondary hover:text-text-primary p-1 rounded transition-colors" id="closeModalBtn">
+<span class="material-symbols-outlined text-xl" data-icon="close">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-6 space-y-4">
+<!-- Target Criteria Banner -->
+<div class="bg-[#F0F7FF] border border-[#BAE0FF] rounded p-3 text-caption font-caption">
+<div class="text-text-secondary">Tiêu chí đang gán:</div>
+<div class="text-body-md font-body-md font-semibold text-primary mt-0.5">
+            03. Kiểm tra vệ sinh cốp pha trước khi đổ (Bắt buộc)
+          </div>
+<div class="text-text-secondary mt-1">
+            ObjectId đồng bộ: <span class="font-label-sm font-semibold">Dầm D5 - Nhịp 4-5 &amp; Sàn khu vực Sảnh E</span>
+</div>
+</div>
+<!-- Form Selection Field -->
+<div class="space-y-1.5">
+<label class="block text-caption font-caption font-semibold text-text-primary">
+            Chọn Form Inspection cùng ObjectId chưa gắn <span class="text-status-error">*</span>
+</label>
+<div class="relative">
+<select class="w-full h-10 px-3 bg-surface-white border border-border-strong rounded text-body-md font-body-md focus:border-primary focus:outline-none transition-colors">
+<option selected="" value="INS-2025-0601">
+                INS-2025-0601 (Đã nộp - Chờ duyệt) - Nghiệm thu hiện trường Vệ sinh ván khuôn
+              </option>
+<option value="INS-2025-0604">
+                INS-2025-0604 (Draft) - Phiếu đo cao độ &amp; độ kín khít cốp pha
+              </option>
+</select>
+</div>
+<p class="text-[11px] text-text-secondary">Chỉ hiển thị các Form tạo trên cùng Marker và tọa độ thiết kế của đối tượng BIM này.</p>
+</div>
+<!-- Detail preview card of selected form -->
+<div class="border border-border-subtle rounded p-3 bg-canvas-background space-y-2">
+<div class="flex items-center justify-between text-caption font-caption">
+<span class="font-label-md text-label-md font-semibold text-text-primary">INS-2025-0601</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase bg-[#FFFBE6] border border-[#FFE58F] text-[#D48806]">
+              UnderReview
+            </span>
+</div>
+<div class="text-caption font-caption text-text-secondary">
+            Kỹ sư phụ trách: <span class="text-text-primary font-medium">Lê Văn Khoa (Đội thi công 2)</span>
+</div>
+<div class="text-caption font-caption text-text-secondary">
+            Thời điểm submit: <span class="font-label-sm">26/02/2025 08:30:15</span>
+</div>
+<div class="flex items-center gap-1 text-[11px] text-status-warning bg-[#FFFBE6] p-1.5 rounded">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+            Lưu ý: Form này đang ở trạng thái 'Chờ duyệt', sau khi gắn tiêu chí sẽ chuyển sang 'Done' khi Form đạt trạng thái 'Approved'.
+          </div>
+</div>
+<!-- Optional Note -->
+<div class="space-y-1">
+<label class="block text-caption font-caption text-text-secondary">Ghi chú kèm theo (Audit Trail)</label>
+<input class="w-full h-8 px-3 text-caption font-caption bg-surface-white border border-border-strong rounded focus:border-primary focus:outline-none" placeholder="Nhập lý do hoặc nội dung chỉ dẫn nếu có..." type="text" value="Liên kết form biên bản hiện trường đợt 1 kiểm tra bề mặt cốp pha"/>
+</div>
+</div>
+<!-- Modal Footer Actions -->
+<div class="px-6 py-3.5 bg-canvas-background border-t border-border-subtle flex items-center justify-end gap-3">
+<button class="px-4 py-2 border border-border-strong bg-surface-white text-text-primary hover:bg-canvas-background rounded text-caption font-caption font-semibold transition-colors" id="cancelModalBtn">
+          Hủy bỏ
+        </button>
+<button class="px-4 py-2 bg-primary text-on-primary hover:bg-primary-container rounded text-caption font-caption font-semibold transition-colors flex items-center gap-1.5 shadow-sm" id="confirmLinkBtn">
+<span class="material-symbols-outlined text-base" data-icon="check">check</span>
+          Xác nhận gắn
+        </button>
+</div>
+</div>
+</div>
+<!-- Inline Vanilla Micro-Interactions Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('modalOverlay');
+      const openModalBtn = document.getElementById('openModalBtn');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const cancelModalBtn = document.getElementById('cancelModalBtn');
+      const confirmLinkBtn = document.getElementById('confirmLinkBtn');
+
+      // Modal open / close handlers
+      const toggleModal = (show) => {
+        if (show) {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        } else {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+      };
+
+      if (openModalBtn) openModalBtn.addEventListener('click', () => toggleModal(true));
+      if (closeModalBtn) closeModalBtn.addEventListener('click', () => toggleModal(false));
+      if (cancelModalBtn) cancelModalBtn.addEventListener('click', () => toggleModal(false));
+
+      // Click outside to dismiss modal
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) toggleModal(false);
+      });
+
+      // Confirm association simulation
+      if (confirmLinkBtn) {
+        confirmLinkBtn.addEventListener('click', () => {
+          confirmLinkBtn.innerHTML = '<span class="material-symbols-outlined text-base animate-spin" data-icon="sync">sync</span> Đang liên kết...';
+          setTimeout(() => {
+            alert('Đã gắn thành công Form INS-2025-0601 vào tiêu chí số 03! Tiêu chuẩn đang đợi Lead QA/QC phê duyệt Form để đủ điều kiện Đóng Checklist.');
+            toggleModal(false);
+            confirmLinkBtn.innerHTML = '<span class="material-symbols-outlined text-base" data-icon="check">check</span> Xác nhận gắn';
+          }, 600);
+        });
+      }
+    });
+  </script>
+</body></html>

@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ConstrutInspect - Danh sách &amp; Tải lên Bản vẽ (/drawings)</title>
+<!-- Google Fonts: Public Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "status-success": "#52C41A",
+            "on-surface-variant": "#414755",
+            "border-strong": "#D9D9D9",
+            "surface-tint": "#0059c7",
+            "error": "#ba1a1a",
+            "on-tertiary": "#ffffff",
+            "outline": "#727786",
+            "on-secondary-fixed": "#001849",
+            "on-primary": "#ffffff",
+            "tertiary-fixed-dim": "#bac8d3",
+            "on-secondary-fixed-variant": "#003fa3",
+            "primary-fixed": "#d9e2ff",
+            "outline-variant": "#c1c6d7",
+            "surface-dim": "#dbdad9",
+            "inverse-surface": "#2f3031",
+            "primary-container": "#006ef2",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "surface-container-highest": "#e3e2e2",
+            "background": "#faf9f9",
+            "surface-container-lowest": "#ffffff",
+            "tertiary": "#505e67",
+            "surface-bright": "#faf9f9",
+            "secondary-fixed": "#dae1ff",
+            "on-tertiary-container": "#fcfcff",
+            "on-background": "#1b1c1c",
+            "inverse-primary": "#afc6ff",
+            "on-primary-container": "#fefcff",
+            "surface-container": "#efeded",
+            "viewport-overlay-stroke": "#1677FF",
+            "inverse-on-surface": "#f2f0f0",
+            "surface-variant": "#e3e2e2",
+            "status-neutral": "#8C8C8C",
+            "secondary-fixed-dim": "#b3c5ff",
+            "primary-fixed-dim": "#afc6ff",
+            "primary": "#0057c2",
+            "status-warning": "#FAAD14",
+            "secondary-container": "#306ded",
+            "surface-white": "#FFFFFF",
+            "on-primary-fixed-variant": "#004398",
+            "surface-container-high": "#e9e8e8",
+            "status-error": "#FF4D4F",
+            "on-secondary": "#ffffff",
+            "tertiary-container": "#697680",
+            "surface": "#faf9f9",
+            "on-secondary-container": "#fefcff",
+            "secondary": "#0053d0",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "on-primary-fixed": "#001a43",
+            "on-tertiary-fixed": "#101d25",
+            "text-primary": "#1F2937",
+            "canvas-background": "#F5F7FA",
+            "surface-container-low": "#f4f3f3",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "text-secondary": "#595959",
+            "tertiary-fixed": "#d6e4ef",
+            "border-subtle": "#E4E7ED",
+            "on-surface": "#1b1c1c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin-mobile": "1rem",
+            "gutter-lg": "1.5rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1.5rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "headline-lg-mobile": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "headline-lg": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "headline-sm": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "display-mobile": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "display-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-canvas-background text-text-primary font-body-md text-body-md antialiased min-h-screen flex flex-col">
+<!-- ================= TOP APP BAR (Shared Components JSON) ================= -->
+<header class="bg-surface-container-lowest text-primary flex justify-between items-center w-full px-space-lg h-14 z-50 sticky top-0 border-b border-border-subtle select-none">
+<!-- Left Section: Logo & Breadcrumbs -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[26px]" style="font-variation-settings: 'FILL' 1;">architecture</span>
+<span class="text-headline-sm font-headline-sm font-bold text-primary tracking-tight">ConstrutInspect</span>
+</div>
+<!-- Ant Design Breadcrumbs -->
+<nav class="hidden md:flex items-center gap-2 text-caption font-caption text-text-secondary">
+<span class="hover:text-primary transition-colors cursor-pointer flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">home</span>
+          Trang chủ
+        </span>
+<span class="text-outline-variant">/</span>
+<span class="text-text-primary font-semibold">Danh sách bản vẽ</span>
+</nav>
+</div>
+<!-- Center Navigation Links (TopNavBar Anchor) -->
+<div class="hidden lg:flex items-center space-x-6 h-full">
+<a class="text-text-secondary hover:text-text-primary font-body-md text-body-md transition-colors duration-150 flex items-center h-full" href="#">Dự án</a>
+<a class="text-text-secondary hover:text-text-primary font-body-md text-body-md transition-colors duration-150 flex items-center h-full" href="/inspections">Hồ sơ nghiệm thu</a>
+<a class="text-primary font-semibold border-b-2 border-primary h-full flex items-center pb-0.5" href="/drawings">Bản vẽ &amp; BIM</a>
+<a class="text-text-secondary hover:text-text-primary font-body-md text-body-md transition-colors duration-150 flex items-center h-full" href="#">Báo cáo QA/QC</a>
+</div>
+<!-- Right Controls: Quick Actions & Profile -->
+<div class="flex items-center gap-3">
+<!-- Role Switcher Quick Pill (Demo) -->
+<div class="hidden sm:flex items-center bg-surface-container-low border border-border-subtle rounded-lg p-0.5" title="Chuyển vai trò thử nghiệm">
+<span class="text-[11px] font-label-sm text-text-secondary px-2">Role:</span>
+<select class="text-caption font-caption bg-surface-container-lowest border-0 rounded py-0.5 px-2 text-primary font-semibold focus:ring-0 cursor-pointer" id="roleSelector" onchange="switchRole(this.value)">
+<option selected="" value="Submitter">Submitter (Kỹ sư)</option>
+<option value="Reviewer">Reviewer (Tư vấn)</option>
+<option value="Approver">Approver (Chủ đầu tư)</option>
+<option value="Admin">Admin Quản trị</option>
+</select>
+</div>
+<!-- Trailing Icon Actions -->
+<button class="p-1.5 rounded-lg text-text-secondary hover:bg-surface-container hover:text-primary transition-colors relative" title="Thông báo">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-status-error rounded-full ring-2 ring-surface-white"></span>
+</button>
+<button class="p-1.5 rounded-lg text-text-secondary hover:bg-surface-container hover:text-primary transition-colors" title="Trợ giúp kỹ thuật">
+<span class="material-symbols-outlined text-[20px]">help</span>
+</button>
+<!-- User Profile Box -->
+<div class="flex items-center gap-2 pl-2 border-l border-border-subtle">
+<img class="w-8 h-8 rounded-full border border-border-subtle object-cover shadow-sm" data-alt="A sharp and professional photographic headshot of an Asian civil site engineer wearing a crisp safety helmet and formal industrial uniform. The lighting is bright, clear, and high-key with soft contrast, portraying authoritative quality assurance expertise within a modern civil engineering design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNRqRPy9MOAwkGoZs9nenKJzMLfLcSSCeDjpd_15rj-ymLalLQjZdVuqBEoneoSj9WOe8erYfFKrhuMzZVWv4DHuxoj5c9lUFpyTlPvCc_Vdz9Ot1ownQXEDcWtyTXPaf53sTgpycrIyVrbjyKeXdVSoxCjvp2NECGPdUgPhv6_HbsbkEoDwi0i93ovnFDMQzpqZfuBciW6KgovIviLXZwgW042FROKfHNMRkQMBvWYKgGAISwJB1L"/>
+<div class="hidden xl:flex flex-col text-left">
+<span class="font-body-sm text-body-sm font-semibold text-text-primary leading-tight">Nguyễn Văn Kỹ Sư</span>
+<span class="inline-block text-[10px] font-label-sm uppercase px-1.5 py-0.5 rounded bg-blue-50 text-primary border border-blue-200 mt-0.5 w-max" id="roleBadgeDisplay">Submitter</span>
+</div>
+</div>
+<!-- Logout Button -->
+<button class="flex items-center gap-1 text-caption font-caption text-text-secondary hover:text-status-error px-2 py-1 rounded transition-colors ml-1" title="Đăng xuất khỏi hệ thống">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span class="hidden md:inline">Đăng xuất</span>
+</button>
+</div>
+</header>
+<!-- ================= MAIN WORKSPACE (SIDEBAR + FLUID CONTENT) ================= -->
+<div class="flex flex-1 w-full overflow-hidden">
+<!-- ================= SIDEBAR NAVIGATION (Shared Components JSON) ================= -->
+<aside class="flex flex-col justify-between h-[calc(100vh-3.5rem)] w-64 sticky top-14 left-0 py-space-md px-space-sm bg-surface-container-lowest border-r border-border-subtle z-40 shrink-0 select-none">
+<!-- Top Group: Brand Subtext & Navigation List -->
+<div class="space-y-4">
+<!-- Sidebar Brand Sub-header -->
+<div class="px-space-md py-1 border-b border-border-subtle pb-3">
+<div class="text-caption font-caption text-text-secondary uppercase tracking-wider">Hệ thống QA/QC Công trình</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary truncate">Dự án: The Horizon Tower 01</div>
+</div>
+<!-- CTA Button in Sidebar (Shared Component JSON) -->
+<div class="px-space-xs">
+<button class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-surface-tint text-surface-white py-2 px-space-md rounded-lg font-headline-sm text-body-md font-semibold transition-all duration-150 shadow-sm active:scale-[0.99]" onclick="triggerQuickUploadModal()">
+<span class="material-symbols-outlined text-[18px]">upload_file</span>
+<span>Tải lên bản vẽ PDF</span>
+</button>
+</div>
+<!-- Navigation Tabs (Exact Strings from JSON) -->
+<nav class="space-y-1">
+<!-- Tab 1 -->
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary font-body-md text-body-md hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Tổng quan kiểm định</span>
+</a>
+<!-- Tab 2: Link to /inspections -->
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary font-body-md text-body-md hover:bg-canvas-background hover:text-primary transition-all duration-150" href="/inspections">
+<span class="material-symbols-outlined text-[20px]">fact_check</span>
+<span>Danh mục nghiệm thu</span>
+</a>
+<!-- Tab 3: ACTIVE TAB (Bản vẽ kỹ thuật & Marker) -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded bg-primary-fixed text-primary font-semibold transition-all duration-150" href="/drawings">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">architecture</span>
+<span>Bản vẽ kỹ thuật &amp; Marker</span>
+</a>
+<!-- Tab 4 -->
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary font-body-md text-body-md hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">dynamic_form</span>
+<span>Mẫu biên bản FormIO</span>
+</a>
+<!-- Tab 5 -->
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary font-body-md text-body-md hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">timeline</span>
+<span>Luồng phê duyệt Steps</span>
+</a>
+<!-- Tab 6 -->
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary font-body-md text-body-md hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+<span>Phân quyền &amp; Kiểm soát</span>
+</a>
+</nav>
+</div>
+<!-- Footer Tabs (Shared Component JSON) -->
+<div class="border-t border-border-subtle pt-3 space-y-1">
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary font-body-sm text-body-sm hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span>Nhật ký Audit</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary font-body-sm text-body-sm hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">support_agent</span>
+<span>Hỗ trợ kỹ thuật</span>
+</a>
+</div>
+</aside>
+<!-- ================= MAIN CONTENT CANVAS ================= -->
+<main class="flex-1 overflow-y-auto px-space-lg py-space-md space-y-space-md">
+<!-- Top Title & Quick Metric Row -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-space-md rounded-lg border border-border-subtle">
+<div>
+<div class="flex items-center gap-2">
+<h1 class="text-headline-lg font-headline-lg text-text-primary tracking-tight">Quản lý Bản vẽ kỹ thuật &amp; Marker số hóa</h1>
+<span class="bg-primary-fixed text-primary px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold">Tầng 01 - Tầng 25</span>
+</div>
+<p class="text-caption font-caption text-text-secondary mt-1">
+            Không gian lưu trữ bản vẽ mặt bằng PDF, định vị toạ độ cọc móng, kết cấu dầm sàn và liên kết mẫu FormIO nghiệm thu.
+          </p>
+</div>
+<!-- Action Cluster: Quick Inspection link (Màn hình 08) -->
+<div class="flex items-center gap-3 shrink-0">
+<button class="inline-flex items-center gap-1.5 bg-surface-container-lowest border border-primary text-primary hover:bg-primary hover:text-surface-white px-3 py-1.5 rounded-lg text-body-md font-body-md font-medium transition-all duration-150 shadow-sm" onclick="window.location.href='/inspections/new'" title="Liên kết chuyển sang Màn hình 08">
+<span class="material-symbols-outlined text-[18px]">add_task</span>
+<span>Tạo đợt kiểm tra nhanh (Màn hình 08)</span>
+</button>
+</div>
+</div>
+<!-- 1. DRAGGER UPLOAD AREA (Ant Design Upload.Dragger Style) -->
+<div class="group relative bg-surface-container-lowest border-2 border-dashed border-border-strong hover:border-primary rounded-xl p-space-xl text-center cursor-pointer transition-all duration-200" id="dropZone" ondragleave="handleDragLeave(event)" ondragover="handleDragOver(event)" ondrop="handleFileDrop(event)">
+<input accept="application/pdf" class="hidden" id="pdfFileInput" multiple="" onchange="handleFileSelect(event)" type="file"/>
+<div class="max-w-xl mx-auto flex flex-col items-center">
+<!-- Ant Design Inbox Icon Box -->
+<div class="w-16 h-16 rounded-full bg-blue-50 text-primary flex items-center justify-center mb-space-sm group-hover:scale-105 transition-transform duration-200">
+<span class="material-symbols-outlined text-[36px]" style="font-variation-settings: 'FILL' 1;">inbox</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary group-hover:text-primary transition-colors">
+            Nhấp hoặc kéo thả file bản vẽ PDF vào khu vực này để tải lên
+          </h3>
+<p class="text-body-sm font-body-sm text-text-secondary mt-1.5">
+            Hỗ trợ tải lên một hoặc nhiều tệp PDF kỹ thuật mặt bằng, bản vẽ kiến trúc AutoCAD xuất PDF, kết cấu thép. Dung lượng tối đa: 50MB/bản vẽ.
+          </p>
+<div class="mt-4 flex items-center gap-3">
+<button class="inline-flex items-center gap-2 bg-primary hover:bg-surface-tint text-surface-white px-4 py-2 rounded-lg font-body-md text-body-md font-medium shadow-sm transition-colors" onclick="document.getElementById('pdfFileInput').click()" type="button">
+<span class="material-symbols-outlined text-[18px]">file_upload</span>
+<span>Tải lên nhanh</span>
+</button>
+<span class="text-caption font-caption text-text-secondary">Chỉ chấp nhận định dạng <span class="font-label-sm font-semibold text-status-error">.PDF</span> kỹ thuật</span>
+</div>
+<!-- Upload Progress Notification Area (Hidden by default) -->
+<div class="hidden w-full mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-left flex items-center justify-between" id="uploadFeedback">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px] animate-spin">sync</span>
+<span class="text-body-sm font-body-sm text-primary font-medium" id="uploadFeedbackText">Đang xử lý phân tích toạ độ vector...</span>
+</div>
+<span class="text-label-sm font-label-sm text-primary font-semibold">100%</span>
+</div>
+</div>
+</div>
+<!-- 2. ANT DESIGN DATA TABLE SECTION -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden shadow-none">
+<!-- Table Control Bar / Filter header -->
+<div class="p-space-md border-b border-border-subtle flex flex-col md:flex-row md:items-center justify-between gap-3 bg-surface-bright">
+<div class="flex items-center gap-3 flex-1">
+<div class="relative w-full max-w-sm">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-text-secondary text-[18px]">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 text-body-sm font-body-sm bg-surface-white border border-border-strong rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-text-secondary" id="searchInput" onkeyup="filterDrawings()" placeholder="Tìm theo tên bản vẽ, mã hiệu tầng..." type="text"/>
+</div>
+<!-- Discipline Filter Dropdown -->
+<select class="text-body-sm font-body-sm bg-surface-white border border-border-strong rounded-lg py-1.5 px-3 text-text-primary focus:border-primary focus:ring-0">
+<option value="all">Tất cả bộ môn (BIM / K.Cấu / K.Trúc)</option>
+<option value="arch">Kiến trúc (ARC)</option>
+<option value="struct">Kết cấu dầm sàn (STR)</option>
+<option value="mep">Cơ điện (MEP)</option>
+</select>
+</div>
+<div class="flex items-center gap-2 text-caption font-caption text-text-secondary">
+<span>Hiển thị: <strong>4</strong> bản vẽ kỹ thuật khả dụng</span>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto">
+<table class="w-full border-collapse text-left" id="drawingTable">
+<thead>
+<tr class="bg-slate-50 border-b border-border-subtle text-text-secondary text-[12px] font-caption uppercase tracking-wider">
+<th class="py-3 px-4 w-12 text-center">STT</th>
+<th class="py-3 px-4">Tên file bản vẽ PDF</th>
+<th class="py-3 px-4">Người tải lên</th>
+<th class="py-3 px-4">Ngày tải</th>
+<th class="py-3 px-4 text-center">Số Object Marker</th>
+<th class="py-3 px-4 text-center">Phê duyệt QA</th>
+<th class="py-3 px-4 text-right">Thao tác</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle text-body-sm font-body-sm text-text-primary" id="tableBody">
+<!-- Row 1 -->
+<tr class="hover:bg-blue-50/50 transition-colors duration-150 group" data-title="MatBang_Tang5_BlockA.pdf">
+<td class="py-3 px-4 text-center font-label-sm text-text-secondary">01</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2.5">
+<!-- PDF Icon Red AntD style -->
+<span class="material-symbols-outlined text-status-error text-[24px]" style="font-variation-settings: 'FILL' 1;">picture_as_pdf</span>
+<div>
+<div class="font-semibold text-text-primary hover:text-primary transition-colors cursor-pointer" onclick="openViewport('DWG-A05')">
+                        MatBang_Tang5_BlockA.pdf
+                      </div>
+<div class="text-[11px] font-label-sm text-text-secondary">REV_03 • 14.8 MB • Tỉ lệ 1:100</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-border-subtle object-cover" data-alt="A professional civil construction engineer portrait, with a white hardhat and reflective vest against modern skyscraper blueprints in a bright office environment. The image is rendered with warm, natural sunlight, representing engineering precision and compliance reliability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4YIo2h1Q7YmXcqUh-URrruxZviUF5uUFZxQnAEvMN4LKZYOvho_Pcg_T2xwb2BxpYxsE3FOJfqP8jJ_YYr_mX7dhp9VLRUDUiHCmx9cDT6ctKUzyvlhf2223cK95-mZQJ5AT9Xlbpl8WjfLOW7ifPnporgtkZnQyXQF6g9CYuC7hTQCU78GFVE6qLBOxkxG0AA8km4IyIIx5Eps2XbUCVSTrwPaz7SoMEA1Tqy6hc8vuo9Xhu1DKM"/>
+<span class="font-medium text-text-primary">Nguyễn Văn Kỹ Sư</span>
+</div>
+</td>
+<td class="py-3 px-4 font-label-sm text-text-secondary">24/10/2024 09:30</td>
+<td class="py-3 px-4 text-center">
+<!-- Ant Design Badge Count -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-[11px] font-semibold bg-blue-50 text-primary border border-blue-200">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                    18 Marker
+                  </span>
+</td>
+<td class="py-3 px-4 text-center">
+<!-- Status Tag Approved AntD -->
+<span class="inline-block px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold uppercase bg-[#F6FFED] border border-[#B7EB8F] text-[#52C41A]">
+                    Đã duyệt
+                  </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<!-- Action: Mo Viewport -->
+<button class="inline-flex items-center gap-1 bg-primary text-surface-white hover:bg-secondary px-2.5 py-1 rounded text-caption font-caption font-medium transition-colors shadow-sm" onclick="openViewport('DWG-A05')" title="Mở sang Viewport Bản vẽ (/drawings/:id/viewport)">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Mở Viewport</span>
+</button>
+<!-- Action: Tai ve -->
+<button class="p-1 rounded text-text-secondary hover:text-primary hover:bg-surface-container transition-colors" title="Tải xuống tệp PDF">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+<!-- Action: Xoa -->
+<button class="p-1 rounded text-text-secondary hover:text-status-error hover:bg-red-50 transition-colors" onclick="deleteDrawingRow(this)" title="Xóa bản vẽ">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-blue-50/50 transition-colors duration-150 group" data-title="BanVe_KetCau_DacBiet_V2.pdf">
+<td class="py-3 px-4 text-center font-label-sm text-text-secondary">02</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-status-error text-[24px]" style="font-variation-settings: 'FILL' 1;">picture_as_pdf</span>
+<div>
+<div class="font-semibold text-text-primary hover:text-primary transition-colors cursor-pointer" onclick="openViewport('DWG-KC02')">
+                        BanVe_KetCau_DacBiet_V2.pdf
+                      </div>
+<div class="text-[11px] font-label-sm text-text-secondary">REV_02 • 32.4 MB • Dầm sàn chuyển ứng lực</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">
+                      TH
+                    </div>
+<span class="font-medium text-text-primary">Trần Hoàng BIM</span>
+</div>
+</td>
+<td class="py-3 px-4 font-label-sm text-text-secondary">23/10/2024 16:15</td>
+<td class="py-3 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-[11px] font-semibold bg-blue-50 text-primary border border-blue-200">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                    42 Marker
+                  </span>
+</td>
+<td class="py-3 px-4 text-center">
+<!-- Status Tag UnderReview AntD -->
+<span class="inline-block px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold uppercase bg-[#FFFBE6] border border-[#FFE58F] text-[#D48806]">
+                    Đang duyệt
+                  </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<button class="inline-flex items-center gap-1 bg-primary text-surface-white hover:bg-secondary px-2.5 py-1 rounded text-caption font-caption font-medium transition-colors shadow-sm" onclick="openViewport('DWG-KC02')">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Mở Viewport</span>
+</button>
+<button class="p-1 rounded text-text-secondary hover:text-primary hover:bg-surface-container transition-colors" title="Tải xuống tệp PDF">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+<button class="p-1 rounded text-text-secondary hover:text-status-error hover:bg-red-50 transition-colors" onclick="deleteDrawingRow(this)" title="Xóa bản vẽ">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-blue-50/50 transition-colors duration-150 group" data-title="Mep_HeThong_PCCC_HamB1.pdf">
+<td class="py-3 px-4 text-center font-label-sm text-text-secondary">03</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-status-error text-[24px]" style="font-variation-settings: 'FILL' 1;">picture_as_pdf</span>
+<div>
+<div class="font-semibold text-text-primary hover:text-primary transition-colors cursor-pointer" onclick="openViewport('DWG-PCCC01')">
+                        Mep_HeThong_PCCC_HamB1.pdf
+                      </div>
+<div class="text-[11px] font-label-sm text-text-secondary">REV_01 • 9.1 MB • Hầm B1 Block B</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-border-subtle object-cover" data-alt="A portrait of a senior Vietnamese mechanical MEP engineer holding a digital inspection tablet on an active construction basement background. Crisp, industrial lighting with clean corporate tones in a modern architecture environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGAY2-Lydk1zGtnUP-ckMVRW5w1YzSClwW-3MJouH7EwFjreIkAb4EG06IH-OViLyilIvoY6gjC08EEm7w9CU15TX6ftgpBpIvldWoojKmF95VUCXB-IMzvM7opjsAYtIizSf-MbIIjYL4KMCYMCcTvT0PvgSvbDJZ7wz0DK5vwmv4E51u8cY-yN2k8lws1dMqIrF_ulEcHgEGv8zv5Cs5oUvNtxlGtkLICy7pfru3e4D6XHKut9Fq"/>
+<span class="font-medium text-text-primary">Lê Quang MEP</span>
+</div>
+</td>
+<td class="py-3 px-4 font-label-sm text-text-secondary">21/10/2024 11:20</td>
+<td class="py-3 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-[11px] font-semibold bg-gray-100 text-text-secondary border border-border-strong">
+                    8 Marker
+                  </span>
+</td>
+<td class="py-3 px-4 text-center">
+<span class="inline-block px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold uppercase bg-[#F6FFED] border border-[#B7EB8F] text-[#52C41A]">
+                    Đã duyệt
+                  </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<button class="inline-flex items-center gap-1 bg-primary text-surface-white hover:bg-secondary px-2.5 py-1 rounded text-caption font-caption font-medium transition-colors shadow-sm" onclick="openViewport('DWG-PCCC01')">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Mở Viewport</span>
+</button>
+<button class="p-1 rounded text-text-secondary hover:text-primary hover:bg-surface-container transition-colors" title="Tải xuống tệp PDF">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+<button class="p-1 rounded text-text-secondary hover:text-status-error hover:bg-red-50 transition-colors" onclick="deleteDrawingRow(this)" title="Xóa bản vẽ">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-blue-50/50 transition-colors duration-150 group" data-title="KienTruc_CanHoMau_Tang12.pdf">
+<td class="py-3 px-4 text-center font-label-sm text-text-secondary">04</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-status-error text-[24px]" style="font-variation-settings: 'FILL' 1;">picture_as_pdf</span>
+<div>
+<div class="font-semibold text-text-primary hover:text-primary transition-colors cursor-pointer" onclick="openViewport('DWG-ARC12')">
+                        KienTruc_CanHoMau_Tang12.pdf
+                      </div>
+<div class="text-[11px] font-label-sm text-text-secondary">REV_04 • 21.6 MB • Bố trí vách thạch cao &amp; cửa</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-blue-100 text-primary flex items-center justify-center text-[10px] font-bold">
+                      NK
+                    </div>
+<span class="font-medium text-text-primary">Nguyễn Văn Kỹ Sư</span>
+</div>
+</td>
+<td class="py-3 px-4 font-label-sm text-text-secondary">20/10/2024 14:05</td>
+<td class="py-3 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-[11px] font-semibold bg-gray-100 text-text-secondary border border-border-strong">
+                    5 Marker
+                  </span>
+</td>
+<td class="py-3 px-4 text-center">
+<!-- Status Tag Rejected AntD -->
+<span class="inline-block px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold uppercase bg-[#FFF2F0] border border-[#FFCCC7] text-[#FF4D4F]">
+                    Cần sửa
+                  </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1.5 justify-end">
+<button class="inline-flex items-center gap-1 bg-primary text-surface-white hover:bg-secondary px-2.5 py-1 rounded text-caption font-caption font-medium transition-colors shadow-sm" onclick="openViewport('DWG-ARC12')">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Mở Viewport</span>
+</button>
+<button class="p-1 rounded text-text-secondary hover:text-primary hover:bg-surface-container transition-colors" title="Tải xuống tệp PDF">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+<button class="p-1 rounded text-text-secondary hover:text-status-error hover:bg-red-50 transition-colors" onclick="deleteDrawingRow(this)" title="Xóa bản vẽ">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- 3. ANT DESIGN PAGINATION FOOTER -->
+<div class="p-space-md bg-surface-container-lowest border-t border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="text-caption font-caption text-text-secondary">
+            Hiển thị 1 đến 4 của tổng số 18 bản vẽ hồ sơ
+          </div>
+<!-- Ant Design Paginate Controls -->
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded border border-border-strong text-text-secondary hover:border-primary hover:text-primary flex items-center justify-center transition-colors disabled:opacity-40" disabled="">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded border border-primary bg-primary text-surface-white font-label-sm text-[12px] font-semibold flex items-center justify-center shadow-sm">
+              1
+            </button>
+<button class="w-8 h-8 rounded border border-border-strong text-text-primary hover:border-primary hover:text-primary font-label-sm text-[12px] flex items-center justify-center transition-colors">
+              2
+            </button>
+<button class="w-8 h-8 rounded border border-border-strong text-text-primary hover:border-primary hover:text-primary font-label-sm text-[12px] flex items-center justify-center transition-colors">
+              3
+            </button>
+<span class="px-1 text-text-secondary">•••</span>
+<button class="w-8 h-8 rounded border border-border-strong text-text-primary hover:border-primary hover:text-primary font-label-sm text-[12px] flex items-center justify-center transition-colors">
+              5
+            </button>
+<button class="w-8 h-8 rounded border border-border-strong text-text-secondary hover:border-primary hover:text-primary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+<!-- Page Size selector -->
+<select class="ml-2 text-caption font-caption bg-surface-white border border-border-strong rounded py-1 px-2 text-text-primary focus:border-primary focus:ring-0">
+<option value="10">10 / trang</option>
+<option value="20">20 / trang</option>
+<option value="50">50 / trang</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Quick Tips Card: Industrial Functionalism -->
+<div class="bg-blue-50/60 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[22px] shrink-0">info</span>
+<div class="text-caption font-caption text-text-primary leading-relaxed">
+<strong>Quy chuẩn đánh dấu đối tượng (Marker):</strong> Sau khi tải lên file PDF mặt bằng, nhấp nút <strong class="text-primary font-medium">"Mở Viewport"</strong> để thực hiện thao tác kéo thả bounding box trực tiếp trên canvas PDF.js, tự động trích xuất mã ID cấu kiện và đồng bộ sang Biên bản kiểm tra FormIO.
+        </div>
+</div>
+</main>
+</div>
+<!-- Interactive Modal / Notification Toast (Pure JS for demo) -->
+<div class="fixed bottom-6 right-6 z-50 bg-slate-900 text-surface-white px-4 py-3 rounded-lg shadow-xl border border-slate-700 flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none" id="quickToast">
+<span class="material-symbols-outlined text-status-success text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-body-sm font-body-sm" id="toastMsg">Thao tác thành công</span>
+</div>
+<!-- Inline Micro-interactions Script -->
+<script>
+    // 1. Navigation to Viewport
+    function openViewport(drawingId) {
+      showToast(`Đang chuyển hướng sang Viewport: /drawings/${drawingId}/viewport`);
+      setTimeout(() => {
+        // Mock simulated transition to Viewport screen
+        window.location.href = `/drawings/${drawingId}/viewport`;
+      }, 700);
+    }
+
+    // 2. Drag & Drop PDF Handling
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropZone = document.getElementById('dropZone');
+      dropZone.classList.add('border-primary', 'bg-blue-50/40');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropZone = document.getElementById('dropZone');
+      dropZone.classList.remove('border-primary', 'bg-blue-50/40');
+    }
+
+    function handleFileDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropZone = document.getElementById('dropZone');
+      dropZone.classList.remove('border-primary', 'bg-blue-50/40');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        processUploadedFiles(files);
+      }
+    }
+
+    function handleFileSelect(e) {
+      const files = e.target.files;
+      if (files.length > 0) {
+        processUploadedFiles(files);
+      }
+    }
+
+    function processUploadedFiles(files) {
+      const file = files[0];
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        alert('Cảnh báo hệ thống: Chỉ hỗ trợ tệp định dạng .PDF kỹ thuật!');
+        return;
+      }
+
+      const feedback = document.getElementById('uploadFeedback');
+      const feedbackText = document.getElementById('uploadFeedbackText');
+      feedback.classList.remove('hidden');
+      feedbackText.innerText = `Đang phân tích cấu trúc vector và tải lên: ${file.name}...`;
+
+      setTimeout(() => {
+        feedback.classList.add('hidden');
+        showToast(`Tải lên thành công bản vẽ: ${file.name}`);
+        addNewRowToTable(file.name);
+      }, 1500);
+    }
+
+    function addNewRowToTable(fileName) {
+      const tableBody = document.getElementById('tableBody');
+      const newRow = document.createElement('tr');
+      newRow.className = "hover:bg-blue-50/50 transition-colors duration-150 group bg-yellow-50/30";
+      newRow.setAttribute('data-title', fileName);
+      
+      newRow.innerHTML = `
+        <td class="py-3 px-4 text-center font-label-sm text-text-secondary">NEW</td>
+        <td class="py-3 px-4">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-status-error text-[24px]" style="font-variation-settings: 'FILL' 1;">picture_as_pdf</span>
+            <div>
+              <div class="font-semibold text-text-primary hover:text-primary transition-colors cursor-pointer" onclick="openViewport('DWG-NEW')">
+                ${fileName}
+              </div>
+              <div class="text-[11px] font-label-sm text-text-secondary">REV_00 • 12.0 MB • Mới tải lên</div>
+            </div>
+          </div>
+        </td>
+        <td class="py-3 px-4">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-blue-100 text-primary flex items-center justify-center text-[10px] font-bold">NK</div>
+            <span class="font-medium text-text-primary">Nguyễn Văn Kỹ Sư</span>
+          </div>
+        </td>
+        <td class="py-3 px-4 font-label-sm text-text-secondary">Vừa xong</td>
+        <td class="py-3 px-4 text-center">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-[11px] font-semibold bg-gray-100 text-text-secondary border border-border-strong">
+            0 Marker
+          </span>
+        </td>
+        <td class="py-3 px-4 text-center">
+          <span class="inline-block px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold uppercase bg-gray-100 border border-gray-300 text-text-secondary">
+            Bản nháp
+          </span>
+        </td>
+        <td class="py-3 px-4 text-right">
+          <div class="inline-flex items-center gap-1.5 justify-end">
+            <button onclick="openViewport('DWG-NEW')" class="inline-flex items-center gap-1 bg-primary text-surface-white hover:bg-secondary px-2.5 py-1 rounded text-caption font-caption font-medium transition-colors shadow-sm">
+              <span class="material-symbols-outlined text-[16px]">visibility</span>
+              <span>Mở Viewport</span>
+            </button>
+            <button onclick="deleteDrawingRow(this)" class="p-1 rounded text-text-secondary hover:text-status-error hover:bg-red-50 transition-colors">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+          </div>
+        </td>
+      `;
+      tableBody.insertBefore(newRow, tableBody.firstChild);
+    }
+
+    // 3. Delete Row
+    function deleteDrawingRow(btn) {
+      if (confirm('Bạn có chắc chắn muốn xóa bản vẽ kỹ thuật này khỏi hệ thống? Các Marker liên kết sẽ bị lưu trữ.')) {
+        const row = btn.closest('tr');
+        row.remove();
+        showToast('Đã xóa bản vẽ khỏi danh mục');
+      }
+    }
+
+    // 4. Search Filter
+    function filterDrawings() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#tableBody tr');
+      rows.forEach(row => {
+        const title = row.getAttribute('data-title') || '';
+        if (title.toLowerCase().includes(input)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // 5. Role Switcher Demo
+    function switchRole(roleName) {
+      const badge = document.getElementById('roleBadgeDisplay');
+      badge.innerText = roleName;
+      if (roleName === 'Approver') {
+        badge.className = "inline-block text-[10px] font-label-sm uppercase px-1.5 py-0.5 rounded bg-green-50 text-status-success border border-green-200 mt-0.5 w-max";
+      } else if (roleName === 'Reviewer') {
+        badge.className = "inline-block text-[10px] font-label-sm uppercase px-1.5 py-0.5 rounded bg-yellow-50 text-status-warning border border-yellow-200 mt-0.5 w-max";
+      } else {
+        badge.className = "inline-block text-[10px] font-label-sm uppercase px-1.5 py-0.5 rounded bg-blue-50 text-primary border border-blue-200 mt-0.5 w-max";
+      }
+      showToast(`Chuyển sang vai trò: ${roleName}`);
+    }
+
+    // 6. Toast Notification Helper
+    function showToast(message) {
+      const toast = document.getElementById('quickToast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.innerText = message;
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    function triggerQuickUploadModal() {
+      document.getElementById('pdfFileInput').click();
+    }
+  </script>
+</body></html>

@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ConstrutInspect - Tạo mới đợt nghiệm thu (Inspection)</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "status-success": "#52C41A",
+            "on-surface-variant": "#414755",
+            "border-strong": "#D9D9D9",
+            "surface-tint": "#0059c7",
+            "error": "#ba1a1a",
+            "on-tertiary": "#ffffff",
+            "outline": "#727786",
+            "on-secondary-fixed": "#001849",
+            "on-primary": "#ffffff",
+            "tertiary-fixed-dim": "#bac8d3",
+            "on-secondary-fixed-variant": "#003fa3",
+            "primary-fixed": "#d9e2ff",
+            "outline-variant": "#c1c6d7",
+            "surface-dim": "#dbdad9",
+            "inverse-surface": "#2f3031",
+            "primary-container": "#006ef2",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "surface-container-highest": "#e3e2e2",
+            "background": "#faf9f9",
+            "surface-container-lowest": "#ffffff",
+            "tertiary": "#505e67",
+            "surface-bright": "#faf9f9",
+            "secondary-fixed": "#dae1ff",
+            "on-tertiary-container": "#fcfcff",
+            "on-background": "#1b1c1c",
+            "inverse-primary": "#afc6ff",
+            "on-primary-container": "#fefcff",
+            "surface-container": "#efeded",
+            "viewport-overlay-stroke": "#1677FF",
+            "inverse-on-surface": "#f2f0f0",
+            "surface-variant": "#e3e2e2",
+            "status-neutral": "#8C8C8C",
+            "secondary-fixed-dim": "#b3c5ff",
+            "primary-fixed-dim": "#afc6ff",
+            "primary": "#0057c2",
+            "status-warning": "#FAAD14",
+            "secondary-container": "#306ded",
+            "surface-white": "#FFFFFF",
+            "on-primary-fixed-variant": "#004398",
+            "surface-container-high": "#e9e8e8",
+            "status-error": "#FF4D4F",
+            "on-secondary": "#ffffff",
+            "tertiary-container": "#697680",
+            "surface": "#faf9f9",
+            "on-secondary-container": "#fefcff",
+            "secondary": "#0053d0",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "on-primary-fixed": "#001a43",
+            "on-tertiary-fixed": "#101d25",
+            "text-primary": "#1F2937",
+            "canvas-background": "#F5F7FA",
+            "surface-container-low": "#f4f3f3",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "text-secondary": "#595959",
+            "tertiary-fixed": "#d6e4ef",
+            "border-subtle": "#E4E7ED",
+            "on-surface": "#1b1c1c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin-mobile": "1rem",
+            "gutter-lg": "1.5rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1.5rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "headline-lg-mobile": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "headline-lg": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "headline-sm": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "display-mobile": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "display-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Ant Design-inspired precise accents */
+    .ant-input-focus:focus-within {
+      border-color: #1677FF !important;
+      box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #c1c6d7;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-canvas-background text-text-primary font-body-md text-body-md antialiased min-h-screen flex flex-col">
+<!-- TOP APP BAR (from Shared Components JSON) -->
+<header class="bg-surface-container-lowest text-primary flex justify-between items-center w-full px-space-lg h-14 z-50 sticky top-0 border-b border-border-subtle">
+<!-- Brand & Global Search -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[26px]">apartment</span>
+<span class="text-headline-sm font-headline-sm font-bold text-primary tracking-tight">ConstrutInspect</span>
+</div>
+<div class="h-4 w-px bg-border-subtle hidden md:block"></div>
+<!-- Search Bar On Left -->
+<div class="relative w-64 hidden sm:block ant-input-focus rounded">
+<span class="material-symbols-outlined absolute left-2.5 top-2.5 text-outline text-[18px]">search</span>
+<input class="w-full bg-canvas-background pl-8 pr-3 py-1.5 text-body-sm font-body-sm border border-border-strong rounded focus:outline-none focus:border-viewport-overlay-stroke focus:bg-surface-white transition-colors duration-150" placeholder="Tìm kiếm hồ sơ, bản vẽ, QC..." type="text"/>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden lg:flex items-center space-x-6 h-full text-body-md font-body-md">
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150 py-4" href="#">Dự án</a>
+<a class="text-primary font-semibold border-b-2 border-primary pb-3.5 pt-4 transition-colors duration-150" href="#">Hồ sơ nghiệm thu</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150 py-4" href="#">Bản vẽ &amp; BIM</a>
+<a class="text-text-secondary hover:text-text-primary transition-colors duration-150 py-4" href="#">Báo cáo QA/QC</a>
+</nav>
+<!-- Trailing Actions Cluster -->
+<div class="flex items-center gap-space-sm">
+<button class="hidden xl:inline-flex items-center gap-1.5 bg-primary text-on-primary px-3 py-1.5 rounded text-label-sm font-label-sm font-medium hover:bg-secondary transition-colors duration-150 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">add_circle</span>
+        Tạo yêu cầu nghiệm thu
+      </button>
+<!-- Trailing Icon Actions -->
+<button class="p-1.5 text-text-secondary hover:text-primary hover:bg-surface-container rounded transition-colors duration-150" title="Thông báo">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="p-1.5 text-text-secondary hover:text-primary hover:bg-surface-container rounded transition-colors duration-150" title="Hỗ trợ kỹ thuật">
+<span class="material-symbols-outlined text-[20px]">help</span>
+</button>
+<button class="p-1.5 text-text-secondary hover:text-primary hover:bg-surface-container rounded transition-colors duration-150" title="Cài đặt hệ thống">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+<!-- Profile Avatar & Secondary Action -->
+<div class="flex items-center pl-2 ml-1 border-l border-border-subtle gap-2">
+<div class="w-8 h-8 rounded bg-primary-fixed flex items-center justify-center text-primary font-semibold text-caption border border-outline-variant">
+          GS
+        </div>
+<button class="text-body-sm font-body-sm text-text-secondary hover:text-status-error transition-colors duration-150 hidden md:inline-block" title="Thoát phiên làm việc">
+          Đăng xuất
+        </button>
+</div>
+</div>
+</header>
+<!-- APP BODY: Split Sidebar Submitter + Workspace -->
+<div class="flex flex-1 w-full overflow-hidden">
+<!-- SIDEBAR NAVIGATION (from Shared Components JSON) -->
+<aside class="flex flex-col justify-between h-[calc(100vh-3.5rem)] w-64 sticky top-14 left-0 py-space-md px-space-sm z-40 bg-surface-container-lowest border-r border-border-subtle shrink-0 hidden md:flex">
+<div class="space-y-4">
+<!-- Submitter Identity Header -->
+<div class="px-space-sm pb-2 border-b border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">verified_user</span>
+<div>
+<p class="text-label-sm font-label-sm font-semibold text-text-primary uppercase tracking-wide">ConstrutInspect</p>
+<p class="text-caption font-caption text-text-secondary">Hệ thống QA/QC Công trình</p>
+</div>
+</div>
+</div>
+<!-- Primary Tabs list -->
+<nav class="space-y-1">
+<!-- Tab 1: Tổng quan kiểm định -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+<span class="text-label-sm font-label-sm">Tổng quan kiểm định</span>
+</a>
+<!-- Tab 2: Danh mục nghiệm thu (ACTIVE TAB) -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded bg-primary-fixed text-primary font-semibold transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">fact_check</span>
+<span class="text-label-sm font-label-sm">Danh mục nghiệm thu</span>
+</a>
+<!-- Tab 3: Bản vẽ kỹ thuật & Marker -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">architecture</span>
+<span class="text-label-sm font-label-sm">Bản vẽ kỹ thuật &amp; Marker</span>
+</a>
+<!-- Tab 4: Mẫu biên bản FormIO -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">dynamic_form</span>
+<span class="text-label-sm font-label-sm">Mẫu biên bản FormIO</span>
+</a>
+<!-- Tab 5: Luồng phê duyệt Steps -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">timeline</span>
+<span class="text-label-sm font-label-sm">Luồng phê duyệt Steps</span>
+</a>
+<!-- Tab 6: Phân quyền & Kiểm soát -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+<span class="text-label-sm font-label-sm">Phân quyền &amp; Kiểm soát</span>
+</a>
+</nav>
+<!-- CTA Action -->
+<div class="pt-2 px-space-xs">
+<button class="w-full flex items-center justify-center gap-2 border border-border-strong bg-surface-white hover:bg-canvas-background text-text-primary px-3 py-2 rounded text-body-sm font-body-sm transition-colors duration-150 shadow-none">
+<span class="material-symbols-outlined text-primary text-[18px]">upload_file</span>
+<span>Tải lên bản vẽ PDF</span>
+</button>
+</div>
+</div>
+<!-- Footer Tabs -->
+<div class="pt-4 border-t border-border-subtle space-y-1">
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary hover:text-primary hover:bg-canvas-background transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span class="text-label-sm font-label-sm">Nhật ký Audit</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary hover:text-primary hover:bg-canvas-background transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]">support_agent</span>
+<span class="text-label-sm font-label-sm">Hỗ trợ kỹ thuật</span>
+</a>
+<div class="px-space-md pt-2 text-[10px] text-text-secondary font-caption">
+          Engine v3.4.12 • Enterprise QA
+        </div>
+</div>
+</aside>
+<!-- MAIN CONTENT VIEWPORT CANVAS -->
+<main class="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto bg-canvas-background custom-scroll pb-24">
+<div class="max-w-7xl w-full mx-auto px-4 md:px-8 py-6 space-y-6">
+<!-- BREADCRUMB & HEADER TITLE -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-caption font-caption text-text-secondary">
+<a class="hover:text-primary transition-colors" href="#">Hồ sơ kiểm tra</a>
+<span class="text-outline-variant">/</span>
+<a class="text-text-primary font-medium" href="#">Tạo mới đợt nghiệm thu (Inspection)</a>
+</div>
+<div class="flex items-center gap-3">
+<h1 class="text-headline-lg font-headline-lg text-text-primary tracking-tight">Tạo mới đợt nghiệm thu chất lượng</h1>
+<span class="bg-status-warning/10 text-status-warning border border-status-warning/30 px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold uppercase">Draft Mode</span>
+</div>
+</div>
+<!-- Quick Metadata Badge cluster -->
+<div class="flex items-center gap-2 self-start sm:self-center">
+<div class="bg-surface-white border border-border-subtle rounded px-3 py-1.5 flex items-center gap-2 text-body-sm font-body-sm">
+<span class="w-2 h-2 rounded-full bg-status-success inline-block"></span>
+<span class="text-text-secondary">Elsa Workflow:</span>
+<span class="font-medium text-text-primary">WF-QAQC-2025-V2</span>
+</div>
+</div>
+</div>
+<!-- FORM HEADER CỐ ĐỊNH CARD (Ant Design Card Specification) -->
+<section class="bg-surface-white border border-border-subtle rounded p-6 shadow-none">
+<div class="flex items-center justify-between pb-4 mb-5 border-b border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">tune</span>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Thông số định danh &amp; Đối tượng liên kết</h2>
+</div>
+<span class="text-caption font-caption text-text-secondary italic">Các trường đánh dấu (*) là bắt buộc đối với Submitter</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+<!-- Col 1: Mã hồ sơ tự sinh -->
+<div class="md:col-span-3 space-y-1.5">
+<label class="block text-caption font-caption text-text-secondary uppercase font-semibold">
+                Mã hồ sơ tự sinh <span class="text-status-error">*</span>
+</label>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-low border border-border-strong text-text-primary font-label-md text-label-md px-3 py-2 rounded focus:outline-none cursor-not-allowed" readonly="" type="text" value="INS-2025-0589"/>
+<span class="material-symbols-outlined absolute right-3 text-status-success text-[18px]">lock</span>
+</div>
+<p class="text-[11px] text-text-secondary font-caption">Được định danh bởi máy chủ định tuyến QA/QC</p>
+</div>
+<!-- Col 2: Ngày yêu cầu kiểm tra (Ant Design DatePicker) -->
+<div class="md:col-span-3 space-y-1.5">
+<label class="block text-caption font-caption text-text-secondary uppercase font-semibold">
+                Ngày yêu cầu kiểm tra <span class="text-status-error">*</span>
+</label>
+<div class="relative ant-input-focus rounded">
+<input class="w-full bg-surface-white border border-border-strong text-text-primary font-body-md text-body-md px-3 py-2 rounded focus:outline-none focus:border-viewport-overlay-stroke" type="date" value="2025-03-31"/>
+</div>
+<p class="text-[11px] text-text-secondary font-caption">Thời gian dự kiến kỹ thuật viên thực địa có mặt</p>
+</div>
+<!-- Col 3: Chọn Bản vẽ kỹ thuật (Select Ant Design Cascading) -->
+<div class="md:col-span-3 space-y-1.5">
+<label class="block text-caption font-caption text-text-secondary uppercase font-semibold">
+                Bản vẽ kỹ thuật (PDF) <span class="text-status-error">*</span>
+</label>
+<div class="relative ant-input-focus rounded">
+<select class="w-full bg-surface-white border border-border-strong text-text-primary font-body-md text-body-md px-3 py-2 rounded pr-8 appearance-none focus:outline-none focus:border-viewport-overlay-stroke">
+<option selected="">MatBang_Tang5_BlockA.pdf</option>
+<option>MatBang_Tang4_BlockA.pdf</option>
+<option>MatCat_ChiTiet_DamCot_TrucB.pdf</option>
+<option>KC_Mong_Cot_BlockB.pdf</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 pointer-events-none text-text-secondary text-[18px]">arrow_drop_down</span>
+</div>
+<p class="text-[11px] text-text-secondary font-caption">Phiên bản rev: 2.1 (Phê duyệt 12/03/2025)</p>
+</div>
+<!-- Col 4: Chọn Object liên kết (Kèm thumbnail marker nhỏ) -->
+<div class="md:col-span-3 space-y-1.5">
+<label class="block text-caption font-caption text-text-secondary uppercase font-semibold">
+                Object Marker liên kết <span class="text-status-error">*</span>
+</label>
+<div class="relative ant-input-focus rounded">
+<select class="w-full bg-surface-white border border-border-strong text-text-primary font-body-md text-body-md px-3 py-2 rounded pr-8 appearance-none focus:outline-none focus:border-viewport-overlay-stroke">
+<option selected="">Dầm D5 - Nhịp 4-5 (Tầng 5, Trục B)</option>
+<option>Cột C12 - Tầng 5 (Trục A-B)</option>
+<option>Sàn S5-02 - Ô sàn nhịp 4-6</option>
+<option>Vách Thang Máy V1 - Lô 5A</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 pointer-events-none text-text-secondary text-[18px]">arrow_drop_down</span>
+</div>
+<!-- Mini Marker Object Preview Card -->
+<div class="mt-2 p-2 bg-primary-fixed/20 border border-primary/20 rounded flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 bg-viewport-overlay-fill border border-viewport-overlay-stroke rounded flex items-center justify-center text-primary font-label-sm text-[10px] font-bold">
+                    D5
+                  </div>
+<div>
+<span class="text-[11px] font-semibold text-primary block leading-tight">Marker: #MK-4091</span>
+<span class="text-[10px] text-text-secondary font-label-sm leading-tight">X: 1420.4, Y: 852.1</span>
+</div>
+</div>
+<button class="text-body-sm text-primary hover:underline font-medium text-[11px] flex items-center gap-0.5" type="button">
+<span class="material-symbols-outlined text-[14px]">visibility</span> Xem vị trí
+                </button>
+</div>
+</div>
+</div>
+</section>
+<!-- FORMIO ĐỘNG CONTAINER (@formio/react Preview) -->
+<section class="bg-surface-white border border-border-subtle rounded p-6 shadow-none space-y-6">
+<!-- Card Header & FormIO Spec Info -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border-subtle gap-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[24px]">assignment</span>
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">
+                  Biên bản nghiệm thu công việc xây dựng / Cốt thép &amp; Bê tông
+                </h2>
+<p class="text-caption font-caption text-text-secondary">
+                  Schema Engine: FormIO JSON Schema v4.15 • Biểu mẫu tiêu chuẩn QA/QC Nghị định 06/2021/NĐ-CP
+                </p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm bg-surface-container text-text-secondary px-2.5 py-1 rounded border border-border-subtle">
+                FORM-ID: BBNT-COTTHEP-V3
+              </span>
+</div>
+</div>
+<!-- FORMIO FIELDS SIMULATION -->
+<div class="space-y-6">
+<!-- Row 1: Hạng mục kiểm tra & Tiêu chuẩn áp dụng -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<!-- Field: Hạng mục kiểm tra -->
+<div class="space-y-1.5 ant-input-focus rounded">
+<label class="block text-body-sm font-body-sm font-medium text-text-primary">
+                  Hạng mục kiểm tra chi tiết <span class="text-status-error">*</span>
+</label>
+<input class="w-full bg-surface-white border border-border-strong text-text-primary font-body-md text-body-md px-3 py-2 rounded focus:outline-none focus:border-viewport-overlay-stroke" type="text" value="Nghiệm thu lắp dựng cốt thép dầm D5 (Nhịp 4-5) &amp; ván khuôn đáy trước khi đổ bê tông"/>
+<p class="text-[12px] text-text-secondary">Mô tả rõ cấu kiện, phạm vi và công tác nghiệm thu</p>
+</div>
+<!-- Field: Tiêu chuẩn áp dụng -->
+<div class="space-y-1.5 ant-input-focus rounded">
+<label class="block text-body-sm font-body-sm font-medium text-text-primary">
+                  Tiêu chuẩn kỹ thuật áp dụng <span class="text-status-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full bg-surface-white border border-border-strong text-text-primary font-body-md text-body-md px-3 py-2 rounded focus:outline-none focus:border-viewport-overlay-stroke" type="text" value="TCVN 5574:2018; TCVN 4453:1995 (Kết cấu BT &amp; BTCT toàn khối)"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-text-secondary text-[18px]">verified</span>
+</div>
+<p class="text-[12px] text-text-secondary">Quy chuẩn kỹ thuật quốc gia áp dụng cho công trình cấp I</p>
+</div>
+</div>
+<!-- Row 2: Tình trạng hiện trường & Sai số đo đạc -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-5 p-4 bg-canvas-background/60 border border-border-subtle rounded">
+<!-- Radio Group: Tình trạng hiện trường (Đạt / Không đạt / Chờ khắc phục) -->
+<div class="md:col-span-6 space-y-2">
+<label class="block text-body-sm font-body-sm font-semibold text-text-primary">
+                  Tình trạng kiểm tra hiện trường <span class="text-status-error">*</span>
+</label>
+<div class="grid grid-cols-3 gap-2">
+<!-- Radio 1: Đạt -->
+<label class="flex items-center gap-2 p-2.5 bg-surface-white border border-border-strong rounded cursor-pointer hover:border-status-success transition-colors">
+<input checked="" class="text-status-success focus:ring-status-success" name="site_status" type="radio" value="pass"/>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-success"></span>
+<span class="text-body-sm font-medium text-text-primary">Đạt</span>
+</div>
+</label>
+<!-- Radio 2: Không đạt -->
+<label class="flex items-center gap-2 p-2.5 bg-surface-white border border-border-strong rounded cursor-pointer hover:border-status-error transition-colors">
+<input class="text-status-error focus:ring-status-error" name="site_status" type="radio" value="fail"/>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-error"></span>
+<span class="text-body-sm font-medium text-text-primary">Không đạt</span>
+</div>
+</label>
+<!-- Radio 3: Chờ khắc phục -->
+<label class="flex items-center gap-2 p-2.5 bg-surface-white border border-border-strong rounded cursor-pointer hover:border-status-warning transition-colors">
+<input class="text-status-warning focus:ring-status-warning" name="site_status" type="radio" value="pending_fix"/>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-warning"></span>
+<span class="text-body-sm font-medium text-text-primary">Khắc phục</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Input Number: Kết quả đo kích thước hình học (Sai số ±2mm) -->
+<div class="md:col-span-6 space-y-2">
+<label class="block text-body-sm font-body-sm font-semibold text-text-primary">
+                  Kết quả đo kích thước hình học &amp; Sai số (mm) <span class="text-status-error">*</span>
+</label>
+<div class="grid grid-cols-2 gap-3">
+<div class="relative ant-input-focus rounded">
+<span class="text-caption text-text-secondary absolute left-2.5 top-2">Thực tế:</span>
+<input class="w-full bg-surface-white border border-border-strong text-text-primary font-label-md text-label-md pl-16 pr-3 py-1.5 rounded focus:outline-none focus:border-viewport-overlay-stroke" type="number" value="352"/>
+</div>
+<div class="relative ant-input-focus rounded">
+<span class="text-caption text-text-secondary absolute left-2.5 top-2">Sai số:</span>
+<input class="w-full bg-surface-white border border-border-strong text-status-success font-label-md text-label-md pl-16 pr-3 py-1.5 rounded focus:outline-none focus:border-viewport-overlay-stroke font-semibold" type="text" value="±2 mm"/>
+</div>
+</div>
+<p class="text-[11px] text-text-secondary">Dung sai giới hạn cho phép: Chiều rộng dầm: ±5mm; Chiều cao: ±5mm theo TCVN 4453</p>
+</div>
+</div>
+<!-- Row 3: Tải lên ảnh hiện trường (Gallery ảnh cốt thép & ván khuôn) -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<label class="block text-body-sm font-body-sm font-semibold text-text-primary">
+                  Tải lên ảnh hiện trường (Upload Gallery) <span class="text-status-error">*</span>
+</label>
+<span class="text-caption font-caption text-text-secondary">Đã tải: 3/6 tệp (Tối đa 15MB/tệp)</span>
+</div>
+<!-- Gallery Grid Bento -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Upload Dropzone Card -->
+<div class="border-2 border-dashed border-border-strong hover:border-primary rounded p-4 flex flex-col items-center justify-center text-center bg-canvas-background/40 hover:bg-primary-fixed/10 transition-colors cursor-pointer min-h-[140px]">
+<span class="material-symbols-outlined text-primary text-[32px] mb-1">cloud_upload</span>
+<span class="text-body-sm font-semibold text-primary">Chọn ảnh hiện trường</span>
+<span class="text-[11px] text-text-secondary mt-0.5">JPEG, PNG hoặc HEIC chụp từ app di động</span>
+</div>
+<!-- Image 1 -->
+<div class="relative border border-border-subtle rounded overflow-hidden group bg-surface-container-low min-h-[140px]">
+<img class="w-full h-full object-cover" data-alt="Close up high-contrast engineering site photograph showing reinforced steel rebar cage laid out for beam D5 in an industrial construction setting under daylight, with clear spacer blocks visible against grey concrete formwork." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNP5J80tfPiBqjfkVegBbinmZfGs1QUDHa2BJ7XP-_bLF_iScWnpRFs1d38qHNRY4GUU-YZN5Ghy7pPC8coyNTV1llu1yszM98mtbg3Nr2LcK7epryXySnvp4l6PT7Hdn5WDUFGUwliLeKF49D7GHihUAX-13ohUwNUhM3TIsCKMrXnmGKHzD5_647yx2OJDcKx4WaGuDNjQuKWHgclZjL7qhykM0K31fzXGOjktOvM_i0PYmkw1Kc"/>
+<div class="absolute inset-0 bg-inverse-surface/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="w-8 h-8 rounded bg-surface-white text-text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-8 h-8 rounded bg-surface-white text-status-error flex items-center justify-center hover:bg-status-error hover:text-white transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+<div class="absolute bottom-0 inset-x-0 bg-inverse-surface/80 px-2 py-1 flex items-center justify-between text-white text-[10px] font-label-sm">
+<span class="truncate">Dam_D5_LopDuoi.jpg</span>
+<span>1.8 MB</span>
+</div>
+</div>
+<!-- Image 2 -->
+<div class="relative border border-border-subtle rounded overflow-hidden group bg-surface-container-low min-h-[140px]">
+<img class="w-full h-full object-cover" data-alt="Technical documentation photograph of civil engineering steel cage stirrups measured with a high-visibility yellow tape measure indicating millimeter accuracy, modern bright daylight industrial construction aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeED_ItYX4TIIh8m1kRPim-PIO9YHkIp8KyhDL1E1jcMd66hjr1M3ib8wAWHm390l_6G2Fvn_8gWouTWz43Cp6mqRGf5e63sGYjrPyCvBZ1CeWSdLRJz-nB5iWT0RDX1AsdA21Jv1ZvicFR7tDaiKZU6Nav6CBECcHb7r1COUEIZAt3EEifPg68tjFuGMQYM2LqLsVgVQJdO-98AAdEDWlOJZU9LjXBbMlcv1DSJe-wChTP__MGEJn"/>
+<div class="absolute inset-0 bg-inverse-surface/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="w-8 h-8 rounded bg-surface-white text-text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-8 h-8 rounded bg-surface-white text-status-error flex items-center justify-center hover:bg-status-error hover:text-white transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+<div class="absolute bottom-0 inset-x-0 bg-inverse-surface/80 px-2 py-1 flex items-center justify-between text-white text-[10px] font-label-sm">
+<span class="truncate">Do_KhoangCach_Dai.jpg</span>
+<span>2.4 MB</span>
+</div>
+</div>
+<!-- Image 3 -->
+<div class="relative border border-border-subtle rounded overflow-hidden group bg-surface-container-low min-h-[140px]">
+<img class="w-full h-full object-cover" data-alt="Wide perspective shot of clean timber and steel formwork installed for building level 5 concrete pour, pristine industrial site conditions under crisp overhead lighting with geometric precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuUc55Y4KXQYPiptuNloWAFU6Je1Q5ZMo9Kw0Oe9beaUlzjh9w8CCTsFF5J1JTog1axaMUlrtNOAX27N0aECr6Sz_YELuKnXYLm_GvVQ07CfBApf9halDgGl-RzOaElFHktv1d_ChZ7KPwlqqZWDStBLpUntkUD8xDbKHi9pBbB3T3R2AUlb3gJzKkuDlR65KTBYfScihZBFnRuYluG3g3c9n0f3FIAxzym3q7aBF-PVDvBKztG2S7"/>
+<div class="absolute inset-0 bg-inverse-surface/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="w-8 h-8 rounded bg-surface-white text-text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-8 h-8 rounded bg-surface-white text-status-error flex items-center justify-center hover:bg-status-error hover:text-white transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+<div class="absolute bottom-0 inset-x-0 bg-inverse-surface/80 px-2 py-1 flex items-center justify-between text-white text-[10px] font-label-sm">
+<span class="truncate">VanKhuon_DayDam.jpg</span>
+<span>1.5 MB</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Row 4: Ghi chú kỹ thuật viên -->
+<div class="space-y-1.5 ant-input-focus rounded">
+<label class="block text-body-sm font-body-sm font-medium text-text-primary">
+                Ghi chú &amp; Đánh giá của Kỹ thuật viên hiện trường
+              </label>
+<textarea class="w-full bg-surface-white border border-border-strong text-text-primary font-body-md text-body-md p-3 rounded focus:outline-none focus:border-viewport-overlay-stroke" placeholder="Nhập các phát hiện cụ thể tại công trường, điều kiện thời tiết, hoặc các ghi chú bổ sung cho Tổ giám sát..." rows="3">Cốt thép chịu lực dầm D5 đã được vệ sinh sạch gỉ sét, vị trí nối thép đúng 30d so le theo bản vẽ thiết kế thi công. Con kê bê tông dày 30mm bố trí mật độ 4 con/m2, bảo đảm chiều dày lớp bê tông bảo vệ.</textarea>
+<div class="flex items-center justify-between text-[11px] text-text-secondary pt-0.5">
+<span>Khuyến nghị kiểm tra thêm vị trí neo thép vào cột C12 trước khi đổ bê tông</span>
+<span>218/1000 ký tự</span>
+</div>
+</div>
+<!-- Checkbox Cam kết tính xác thực -->
+<div class="p-3 bg-primary-fixed/20 border border-primary/20 rounded flex items-start gap-2.5">
+<input checked="" class="mt-1 text-primary rounded focus:ring-primary" id="confirm_validity" type="checkbox"/>
+<label class="text-body-sm font-body-sm text-text-primary" for="confirm_validity">
+                Tôi xác nhận rằng toàn bộ số liệu đo đạc hình học, ảnh hiện trường và tình trạng thi công nêu trên đã được kiểm chứng trực tiếp tại công trường theo đúng tiêu chuẩn thi công và nghiệm thu hiện hành.
+              </label>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+<!-- FIXED WORKFLOW ACTION FOOTER (Sticky Bottom-Bar) -->
+<footer class="fixed bottom-0 inset-x-0 h-16 bg-surface-white border-t border-border-subtle z-50 px-4 md:px-8 flex items-center justify-between shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
+<!-- Back / Cancel Link -->
+<div class="flex items-center gap-4">
+<a class="inline-flex items-center gap-1.5 text-text-secondary hover:text-text-primary font-medium text-body-md transition-colors px-2 py-1.5 rounded hover:bg-canvas-background" href="/inspections">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span>← Hủy / Quay lại</span>
+</a>
+<span class="text-outline-variant hidden sm:inline">|</span>
+<span class="text-caption font-caption text-text-secondary hidden sm:inline">Trạng thái: <strong class="text-text-primary">Bản nháp chưa gửi</strong></span>
+</div>
+<!-- Action Buttons Cluster -->
+<div class="flex items-center gap-3">
+<!-- Nút phụ: Lưu bản nháp (Draft) -->
+<button class="inline-flex items-center gap-1.5 bg-surface-white border border-border-strong hover:bg-canvas-background text-text-primary px-4 py-2 rounded text-body-md font-medium transition-colors shadow-none" type="button">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">save</span>
+<span>Lưu bản nháp (Draft)</span>
+</button>
+<!-- Nút chính: Gửi duyệt (Submit Inspection) Primary #1677FF -->
+<div class="relative group">
+<button class="inline-flex items-center gap-2 bg-[#1677FF] hover:bg-[#0057c2] active:bg-[#003fa3] text-white px-5 py-2 rounded text-body-md font-semibold transition-all shadow-sm focus:ring-2 focus:ring-[#1677FF]/40" onclick="handleSubmitInspection()" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span>Gửi duyệt (Submit Inspection)</span>
+</button>
+<!-- Technical Tooltip: Validate schema & kích hoạt Elsa Workflow -->
+<div class="absolute bottom-full right-0 mb-2 hidden group-hover:flex flex-col items-start bg-inverse-surface text-surface-white text-caption font-caption p-2.5 rounded shadow-lg w-64 pointer-events-none z-50">
+<div class="flex items-center gap-1 text-[#afc6ff] font-semibold mb-0.5">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+<span>Hệ thống Workflow tự động</span>
+</div>
+<p class="leading-tight text-[11px] text-surface-container">
+            Kiểm tra hợp lệ FormIO Schema, liên kết tọa độ Marker và kích hoạt luồng <strong>Elsa Workflow Level 1</strong> đến Tổ Giám Sát.
+          </p>
+<div class="w-2 h-2 bg-inverse-surface rotate-45 absolute -bottom-1 right-8"></div>
+</div>
+</div>
+</div>
+</footer>
+<!-- Micro-interaction Script -->
+<script>
+    function handleSubmitInspection() {
+      // Direct navigation simulation as specified in prompt: "Khi submit chuyển sang Màn 09"
+      const btn = event.currentTarget;
+      btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> <span>Đang xác thực FormIO...</span>`;
+      btn.classList.add('opacity-80', 'cursor-wait');
+      
+      setTimeout(() => {
+        // Redirection to Screen 09 (Inspection Details / Workflow State Machine)
+        window.location.href = '/inspections/09-detail-approval?id=INS-2025-0589';
+      }, 700);
+    }
+  </script>
+</body></html>

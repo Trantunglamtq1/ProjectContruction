@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ConstrutInspect - Chi tiết Đợt kiểm tra &amp; Phê duyệt (/inspections/:id)</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Public+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Script -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration Verbatim -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "status-success": "#52C41A",
+            "on-surface-variant": "#414755",
+            "border-strong": "#D9D9D9",
+            "surface-tint": "#0059c7",
+            "error": "#ba1a1a",
+            "on-tertiary": "#ffffff",
+            "outline": "#727786",
+            "on-secondary-fixed": "#001849",
+            "on-primary": "#ffffff",
+            "tertiary-fixed-dim": "#bac8d3",
+            "on-secondary-fixed-variant": "#003fa3",
+            "primary-fixed": "#d9e2ff",
+            "outline-variant": "#c1c6d7",
+            "surface-dim": "#dbdad9",
+            "inverse-surface": "#2f3031",
+            "primary-container": "#006ef2",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "surface-container-highest": "#e3e2e2",
+            "background": "#faf9f9",
+            "surface-container-lowest": "#ffffff",
+            "tertiary": "#505e67",
+            "surface-bright": "#faf9f9",
+            "secondary-fixed": "#dae1ff",
+            "on-tertiary-container": "#fcfcff",
+            "on-background": "#1b1c1c",
+            "inverse-primary": "#afc6ff",
+            "on-primary-container": "#fefcff",
+            "surface-container": "#efeded",
+            "viewport-overlay-stroke": "#1677FF",
+            "inverse-on-surface": "#f2f0f0",
+            "surface-variant": "#e3e2e2",
+            "status-neutral": "#8C8C8C",
+            "secondary-fixed-dim": "#b3c5ff",
+            "primary-fixed-dim": "#afc6ff",
+            "primary": "#0057c2",
+            "status-warning": "#FAAD14",
+            "secondary-container": "#306ded",
+            "surface-white": "#FFFFFF",
+            "on-primary-fixed-variant": "#004398",
+            "surface-container-high": "#e9e8e8",
+            "status-error": "#FF4D4F",
+            "on-secondary": "#ffffff",
+            "tertiary-container": "#697680",
+            "surface": "#faf9f9",
+            "on-secondary-container": "#fefcff",
+            "secondary": "#0053d0",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "on-primary-fixed": "#001a43",
+            "on-tertiary-fixed": "#101d25",
+            "text-primary": "#1F2937",
+            "canvas-background": "#F5F7FA",
+            "surface-container-low": "#f4f3f3",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "text-secondary": "#595959",
+            "tertiary-fixed": "#d6e4ef",
+            "border-subtle": "#E4E7ED",
+            "on-surface": "#1b1c1c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin-mobile": "1rem",
+            "gutter-lg": "1.5rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1.5rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "headline-lg-mobile": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "headline-lg": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "headline-sm": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "display-mobile": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "display-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-canvas-background text-text-primary font-body-md text-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar (Shared Component JSON Source) -->
+<header class="flex justify-between items-center w-full px-space-lg h-14 z-50 sticky top-0 bg-surface-container-lowest dark:bg-inverse-surface border-b border-border-subtle dark:border-outline-variant shadow-none">
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="construction">construction</span>
+<span class="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary tracking-tight">ConstrutInspect</span>
+</div>
+<!-- Search Bar on left as specified -->
+<div class="hidden md:flex items-center bg-canvas-background border border-border-strong rounded px-space-sm py-1 w-64 focus-within:border-primary">
+<span class="material-symbols-outlined text-text-secondary mr-2 text-lg" data-icon="search">search</span>
+<input class="bg-transparent border-none p-0 text-body-sm font-body-sm focus:ring-0 w-full text-text-primary placeholder-text-secondary outline-none" placeholder="Tìm kiếm đợt nghiệm thu..." type="text"/>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden lg:flex items-center gap-space-md pt-3">
+<a class="text-text-secondary dark:text-outline-variant hover:text-text-primary dark:hover:text-inverse-on-surface text-body-md font-body-md pb-3" href="#">Dự án</a>
+<!-- Active Tab: Hồ sơ nghiệm thu -->
+<a class="text-primary dark:text-inverse-primary font-semibold border-b-2 border-primary dark:border-inverse-primary pb-3 text-body-md font-body-md" href="#">Hồ sơ nghiệm thu</a>
+<a class="text-text-secondary dark:text-outline-variant hover:text-text-primary dark:hover:text-inverse-on-surface text-body-md font-body-md pb-3" href="#">Bản vẽ &amp; BIM</a>
+<a class="text-text-secondary dark:text-outline-variant hover:text-text-primary dark:hover:text-inverse-on-surface text-body-md font-body-md pb-3" href="#">Báo cáo QA/QC</a>
+</nav>
+</div>
+<!-- Trailing Actions & User Profile -->
+<div class="flex items-center gap-space-md">
+<button class="hidden sm:inline-flex items-center gap-1.5 bg-primary text-on-primary px-space-md py-1.5 rounded text-body-sm font-body-sm hover:bg-secondary transition-colors">
+<span class="material-symbols-outlined text-base" data-icon="add_circle">add_circle</span>
+        Tạo yêu cầu nghiệm thu
+      </button>
+<div class="flex items-center gap-space-xs text-text-secondary border-l border-border-subtle pl-space-sm">
+<button class="p-1.5 hover:bg-surface-container rounded text-text-secondary transition-colors" title="Thông báo">
+<span class="material-symbols-outlined text-xl" data-icon="notifications">notifications</span>
+</button>
+<button class="p-1.5 hover:bg-surface-container rounded text-text-secondary transition-colors" title="Trợ giúp">
+<span class="material-symbols-outlined text-xl" data-icon="help">help</span>
+</button>
+<button class="p-1.5 hover:bg-surface-container rounded text-text-secondary transition-colors" title="Cài đặt">
+<span class="material-symbols-outlined text-xl" data-icon="settings">settings</span>
+</button>
+</div>
+<!-- User Role Display (Approver) -->
+<div class="flex items-center gap-2 pl-space-xs">
+<img class="w-8 h-8 rounded-full border border-border-strong object-cover" data-alt="Chân dung cán bộ giám sát kiểm định chất lượng trong trang phục kỹ sư công trường với mũ bảo hộ trắng, nét mặt cương quyết và đáng tin cậy. Phong cách ánh sáng kỹ thuật hiện đại tông màu xám lạnh và xanh navy tối giản." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4FBHiP3VNOmA_ilQZp7i1zMVjIK31UxwsuD1V0AA8ng-lWZtzpQGo_llAQCt7C-09uLrqNfDdZQhIRb5lvZvL_a4JvFkT9FfPRNq8SMihHUclwedc-blOKITZXGjeCGA41HQy6e0wDOGBGdb7EOUeqblOy8eWEmZHobdidSkX8nL9_Hoeiwo1kjH0N2LnUfgqiGzEwU_s7g70hwWG6zU3BUXchKsBCKakfGEtj49vck4dRphy7ZnX"/>
+<div class="hidden xl:flex flex-col text-left">
+<span class="text-body-sm font-headline-sm font-semibold text-text-primary leading-tight">Trần Giám Sát</span>
+<span class="text-caption font-caption text-primary font-medium leading-tight">Approver (Phê duyệt)</span>
+</div>
+</div>
+<button class="text-text-secondary hover:text-status-error text-body-sm font-body-sm hidden md:block ml-2 transition-colors" title="Đăng xuất">
+        Đăng xuất
+      </button>
+</div>
+</header>
+<!-- App Body Layout (SideNavBar + Main Fluid Canvas) -->
+<div class="flex flex-1 w-full overflow-hidden">
+<!-- SideNavBar (Shared Component JSON Source) -->
+<aside class="flex flex-col justify-between h-[calc(100vh-3.5rem)] w-64 sticky top-14 left-0 py-space-md px-space-sm z-40 bg-surface-container-lowest dark:bg-inverse-surface border-r border-border-subtle dark:border-outline-variant select-none hidden md:flex shrink-0">
+<div class="flex flex-col gap-y-4">
+<!-- Header in Sidebar -->
+<div class="px-space-md py-1">
+<div class="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary leading-tight">ConstrutInspect</div>
+<div class="text-caption font-caption text-text-secondary">Hệ thống QA/QC Công trình</div>
+</div>
+<!-- CTA upload -->
+<div class="px-space-xs">
+<button class="w-full flex items-center justify-center gap-2 bg-canvas-background hover:bg-surface-container text-primary border border-border-strong px-space-md py-2 rounded text-body-sm font-headline-sm transition-all duration-150 ease-in-out">
+<span class="material-symbols-outlined text-lg" data-icon="upload_file">upload_file</span>
+            Tải lên bản vẽ PDF
+          </button>
+</div>
+<!-- 6 Main Tabs -->
+<nav class="flex flex-col gap-1 mt-2">
+<!-- Inactive Tab 1 -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="dashboard">dashboard</span>
+<span class="text-label-sm font-body-md">Tổng quan kiểm định</span>
+</a>
+<!-- Active Tab 2: Danh mục nghiệm thu (/inspections/:id context) -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded bg-primary-fixed dark:bg-secondary-container text-primary dark:text-on-secondary-container font-semibold transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="fact_check" data-weight="fill">fact_check</span>
+<span class="text-label-sm font-headline-sm">Danh mục nghiệm thu</span>
+</a>
+<!-- Inactive Tab 3 -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="architecture">architecture</span>
+<span class="text-label-sm font-body-md">Bản vẽ kỹ thuật &amp; Marker</span>
+</a>
+<!-- Inactive Tab 4 -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="dynamic_form">dynamic_form</span>
+<span class="text-label-sm font-body-md">Mẫu biên bản FormIO</span>
+</a>
+<!-- Inactive Tab 5 -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="timeline">timeline</span>
+<span class="text-label-sm font-body-md">Luồng phê duyệt Steps</span>
+</a>
+<!-- Inactive Tab 6 -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary dark:text-outline-variant font-normal hover:bg-canvas-background hover:text-primary transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="text-label-sm font-body-md">Phân quyền &amp; Kiểm soát</span>
+</a>
+</nav>
+</div>
+<!-- Footer Tabs -->
+<div class="border-t border-border-subtle pt-2 flex flex-col gap-1">
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="history">history</span>
+<span class="text-label-sm font-body-md">Nhật ký Audit</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2 rounded text-text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="support_agent">support_agent</span>
+<span class="text-label-sm font-body-md">Hỗ trợ kỹ thuật</span>
+</a>
+</div>
+</aside>
+<!-- Main Workspace Content Canvas -->
+<main class="flex-1 overflow-y-auto px-4 md:px-space-lg py-space-md flex flex-col gap-space-md pb-24">
+<!-- Breadcrumb & Top Bar Navigation Path -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-caption font-caption text-text-secondary">
+<a class="hover:text-primary transition-colors" href="#">Dự án Alpha Metro Tower</a>
+<span>/</span>
+<a class="hover:text-primary transition-colors" href="#">Đợt nghiệm thu</a>
+<span>/</span>
+<span class="text-text-primary font-semibold text-label-sm font-label-sm">INS-2025-0589</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-caption font-caption text-text-secondary">Elsa Workflow Instance ID:</span>
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded border border-border-subtle text-text-primary">wf-run-7790b-elsa</span>
+</div>
+</div>
+<!-- 1. Thanh tiến trình trạng thái Steps (Ant Design Stepper Architecture) -->
+<section class="bg-surface-white border border-border-subtle rounded p-space-md">
+<div class="text-caption font-caption uppercase tracking-wider text-text-secondary mb-3 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="account_tree">account_tree</span>
+          Tiến trình quy trình nghiệm thu Elsa Workflow (4 Giai đoạn)
+        </div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+<!-- Step 1: Draft - Done -->
+<div class="flex items-start gap-3 relative">
+<div class="w-8 h-8 rounded-full bg-status-success/15 border border-status-success text-status-success flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-base font-bold" data-icon="check">check</span>
+</div>
+<div class="flex flex-col">
+<div class="text-headline-sm font-headline-sm text-text-primary text-sm">Bước 1: Bản nháp</div>
+<div class="text-caption font-caption text-status-success font-semibold">Done (Hoàn tất)</div>
+<div class="text-caption font-caption text-text-secondary mt-0.5">Khởi tạo bởi Lê Submitter</div>
+</div>
+</div>
+<!-- Step 2: Submitted - Done -->
+<div class="flex items-start gap-3 relative">
+<div class="w-8 h-8 rounded-full bg-status-success/15 border border-status-success text-status-success flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-base font-bold" data-icon="check">check</span>
+</div>
+<div class="flex flex-col">
+<div class="text-headline-sm font-headline-sm text-text-primary text-sm">Bước 2: Đã nộp</div>
+<div class="text-caption font-caption text-status-success font-semibold">Done (Đã đính kèm hồ sơ)</div>
+<div class="text-caption font-caption text-text-secondary mt-0.5">Lê Kỹ Sư - 14:30 20/05/2025</div>
+</div>
+</div>
+<!-- Step 3: UnderReview - In Progress (Active) -->
+<div class="flex items-start gap-3 relative">
+<div class="w-8 h-8 rounded-full bg-status-warning/20 border-2 border-status-warning text-status-warning flex items-center justify-center shrink-0 animate-pulse">
+<span class="material-symbols-outlined text-base" data-icon="sync">sync</span>
+</div>
+<div class="flex flex-col">
+<div class="text-headline-sm font-headline-sm text-text-primary text-sm flex items-center gap-1.5">
+                Bước 3: Đang thẩm định
+                <span class="inline-block w-2 h-2 rounded-full bg-status-warning"></span>
+</div>
+<div class="text-caption font-caption text-status-warning font-semibold">In Progress (Đang thực hiện)</div>
+<div class="text-caption font-caption text-text-primary font-medium mt-0.5">Tiếp nhận bởi KS. Hoàng Reviewer</div>
+</div>
+</div>
+<!-- Step 4: Approved / Rejected - Pending -->
+<div class="flex items-start gap-3 relative opacity-60">
+<div class="w-8 h-8 rounded-full bg-canvas-background border border-border-strong text-status-neutral flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-base" data-icon="gavel">gavel</span>
+</div>
+<div class="flex flex-col">
+<div class="text-headline-sm font-headline-sm text-text-primary text-sm">Bước 4: Phê duyệt</div>
+<div class="text-caption font-caption text-text-secondary">Approved / Rejected</div>
+<div class="text-caption font-caption text-text-secondary mt-0.5">Chờ quyết định Approver</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Thẻ tóm tắt thông tin (Ant Design Descriptions Pattern) -->
+<section class="bg-surface-white border border-border-subtle rounded overflow-hidden">
+<div class="px-space-md py-3 bg-[#FAFAFA] border-b border-border-subtle flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="assignment">assignment</span>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Thông tin đợt nghiệm thu chất lượng kết cấu</h2>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-caption font-caption text-text-secondary">Trạng thái:</span>
+<!-- Tag UnderReview Cam #FAAD14 -->
+<span class="px-2.5 py-0.5 border border-[#FFE58F] bg-[#FFFBE6] text-[#FAAD14] font-label-sm text-label-sm font-semibold rounded">
+              UNDER_REVIEW
+            </span>
+</div>
+</div>
+<div class="p-space-md grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6">
+<!-- Col 1: Mã kiểm tra -->
+<div class="border-b md:border-b-0 pb-2 md:pb-0">
+<span class="block text-caption font-caption uppercase tracking-wider text-text-secondary">Mã kiểm tra (Inspection Code)</span>
+<div class="text-body-md font-label-md text-text-primary font-bold mt-1 flex items-center gap-1.5">
+<span>INS-2025-0589</span>
+<button class="text-text-secondary hover:text-primary" title="Sao chép mã">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Col 2: Object -->
+<div class="border-b md:border-b-0 pb-2 md:pb-0">
+<span class="block text-caption font-caption uppercase tracking-wider text-text-secondary">Cấu kiện nghiệm thu (Object)</span>
+<div class="text-body-md font-headline-sm font-semibold text-text-primary mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-base" data-icon="view_in_ar">view_in_ar</span>
+              Dầm D5 - Nhịp 4-5 (Tầng 5 Block A)
+            </div>
+</div>
+<!-- Col 3: Bản vẽ PDF liên kết -->
+<div class="border-b md:border-b-0 pb-2 md:pb-0">
+<span class="block text-caption font-caption uppercase tracking-wider text-text-secondary">Bản vẽ thiết kế &amp; Marker</span>
+<div class="mt-1 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-status-error text-base" data-icon="picture_as_pdf">picture_as_pdf</span>
+<a class="text-primary hover:underline text-body-md font-body-md font-medium flex items-center gap-0.5" href="#" title="Mở bản vẽ trên drawing viewport">
+                MatBang_Tang5_BlockA.pdf
+                <span class="material-symbols-outlined text-sm" data-icon="open_in_new">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- Col 4: Người nộp hồ sơ -->
+<div>
+<span class="block text-caption font-caption uppercase tracking-wider text-text-secondary">Kỹ sư đệ trình (Submitter)</span>
+<div class="text-body-md font-body-md text-text-primary mt-1 flex items-center gap-2">
+<div class="w-5 h-5 rounded-full bg-primary-fixed text-primary text-xs font-bold flex items-center justify-center">L</div>
+<span>Lê Submitter (Ban Chỉ huy CT)</span>
+</div>
+</div>
+<!-- Extra Row Details -->
+<div class="col-span-full border-t border-border-subtle pt-3 grid grid-cols-1 md:grid-cols-3 gap-4 bg-canvas-background -mx-space-md -mb-space-md px-space-md py-2.5">
+<div class="flex items-center gap-2 text-caption font-caption text-text-secondary">
+<span class="material-symbols-outlined text-base text-status-success" data-icon="link">link</span>
+<span>Checklist liên kết cha:</span>
+<a class="text-primary font-semibold hover:underline" href="#">CL-BETONG-COTTHEP-102</a>
+</div>
+<div class="flex items-center gap-2 text-caption font-caption text-text-secondary">
+<span class="material-symbols-outlined text-base" data-icon="event">event</span>
+<span>Thời điểm kiểm tra hiện trường: 09:00 21/05/2025</span>
+</div>
+<div class="flex items-center gap-2 text-caption font-caption text-text-secondary">
+<span class="material-symbols-outlined text-base" data-icon="location_on">location_on</span>
+<span>Vị trí: Trục X4 - Y5 / Cos +18.250</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Vùng xem FormIO (Read-only view with locking parameters) -->
+<section class="bg-surface-white border border-border-subtle rounded overflow-hidden">
+<div class="px-space-md py-3 border-b border-border-subtle flex items-center justify-between bg-surface-white">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="dynamic_form">dynamic_form</span>
+<h3 class="text-headline-sm font-headline-sm text-text-primary">Biên bản nghiệm thu kỹ thuật FormIO: Nghiệm thu Cốt thép dầm sàn</h3>
+</div>
+<!-- Read-only lock indicator -->
+<div class="flex items-center gap-1.5 px-2 py-1 bg-surface-container rounded border border-border-strong text-caption font-caption text-text-secondary">
+<span class="material-symbols-outlined text-sm text-status-warning" data-icon="lock" data-weight="fill">lock</span>
+<span class="font-medium">Chế độ Xem (Read-only View) - Đã khóa sửa đổi</span>
+</div>
+</div>
+<div class="p-space-md space-y-6">
+<!-- Section 1: Tiêu chuẩn kỹ thuật áp dụng -->
+<div>
+<h4 class="text-body-md font-headline-sm font-semibold text-text-primary mb-3 pb-1 border-b border-border-subtle flex items-center gap-2">
+<span class="w-1.5 h-4 bg-primary rounded-full"></span>
+              I. Quy chuẩn &amp; Thông số thiết kế định mức
+            </h4>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div>
+<label class="block text-caption font-caption text-text-secondary uppercase mb-1">Tiêu chuẩn nghiệm thu</label>
+<input class="w-full bg-[#FAFAFA] border border-border-strong rounded px-3 py-1.5 text-body-md font-body-md text-text-primary cursor-not-allowed" disabled="" type="text" value="TCVN 4453:1995 &amp; TCVN 5574:2018"/>
+</div>
+<div>
+<label class="block text-caption font-caption text-text-secondary uppercase mb-1">Mác bê tông dự kiến</label>
+<input class="w-full bg-[#FAFAFA] border border-border-strong rounded px-3 py-1.5 text-body-md font-body-md text-text-primary cursor-not-allowed" disabled="" type="text" value="B30 (M400) - R28 ngày"/>
+</div>
+<div>
+<label class="block text-caption font-caption text-text-secondary uppercase mb-1">Chủng loại thép kết cấu</label>
+<input class="w-full bg-[#FAFAFA] border border-border-strong rounded px-3 py-1.5 text-body-md font-body-md text-text-primary cursor-not-allowed" disabled="" type="text" value="Thép gân CB400-V (Hòa Phát)"/>
+</div>
+</div>
+</div>
+<!-- Section 2: Thông số đo đạc thực tế (Measurements) -->
+<div>
+<h4 class="text-body-md font-headline-sm font-semibold text-text-primary mb-3 pb-1 border-b border-border-subtle flex items-center gap-2">
+<span class="w-1.5 h-4 bg-primary rounded-full"></span>
+              II. Kết quả kiểm tra trắc đạc &amp; Kích thước hình học dầm D5
+            </h4>
+<div class="overflow-x-auto border border-border-subtle rounded">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#FAFAFA] border-b border-border-subtle text-caption font-caption uppercase text-text-secondary">
+<th class="py-2.5 px-3">Hạng mục kiểm tra</th>
+<th class="py-2.5 px-3">Thiết kế quy định</th>
+<th class="py-2.5 px-3">Thực tế đo đạc</th>
+<th class="py-2.5 px-3">Sai số cho phép</th>
+<th class="py-2.5 px-3">Đánh giá hiện trường</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle text-body-sm font-body-sm">
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-2 px-3 font-medium text-text-primary">Chiều rộng tiết diện dầm (b)</td>
+<td class="py-2 px-3 font-label-sm text-text-secondary">300 mm</td>
+<td class="py-2 px-3 font-label-sm font-bold text-text-primary">302 mm</td>
+<td class="py-2 px-3 font-label-sm text-text-secondary">± 5 mm</td>
+<td class="py-2 px-3">
+<span class="inline-flex items-center gap-1 text-status-success font-semibold text-caption">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span> Đạt chuẩn
+                      </span>
+</td>
+</tr>
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-2 px-3 font-medium text-text-primary">Chiều cao tiết diện dầm (h)</td>
+<td class="py-2 px-3 font-label-sm text-text-secondary">650 mm</td>
+<td class="py-2 px-3 font-label-sm font-bold text-text-primary">648 mm</td>
+<td class="py-2 px-3 font-label-sm text-text-secondary">± 5 mm</td>
+<td class="py-2 px-3">
+<span class="inline-flex items-center gap-1 text-status-success font-semibold text-caption">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span> Đạt chuẩn
+                      </span>
+</td>
+</tr>
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-2 px-3 font-medium text-text-primary">Chiều dày lớp bê tông bảo vệ (Cmin)</td>
+<td class="py-2 px-3 font-label-sm text-text-secondary">≥ 25 mm</td>
+<td class="py-2 px-3 font-label-sm font-bold text-text-primary">28 mm (Con kê đúc sẵn)</td>
+<td class="py-2 px-3 font-label-sm text-text-secondary">± 3 mm</td>
+<td class="py-2 px-3">
+<span class="inline-flex items-center gap-1 text-status-success font-semibold text-caption">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span> Đạt chuẩn
+                      </span>
+</td>
+</tr>
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-2 px-3 font-medium text-text-primary">Khoảng cách cốt đai khu vực dồn đai gối dầm</td>
+<td class="py-2 px-3 font-label-sm text-text-secondary">a = 100 mm</td>
+<td class="py-2 px-3 font-label-sm font-bold text-text-primary">a = 100 mm đều</td>
+<td class="py-2 px-3 font-label-sm text-text-secondary">± 10 mm</td>
+<td class="py-2 px-3">
+<span class="inline-flex items-center gap-1 text-status-success font-semibold text-caption">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span> Đạt chuẩn
+                      </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Section 3: Ảnh chụp nghiệm thu hiện trường & Bằng chứng đính kèm -->
+<div>
+<h4 class="text-body-md font-headline-sm font-semibold text-text-primary mb-3 pb-1 border-b border-border-subtle flex items-center justify-between">
+<span class="flex items-center gap-2">
+<span class="w-1.5 h-4 bg-primary rounded-full"></span>
+                III. Hình ảnh kiểm tra hiện trường &amp; Chứng từ thí nghiệm thép
+              </span>
+<span class="text-caption font-caption text-text-secondary">3 Tệp tin đính kèm</span>
+</h4>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+<!-- Image 1 -->
+<div class="border border-border-subtle rounded overflow-hidden group">
+<div class="relative h-40 bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Hình ảnh thực tế cốt thép dầm bê tông cốt thép đã buộc đai hoàn chỉnh trên sàn công trình cao tầng. Thép sạch không gỉ sét, các con kê bê tông bảo vệ xếp đồng đều, thước đo kỹ thuật đặt bên cạnh thể hiện khoảng cách đai chính xác." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJF-ESEk90SVUIt2CgsJa2i__y-LTnuDdvkzPjo0uSqb0iPIlTKBEqpFSnvgkVJnIJO5O6jjnSHCZdhFXyiy4Z5QK52PeGFwjnGvu38C8CcprOfObacT_0o1nahr89gHZRTkXbV2g4jOTU2YV5jdP2vHJumy7Yr0oHfXyb0VKS2yV997Rr1TQFq3xZqm2Bk7sMXMtLGV1vooCSxsqb95fwFIPhyU_6HhTAt3xqa7oDflsQxoGRnSKb"/>
+<span class="absolute top-2 left-2 bg-text-primary/75 text-on-primary text-caption font-label-sm px-2 py-0.5 rounded">Ảnh 01: Chi tiết nút dầm</span>
+</div>
+<div class="p-2.5 bg-surface-white">
+<p class="text-body-sm font-body-sm font-semibold text-text-primary truncate">KiemTraCotThep_DamD5_NutGoi.jpg</p>
+<p class="text-caption font-caption text-text-secondary">Chụp bởi Submitter lúc 09:12 21/05/2025</p>
+</div>
+</div>
+<!-- Image 2 -->
+<div class="border border-border-subtle rounded overflow-hidden group">
+<div class="relative h-40 bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Hình ảnh chụp góc cận cảnh lớp con kê bê tông bảo vệ dày 28mm đúc sẵn kẹp dưới thanh thép chủ dầm D5, ván khuôn gỗ sạch sẽ không rác bẩn trong lòng dầm, ánh sáng tự nhiên rõ nét từng thanh thép buộc kẽm kỹ thuật." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDogbl5KNcaC7yk7qf-pjBULexe9u-o4IHt182dprIGa85AzSQLzrKGxWCW0sp5-WGCVrjcUxq9AUS4f3Eq0o2W55T_trOn9Tsr1Ir1AVvTMSENsXuRgc75fBPrFestXql5YZYYbowCMLbgMx3UDedbB492YGs4WjXpsUf9kiiX6FRkRG6kKP7UBhttzqHl9uyTnhGObRa2BqvUW_CHTBmgK2XJSH2ffL1UcTTNz_bilY-0uslasis6"/>
+<span class="absolute top-2 left-2 bg-text-primary/75 text-on-primary text-caption font-label-sm px-2 py-0.5 rounded">Ảnh 02: Lớp bảo vệ đáy</span>
+</div>
+<div class="p-2.5 bg-surface-white">
+<p class="text-body-sm font-body-sm font-semibold text-text-primary truncate">LopBaoVe_ConKeBeTong_DamD5.jpg</p>
+<p class="text-caption font-caption text-text-secondary">Chụp bởi Submitter lúc 09:18 21/05/2025</p>
+</div>
+</div>
+<!-- Attached Document 3 -->
+<div class="border border-border-subtle rounded p-3 flex flex-col justify-between bg-[#FAFAFA]">
+<div>
+<div class="flex items-center gap-2 text-status-error mb-2">
+<span class="material-symbols-outlined text-2xl" data-icon="description">description</span>
+<span class="font-label-sm text-caption text-text-secondary">Phiếu kết quả thí nghiệm</span>
+</div>
+<h5 class="text-body-sm font-headline-sm font-semibold text-text-primary leading-snug">ChungChi_CoLyThep_HoaPhat_Lot488.pdf</h5>
+<p class="text-caption font-caption text-text-secondary mt-1">Dung lượng: 2.4 MB | LAS-XD 186 chứng thực</p>
+</div>
+<div class="mt-4 pt-2 border-t border-border-subtle flex items-center justify-between">
+<span class="text-caption font-caption text-status-success font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="verified">verified</span> Hợp chuẩn
+                  </span>
+<button class="text-primary hover:text-secondary text-caption font-caption font-semibold flex items-center gap-0.5">
+                    Tải về
+                    <span class="material-symbols-outlined text-xs" data-icon="download">download</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 4: Ý kiến thẩm tra của Reviewer (Kỹ sư Hoàng) -->
+<div class="bg-[#F0F7FF] border border-primary-fixed rounded p-space-md">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="rate_review">rate_review</span>
+<span class="text-body-sm font-headline-sm font-semibold text-text-primary">Ghi chú thẩm tra của Reviewer (KS. Hoàng):</span>
+</div>
+<span class="text-caption font-caption text-text-secondary">21/05/2025 - 10:15 SA</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-primary italic bg-surface-white/80 p-3 rounded border border-border-subtle">
+              "Đã đối chiếu thực tế hiện trường dầm D5: Thép đúng chủng loại CB400-V, số lượng thanh thép chịu kéo gối 4D22 + nhịp 3D20 khớp 100% bản vẽ thiết kế thi công. Con kê 28mm đạt yêu cầu. Đề xuất Approver xem xét phê duyệt chuyển giai đoạn đổ bê tông dầm sàn."
+            </p>
+</div>
+</div>
+</section>
+<!-- 4. Khu vực hành động theo Role & Status (Action Trigger Bar Sticky Bottom) -->
+<section class="sticky bottom-0 z-30 bg-surface-white border border-border-subtle rounded shadow-lg p-space-md">
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+<!-- Hộp thông báo quyền vai trò Approver -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary-fixed text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-xl" data-icon="verified_user">verified_user</span>
+</div>
+<div>
+<div class="text-body-sm font-headline-sm font-semibold text-text-primary flex items-center gap-2">
+<span>Bạn đang đăng nhập vai trò Approver (Người phê duyệt)</span>
+<span class="text-caption font-label-sm bg-primary/10 text-primary px-2 py-0.5 rounded font-bold">L3_APPROVER</span>
+</div>
+<p class="text-caption font-caption text-text-secondary">
+                Quyết định của bạn sẽ tự động hoàn tất Elsa Workflow Instance và đồng bộ trạng thái sang ChecklistItem hoàn thành tại Màn 11.
+              </p>
+</div>
+</div>
+<!-- Bộ nút thao tác quyết định -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- Nút xem checklist liên kết -->
+<a class="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-border-strong bg-surface-white text-text-primary hover:bg-canvas-background text-body-sm font-body-sm font-medium transition-colors" href="/checklists/102">
+<span class="material-symbols-outlined text-base text-text-secondary" data-icon="checklist">checklist</span>
+              Xem Checklist liên kết
+            </a>
+<!-- Nút Từ chối (Reject) màu đỏ Danger #FF4D4F -->
+<button class="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-surface-white border border-status-error text-status-error hover:bg-status-error hover:text-on-primary text-body-sm font-headline-sm font-semibold transition-all duration-150" onclick="document.getElementById('rejectModal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-base" data-icon="cancel">cancel</span>
+              Từ chối (Reject)
+            </button>
+<!-- Nút Phê duyệt hồ sơ (Approve) màu xanh lá Success #52C41A -->
+<button class="inline-flex items-center gap-1.5 px-5 py-2 rounded bg-status-success hover:bg-[#47ab17] text-on-primary text-body-sm font-headline-sm font-semibold transition-all duration-150 shadow-sm" onclick="approveWorkflow()">
+<span class="material-symbols-outlined text-base" data-icon="check_circle" data-weight="fill">check_circle</span>
+              Phê duyệt hồ sơ (Approve)
+            </button>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- 5. Modal: 'Lý do từ chối nghiệm thu' (Mandatory RejectReason Dialog) -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-[1px]" id="rejectModal">
+<div class="bg-surface-white border border-border-strong rounded-lg max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-150">
+<!-- Modal Header -->
+<div class="px-space-md py-3.5 bg-status-error/10 border-b border-status-error/20 flex items-center justify-between">
+<div class="flex items-center gap-2 text-status-error">
+<span class="material-symbols-outlined text-xl" data-icon="warning" data-weight="fill">warning</span>
+<h3 class="text-headline-sm font-headline-sm font-bold">Lý do từ chối nghiệm thu</h3>
+</div>
+<button class="text-text-secondary hover:text-text-primary" onclick="document.getElementById('rejectModal').classList.add('hidden')">
+<span class="material-symbols-outlined text-xl" data-icon="close">close</span>
+</button>
+</div>
+<!-- Modal Body Form -->
+<div class="p-space-md space-y-4">
+<div>
+<p class="text-body-sm font-body-sm text-text-primary mb-2">
+            Vui lòng ghi rõ khiếm khuyết kỹ thuật hoặc các chỉ tiêu không đạt tiêu chuẩn. Yêu cầu này sẽ gửi trả ngược lại Elsa Workflow cho Submitter khắc phục:
+          </p>
+<label class="block text-caption font-caption text-text-secondary uppercase mb-1 font-semibold">
+            Nội dung lý do từ chối (Bắt buộc) <span class="text-status-error">*</span>
+</label>
+<textarea class="w-full bg-surface-white border border-border-strong rounded p-2.5 text-body-sm font-body-sm text-text-primary focus:border-status-error focus:ring-1 focus:ring-status-error outline-none transition-all" id="rejectReasonInput" placeholder="Ví dụ: Khoảng cách đai tại tiết diện giao dầm phụ D5a chưa đạt thiết kế (thực tế a=150mm so với yêu cầu a=100mm). Yêu cầu bổ sung 03 đai gối và vệ sinh rác cốp pha..." rows="4"></textarea>
+</div>
+<div class="bg-[#FFF2F0] border border-[#FFCCC7] rounded p-2.5 text-caption font-caption text-status-error flex items-start gap-2">
+<span class="material-symbols-outlined text-base shrink-0" data-icon="info">info</span>
+<span>Khi xác nhận, trạng thái đợt kiểm tra sẽ chuyển sang <strong>REJECTED</strong>. Submitter phải lập biên bản khắc phục hiện trường trước khi tạo yêu cầu thẩm định lại.</span>
+</div>
+</div>
+<!-- Modal Actions -->
+<div class="px-space-md py-3 bg-canvas-background border-t border-border-subtle flex items-center justify-end gap-2">
+<button class="px-4 py-1.5 rounded border border-border-strong bg-surface-white text-text-secondary hover:text-text-primary text-body-sm font-body-sm font-medium transition-colors" onclick="document.getElementById('rejectModal').classList.add('hidden')">
+          Hủy bỏ
+        </button>
+<button class="px-4 py-1.5 rounded bg-status-error hover:bg-error text-on-primary text-body-sm font-headline-sm font-semibold transition-colors flex items-center gap-1.5" onclick="submitRejectReason()">
+<span class="material-symbols-outlined text-base" data-icon="do_not_disturb_on">do_not_disturb_on</span>
+          Xác nhận từ chối
+        </button>
+</div>
+</div>
+</div>
+<!-- Inline Micro-Interactions Script -->
+<script>
+    function approveWorkflow() {
+      if (confirm("Xác nhận phê duyệt hồ sơ đợt nghiệm thu INS-2025-0589? Quy trình Elsa Workflow sẽ chuyển sang trạng thái APPROVED.")) {
+        alert("Thành công: Đã phê duyệt hồ sơ nghiệm thu. Dữ liệu đã đồng bộ sang ChecklistItem #102 trạng thái DONE.");
+        window.location.reload();
+      }
+    }
+
+    function submitRejectReason() {
+      const reason = document.getElementById('rejectReasonInput').value.trim();
+      if (!reason) {
+        alert("Vui lòng nhập lý do từ chối trước khi xác nhận!");
+        document.getElementById('rejectReasonInput').focus();
+        return;
+      }
+      alert("Đã ghi nhận lý do từ chối: '" + reason + "'. Đợt nghiệm thu chuyển sang REJECTED và đã tạo task khắc phục lỗi cho Submitter.");
+      document.getElementById('rejectModal').classList.add('hidden');
+    }
+  </script>
+</body></html>

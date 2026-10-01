@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-canvas-background" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ConstrutInspect - Danh sách Checklist (Màn hình 10)</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Public Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with custom configuration -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface": "#1b1c1c",
+            "surface": "#faf9f9",
+            "error": "#ba1a1a",
+            "secondary": "#0053d0",
+            "primary-container": "#006ef2",
+            "background": "#faf9f9",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-fixed": "#101d25",
+            "on-secondary-fixed-variant": "#003fa3",
+            "outline": "#727786",
+            "surface-tint": "#0059c7",
+            "surface-container-low": "#f4f3f3",
+            "tertiary-fixed": "#d6e4ef",
+            "status-success": "#52C41A",
+            "on-primary-fixed": "#001a43",
+            "surface-white": "#FFFFFF",
+            "status-warning": "#FAAD14",
+            "inverse-primary": "#afc6ff",
+            "surface-container-highest": "#e3e2e2",
+            "on-tertiary": "#ffffff",
+            "on-error-container": "#93000a",
+            "primary-fixed": "#d9e2ff",
+            "tertiary-fixed-dim": "#bac8d3",
+            "surface-dim": "#dbdad9",
+            "surface-container": "#efeded",
+            "surface-container-high": "#e9e8e8",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "on-secondary-fixed": "#001849",
+            "text-primary": "#1F2937",
+            "on-background": "#1b1c1c",
+            "secondary-fixed": "#dae1ff",
+            "inverse-surface": "#2f3031",
+            "on-primary-container": "#fefcff",
+            "viewport-overlay-stroke": "#1677FF",
+            "primary-fixed-dim": "#afc6ff",
+            "surface-variant": "#e3e2e2",
+            "text-secondary": "#595959",
+            "on-secondary-container": "#fefcff",
+            "on-tertiary-container": "#fcfcff",
+            "error-container": "#ffdad6",
+            "inverse-on-surface": "#f2f0f0",
+            "canvas-background": "#F5F7FA",
+            "on-primary-fixed-variant": "#004398",
+            "status-neutral": "#8C8C8C",
+            "primary": "#0057c2",
+            "on-surface-variant": "#414755",
+            "tertiary": "#505e67",
+            "secondary-container": "#306ded",
+            "border-subtle": "#E4E7ED",
+            "surface-bright": "#faf9f9",
+            "secondary-fixed-dim": "#b3c5ff",
+            "on-secondary": "#ffffff",
+            "on-primary": "#ffffff",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "outline-variant": "#c1c6d7",
+            "tertiary-container": "#697680",
+            "status-error": "#FF4D4F",
+            "border-strong": "#D9D9D9"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "margin": "1.5rem",
+            "gutter": "1rem",
+            "margin-mobile": "1rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "1.5rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display-mobile": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"],
+            "headline-lg": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "headline-lg-mobile": ["Public Sans"],
+            "display": ["Public Sans"],
+            "headline-sm": ["Public Sans"]
+          },
+          "fontSize": {
+            "display-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background-color: #D9D9D9;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-body-md text-text-primary antialiased bg-canvas-background">
+<!-- Ant Design Master Layout: Header (H: 64px, BG: #FFFFFF, Border-Bottom: #F0F0F0) -->
+<header class="h-16 bg-surface-container-lowest border-b border-[#F0F0F0] px-space-lg flex items-center justify-between sticky top-0 z-50 shadow-none">
+<div class="flex items-center gap-6">
+<!-- Logo ConstrutInspect Enterprise -->
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded bg-primary-container text-white flex items-center justify-center font-bold font-headline-sm">
+<span class="material-symbols-outlined text-[20px]" data-icon="architecture">architecture</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-primary tracking-tight">ConstrutInspect</span>
+<span class="font-label-sm text-label-sm text-text-secondary leading-none">Enterprise QA/QC</span>
+</div>
+</div>
+<!-- Divider -->
+<div class="h-5 w-px bg-border-subtle hidden md:block"></div>
+<!-- Breadcrumbs: 'Trang chủ' / 'Hồ sơ nghiệm thu' / 'Danh sách Checklist kiểm tra' -->
+<nav aria-label="Breadcrumb" class="hidden md:flex items-center gap-2 font-body-sm text-body-sm text-text-secondary">
+<a class="hover:text-primary transition-colors duration-150" href="#">Trang chủ</a>
+<span class="text-status-neutral">/</span>
+<a class="hover:text-primary transition-colors duration-150" href="#">Hồ sơ nghiệm thu</a>
+<span class="text-status-neutral">/</span>
+<span class="text-text-primary font-medium">Danh sách Checklist kiểm tra</span>
+</nav>
+</div>
+<!-- User Profile & Action Bar (Reviewer Persona) -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3 pr-2">
+<!-- Avatar -->
+<img class="w-9 h-9 rounded-full object-cover border border-border-subtle shadow-sm" data-alt="Professional headshot portrait of an Asian civil quality inspection engineer wearing a white hardhat and high-visibility corporate safety vest against a modern architectural construction background with bright clean engineering lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoHiw05DJQ1ooQN5aYGuvRFXJzTwj4NrCGxOYPEmT3VeAkjPI_K2vzJ5c-CBfHuL7MdMYs7yQGWOnmoJkJJl_v9Y1RxqAFmbY4DReRIG_HkoH87MRNLS1bnjY4MrlRJKDmHJ7g-fzgchORFiFau0l5jzc6b-AY0iIdv6KQ-QZ4RcS4D0mOo8z78t9UaQmvpVE1FzWSqhkkTapSxJhiqq3BRolUsRYKn4HRmH44pTLOw1uf7YkmNP5x"/>
+<div class="flex flex-col text-left">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-body-md font-semibold text-text-primary">Trần Reviewer</span>
+<!-- Tag Role cyan '#E6FFFB' chữ '#13C2C2' -->
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E6FFFB] text-[#13C2C2] border border-[#87E8DE]">
+              Reviewer
+            </span>
+</div>
+<span class="font-caption text-caption text-text-secondary">Kỹ sư giám sát chất lượng</span>
+</div>
+</div>
+<div class="h-4 w-px bg-border-subtle"></div>
+<!-- Đăng xuất (Text-link) -->
+<button class="flex items-center gap-1 font-body-sm text-body-sm text-text-secondary hover:text-status-error transition-colors duration-150 py-1 px-2 rounded">
+<span class="material-symbols-outlined text-[18px]" data-icon="logout">logout</span>
+<span>Đăng xuất</span>
+</button>
+</div>
+</header>
+<!-- Application Shell Body (Sidebar + Content Workspace) -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Sidebar (W: 220px, BG: #FFFFFF) -->
+<aside class="w-[220px] bg-surface-container-lowest border-r border-[#F0F0F0] flex flex-col justify-between shrink-0 select-none py-4">
+<div class="flex flex-col gap-1 px-3">
+<div class="px-3 pb-2 text-[11px] font-semibold text-[#8C8C8C] uppercase tracking-wider font-label-sm">
+          Menu Reviewer
+        </div>
+<!-- Menu Item: Bản vẽ -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded text-text-secondary hover:bg-canvas-background hover:text-text-primary transition-colors duration-150 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="architecture">architecture</span>
+<span>Bản vẽ</span>
+</a>
+<!-- Menu Item: Inspection -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded text-text-secondary hover:bg-canvas-background hover:text-text-primary transition-colors duration-150 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="fact_check">fact_check</span>
+<span>Inspection</span>
+</a>
+<!-- Menu Item: Checklist (ACTIVE - nền #E6F4FF, chữ #1677FF) -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded bg-[#E6F4FF] text-[#1677FF] font-semibold transition-colors duration-150 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="checklist" data-weight="fill" style="font-variation-settings: 'FILL' 1;">checklist</span>
+<span>Checklist</span>
+</a>
+<div class="my-3 border-t border-border-subtle"></div>
+<div class="px-3 pb-2 text-[11px] font-semibold text-[#8C8C8C] uppercase tracking-wider font-label-sm">
+          Hệ thống
+        </div>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-text-secondary hover:bg-canvas-background transition-colors text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="dynamic_form">dynamic_form</span>
+<span>Mẫu biểu FormIO</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-text-secondary hover:bg-canvas-background transition-colors text-body-sm font-body-sm" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="timeline">timeline</span>
+<span>Luồng phê duyệt</span>
+</a>
+</div>
+<!-- Sidebar Footer Info -->
+<div class="px-4 py-3 bg-[#FAFAFA] mx-3 rounded border border-border-subtle">
+<div class="flex items-center justify-between text-[11px] text-text-secondary font-label-sm">
+<span>Dự án Landmark B</span>
+<span class="inline-block w-2 h-2 rounded-full bg-status-success"></span>
+</div>
+<div class="text-[12px] font-medium text-text-primary truncate mt-0.5">Phân khu A - Block 02</div>
+</div>
+</aside>
+<!-- Main Content Workspace (BG: #F5F7FA, P: 24px) -->
+<main class="flex-1 overflow-y-auto custom-scroll p-space-lg flex flex-col gap-6">
+<!-- Page Header & Action Anchor -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-5 rounded border border-border-subtle">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">
+            Danh mục Checklist Kiểm soát &amp; Nghiệm thu
+          </h1>
+<p class="font-body-md text-body-md text-text-secondary mt-1">
+            Tổng hợp danh mục tiêu chí kiểm tra theo từng đối tượng cấu kiện CAD/BIM, theo dõi tỷ lệ hoàn thành hồ sơ.
+          </p>
+</div>
+<!-- Nút '+ Tạo mới Checklist' (Reviewer Only) -->
+<div class="flex items-center gap-3 shrink-0">
+<button class="inline-flex items-center gap-2 bg-[#1677FF] hover:bg-[#0057c2] active:bg-[#003fa3] text-white font-medium px-4 py-2 rounded shadow-sm transition-colors duration-150 text-body-md font-body-md" onclick="document.getElementById('createChecklistModal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+<span>+ Tạo mới Checklist</span>
+</button>
+</div>
+</div>
+<!-- Filter Toolbar (Ant Design Style) -->
+<div class="bg-surface-container-lowest p-4 rounded border border-border-subtle flex flex-wrap items-center justify-between gap-3">
+<div class="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+<!-- Filter: Trạng thái -->
+<div class="relative w-48">
+<label class="sr-only">Trạng thái</label>
+<div class="relative">
+<select class="w-full h-9 pl-3 pr-8 bg-surface-container-lowest border border-[#D9D9D9] hover:border-[#1677FF] focus:border-[#1677FF] focus:ring-1 focus:ring-[#1677FF] rounded text-body-sm font-body-sm text-text-primary appearance-none cursor-pointer outline-none transition-colors">
+<option value="all">Tất cả trạng thái</option>
+<option value="open">Open (Đang mở)</option>
+<option selected="" value="inprogress">InProgress (Đang xử lý)</option>
+<option value="completed">Completed (Đã hoàn thành)</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2.5 top-2.5 text-[16px] text-text-secondary" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Filter: Đối tượng Object (Searchable Selector) -->
+<div class="relative w-64">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-2.5 text-[16px] text-text-secondary" data-icon="category">category</span>
+<input class="w-full h-9 pl-8 pr-8 bg-surface-container-lowest border border-[#D9D9D9] hover:border-[#1677FF] focus:border-[#1677FF] focus:ring-1 focus:ring-[#1677FF] rounded text-body-sm font-body-sm text-text-primary outline-none transition-colors" placeholder="Lọc Đối tượng Object (Dầm, Cọc, Sàn...)" type="text" value="Dầm D5 - Nhịp 4-5"/>
+<span class="material-symbols-outlined pointer-events-none absolute right-2.5 text-[16px] text-text-secondary" data-icon="arrow_drop_down">arrow_drop_down</span>
+</div>
+</div>
+<!-- Input.Search: Tìm kiếm tên Checklist -->
+<div class="relative flex-1 min-w-[220px]">
+<div class="relative flex items-center">
+<input class="w-full h-9 pl-3 pr-9 bg-surface-container-lowest border border-[#D9D9D9] hover:border-[#1677FF] focus:border-[#1677FF] focus:ring-1 focus:ring-[#1677FF] rounded text-body-sm font-body-sm text-text-primary outline-none transition-colors placeholder:text-status-neutral" placeholder="Tìm kiếm mã, tên Checklist..." type="text"/>
+<button class="absolute right-2 text-text-secondary hover:text-primary p-0.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="search">search</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Clear / View options -->
+<div class="flex items-center gap-2 text-text-secondary font-label-sm text-label-sm">
+<span>Hiển thị: <strong>3</strong> / 14 hồ sơ</span>
+<div class="h-4 w-px bg-border-subtle mx-1"></div>
+<button class="p-1 hover:bg-canvas-background rounded text-[#1677FF]" title="Lưới thẻ">
+<span class="material-symbols-outlined text-[20px]" data-icon="grid_view">grid_view</span>
+</button>
+<button class="p-1 hover:bg-canvas-background rounded text-text-secondary" title="Dạng bảng">
+<span class="material-symbols-outlined text-[20px]" data-icon="table_rows">table_rows</span>
+</button>
+</div>
+</div>
+<!-- Danh sách Checklist dạng lưới Bento Grid / Ant Design Cards -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+<!-- CARD 1: CHK-2025-004 (InProgress - 75%) -->
+<div class="bg-surface-container-lowest rounded border border-border-subtle p-5 flex flex-col justify-between hover:border-[#1677FF] hover:shadow-sm transition-all duration-150">
+<div>
+<!-- Header Card & Tag -->
+<div class="flex items-start justify-between gap-3 mb-3">
+<span class="font-label-md text-label-md font-semibold text-primary bg-primary-fixed/40 px-2 py-0.5 rounded">
+                CHK-2025-004
+              </span>
+<!-- Tag gold nền #FFF7E6, chữ #FAAD14 -->
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-semibold font-label-sm bg-[#FFF7E6] text-[#FAAD14] border border-[#FFE58F]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#FAAD14]"></span>
+                InProgress
+              </span>
+</div>
+<!-- Title -->
+<h3 class="font-headline-sm text-headline-sm text-text-primary leading-snug font-semibold hover:text-[#1677FF] cursor-pointer">
+              Nghiệm thu Cốt thép &amp; Ván khuôn Dầm D5 - Block A
+            </h3>
+<!-- Linked Object Metadata -->
+<div class="mt-3 p-3 bg-canvas-background rounded border border-border-subtle text-body-sm font-body-sm flex flex-col gap-1.5">
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="layers">layers</span>
+<span class="font-medium text-text-primary">Đối tượng Object:</span>
+</div>
+<p class="text-text-primary pl-5">
+                Dầm D5 - Nhịp 4-5 &amp; Sàn khu vực Sảnh E
+              </p>
+<div class="flex items-center gap-1.5 pl-5 text-[11px] text-text-secondary font-label-sm truncate">
+<span class="material-symbols-outlined text-[14px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span>MatBang_Tang5_BlockA.pdf (CAD Rev.3)</span>
+</div>
+</div>
+<!-- Ant Design Progress Bar: 75% Done, strokeColor: #52C41A -->
+<div class="mt-4">
+<div class="flex items-center justify-between text-body-sm font-body-sm mb-1.5">
+<span class="text-text-secondary">Tiến độ tiêu chí:</span>
+<span class="font-label-md text-label-md font-bold text-[#52C41A]">75%</span>
+</div>
+<div class="w-full bg-[#F0F0F0] h-2 rounded-full overflow-hidden flex">
+<div class="bg-[#52C41A] h-full transition-all duration-300" style="width: 75%"></div>
+</div>
+<div class="flex items-center justify-between mt-1 text-[11px] text-text-secondary font-label-sm">
+<span>3/4 tiêu chí bắt buộc đã Done</span>
+<span class="text-status-warning font-medium">1 Pending</span>
+</div>
+</div>
+<!-- Timeline & Personnel -->
+<div class="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between text-caption font-caption text-text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="calendar_today">calendar_today</span>
+<span>Ngày lập: 20/05/2025</span>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="person">person</span>
+<span class="text-text-primary font-medium">Trần Reviewer</span>
+</span>
+</div>
+</div>
+<!-- Bottom Action Button: Xem chi tiết & Gắn Form -->
+<div class="mt-5">
+<a class="w-full py-2 px-3 border border-[#1677FF] text-[#1677FF] hover:bg-[#1677FF] hover:text-white rounded font-medium text-body-sm font-body-sm flex items-center justify-center gap-1 transition-all duration-150" href="/checklists/CHK-2025-004">
+<span>Xem chi tiết &amp; Gắn Form</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- CARD 2: CHK-2025-001 (Completed - 100%) -->
+<div class="bg-surface-container-lowest rounded border border-border-subtle p-5 flex flex-col justify-between hover:border-[#52C41A] hover:shadow-sm transition-all duration-150">
+<div>
+<!-- Header Card & Tag -->
+<div class="flex items-start justify-between gap-3 mb-3">
+<span class="font-label-md text-label-md font-semibold text-text-secondary bg-[#FAFAFA] border border-border-subtle px-2 py-0.5 rounded">
+                CHK-2025-001
+              </span>
+<!-- Tag green nền #F6FFED, chữ #52C41A -->
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-semibold font-label-sm bg-[#F6FFED] text-[#52C41A] border border-[#B7EB8F]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#52C41A]"></span>
+                Completed
+              </span>
+</div>
+<!-- Title -->
+<h3 class="font-headline-sm text-headline-sm text-text-primary leading-snug font-semibold hover:text-[#1677FF] cursor-pointer">
+              Nghiệm thu Cọc khoan nhồi Móng băng M2
+            </h3>
+<!-- Linked Object Metadata -->
+<div class="mt-3 p-3 bg-canvas-background rounded border border-border-subtle text-body-sm font-body-sm flex flex-col gap-1.5">
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="foundation">foundation</span>
+<span class="font-medium text-text-primary">Đối tượng Object:</span>
+</div>
+<p class="text-text-primary pl-5">
+                Móng băng M2 - Phân đoạn 1
+              </p>
+<div class="flex items-center gap-1.5 pl-5 text-[11px] text-text-secondary font-label-sm truncate">
+<span class="material-symbols-outlined text-[14px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span>KC_MongBang_M2_Final.pdf</span>
+</div>
+</div>
+<!-- Ant Design Progress Bar: 100% Done, strokeColor: #52C41A -->
+<div class="mt-4">
+<div class="flex items-center justify-between text-body-sm font-body-sm mb-1.5">
+<span class="text-text-secondary">Tiến độ tiêu chí:</span>
+<span class="font-label-md text-label-md font-bold text-[#52C41A]">100%</span>
+</div>
+<div class="w-full bg-[#F0F0F0] h-2 rounded-full overflow-hidden flex">
+<div class="bg-[#52C41A] h-full transition-all duration-300" style="width: 100%"></div>
+</div>
+<div class="flex items-center justify-between mt-1 text-[11px] text-[#52C41A] font-label-sm font-medium">
+<span>5/5 tiêu chí bắt buộc đã Done</span>
+<span class="flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]" data-icon="check_circle">check_circle</span>
+                  Hồ sơ khép lại
+                </span>
+</div>
+</div>
+<!-- Timeline & Personnel -->
+<div class="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between text-caption font-caption text-text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-status-success" data-icon="event_available">event_available</span>
+<span>Ngày hoàn tất: 15/05/2025</span>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified_user">verified_user</span>
+<span class="text-text-primary">Đã ký số QA/QC</span>
+</span>
+</div>
+</div>
+<!-- Bottom Action Button -->
+<div class="mt-5">
+<a class="w-full py-2 px-3 border border-border-strong text-text-primary hover:border-[#1677FF] hover:text-[#1677FF] rounded font-medium text-body-sm font-body-sm flex items-center justify-center gap-1 transition-all duration-150" href="/checklists/CHK-2025-001">
+<span>Xem chi tiết hồ sơ</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+</a>
+</div>
+</div>
+<!-- CARD 3: CHK-2025-006 (Open - 20%) -->
+<div class="bg-surface-container-lowest rounded border border-border-subtle p-5 flex flex-col justify-between hover:border-[#1677FF] hover:shadow-sm transition-all duration-150">
+<div>
+<!-- Header Card & Tag -->
+<div class="flex items-start justify-between gap-3 mb-3">
+<span class="font-label-md text-label-md font-semibold text-text-secondary bg-[#FAFAFA] border border-border-subtle px-2 py-0.5 rounded">
+                CHK-2025-006
+              </span>
+<!-- Tag gold nền #FFF7E6, chữ #FAAD14 (Open) -->
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-semibold font-label-sm bg-[#FFF7E6] text-[#FAAD14] border border-[#FFE58F]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#FAAD14]"></span>
+                Open
+              </span>
+</div>
+<!-- Title -->
+<h3 class="font-headline-sm text-headline-sm text-text-primary leading-snug font-semibold hover:text-[#1677FF] cursor-pointer">
+              Nghiệm thu Vách thang máy V1 - Lõi B
+            </h3>
+<!-- Linked Object Metadata -->
+<div class="mt-3 p-3 bg-canvas-background rounded border border-border-subtle text-body-sm font-body-sm flex flex-col gap-1.5">
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="elevator">elevator</span>
+<span class="font-medium text-text-primary">Đối tượng Object:</span>
+</div>
+<p class="text-text-primary pl-5">
+                Vách thang máy V1 - Lõi B
+              </p>
+<div class="flex items-center gap-1.5 pl-5 text-[11px] text-text-secondary font-label-sm truncate">
+<span class="material-symbols-outlined text-[14px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span>MatBang_LoiThangMay_B.dwg.pdf</span>
+</div>
+</div>
+<!-- Ant Design Progress Bar: 20% Done, strokeColor: #52C41A -->
+<div class="mt-4">
+<div class="flex items-center justify-between text-body-sm font-body-sm mb-1.5">
+<span class="text-text-secondary">Tiến độ tiêu chí:</span>
+<span class="font-label-md text-label-md font-bold text-[#52C41A]">20%</span>
+</div>
+<div class="w-full bg-[#F0F0F0] h-2 rounded-full overflow-hidden flex">
+<div class="bg-[#52C41A] h-full transition-all duration-300" style="width: 20%"></div>
+</div>
+<div class="flex items-center justify-between mt-1 text-[11px] text-text-secondary font-label-sm">
+<span>1/5 tiêu chí đã Done</span>
+<span class="text-text-secondary">4 tiêu chí chờ đánh giá</span>
+</div>
+</div>
+<!-- Timeline & Personnel -->
+<div class="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between text-caption font-caption text-text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="calendar_today">calendar_today</span>
+<span>Ngày tạo: 24/05/2025</span>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="pending_actions">pending_actions</span>
+<span>Chưa gửi duyệt</span>
+</span>
+</div>
+</div>
+<!-- Bottom Action Button -->
+<div class="mt-5">
+<a class="w-full py-2 px-3 border border-[#1677FF] text-[#1677FF] hover:bg-[#1677FF] hover:text-white rounded font-medium text-body-sm font-body-sm flex items-center justify-center gap-1 transition-all duration-150" href="/checklists/CHK-2025-006">
+<span>Xem chi tiết &amp; Gắn Form</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Quick Metrics Summary Bar (Industrial Functionalism) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-surface-container-lowest p-4 rounded border border-border-subtle">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-[#E6F4FF] text-[#1677FF] flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="rule">rule</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-text-secondary">Tổng Checklist</div>
+<div class="font-headline-sm text-headline-sm font-bold text-text-primary">14 mục</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-[#FFF7E6] text-[#FAAD14] flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="hourglass_top">hourglass_top</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-text-secondary">Đang nghiệm thu</div>
+<div class="font-headline-sm text-headline-sm font-bold text-text-primary">8 mục</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-[#F6FFED] text-[#52C41A] flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="task_alt">task_alt</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-text-secondary">Hoàn thành 100%</div>
+<div class="font-headline-sm text-headline-sm font-bold text-text-primary">5 mục</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-[#FFF2F0] text-[#FF4D4F] flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="error_outline">error_outline</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-text-secondary">Tiêu chí lỗi / Re-check</div>
+<div class="font-headline-sm text-headline-sm font-bold text-status-error">1 cấu kiện</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Modal Ant Design: Tạo mới Checklist (Modal hiển thị nổi bật trực quan) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs transition-opacity duration-200" id="createChecklistModal">
+<div class="bg-surface-container-lowest w-full max-w-[560px] rounded shadow-[0_12px_32px_rgba(15,23,42,0.16)] border border-[#D9D9D9] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+<!-- Modal Header -->
+<div class="px-6 py-4 border-b border-[#F0F0F0] flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-[#1677FF]" data-icon="playlist_add">playlist_add</span>
+<h2 class="font-headline-md text-headline-md font-semibold text-text-primary">Tạo Checklist mới</h2>
+</div>
+<button class="text-text-secondary hover:text-text-primary p-1 rounded transition-colors" onclick="document.getElementById('createChecklistModal').classList.add('hidden')">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<!-- Modal Body (FormIO Compatible Schema Fields) -->
+<form class="p-6 flex flex-col gap-4 font-body-md text-body-md" onsubmit="event.preventDefault(); document.getElementById('createChecklistModal').classList.add('hidden');">
+<!-- Input: Tên Checklist (Bắt buộc) -->
+<div>
+<label class="block font-body-sm text-body-sm font-medium text-text-primary mb-1.5">
+            Tên Checklist <span class="text-[#FF4D4F]">*</span>
+</label>
+<input class="w-full h-10 px-3.5 bg-surface-container-lowest border border-[#D9D9D9] hover:border-[#1677FF] focus:border-[#1677FF] focus:ring-2 focus:ring-[#1677FF]/20 rounded text-body-md font-body-md text-text-primary outline-none transition-colors" placeholder="VD: Nghiệm thu hệ thống điện tầng 3" required="" type="text" value="Nghiệm thu hệ thống điện &amp; ống luồn dây tầng 3 - Block B"/>
+</div>
+<!-- Select: Object liên kết (Bắt buộc, search được) -->
+<div>
+<label class="block font-body-sm text-body-sm font-medium text-text-primary mb-1.5">
+            Chọn Object CAD/BIM liên kết <span class="text-[#FF4D4F]">*</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-text-secondary" data-icon="search">search</span>
+<select class="w-full h-10 pl-9 pr-9 bg-surface-container-lowest border border-[#D9D9D9] hover:border-[#1677FF] focus:border-[#1677FF] focus:ring-2 focus:ring-[#1677FF]/20 rounded text-body-md font-body-md text-text-primary appearance-none cursor-pointer outline-none transition-colors" required="">
+<option disabled="" value="">Tìm kiếm và chọn Object cấu kiện...</option>
+<option selected="" value="OBJ-D5-T5">OBJ-204: Dầm D5 - Nhịp 4-5 (MatBang_Tang5_BlockA.pdf)</option>
+<option value="OBJ-M2-01">OBJ-112: Móng băng M2 - Phân đoạn 1 (KC_MongBang_M2_Final.pdf)</option>
+<option value="OBJ-V1-LB">OBJ-305: Vách thang máy V1 - Lõi B (MatBang_LoiThangMay_B.dwg.pdf)</option>
+<option value="OBJ-SAN-T3">OBJ-442: Sàn Bê tông khu vực Trục 2-4 Tầng 3</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-2.5 text-[18px] text-text-secondary" data-icon="unfold_more">unfold_more</span>
+</div>
+<p class="font-caption text-caption text-text-secondary mt-1">Checklist sẽ tự động đính kèm tọa độ Marker trên PDF Drawing Viewer.</p>
+</div>
+<!-- Textarea: Mô tả thêm (Không bắt buộc) -->
+<div>
+<label class="block font-body-sm text-body-sm font-medium text-text-primary mb-1.5">
+            Mô tả thêm <span class="text-text-secondary font-normal font-caption text-caption">(không bắt buộc)</span>
+</label>
+<textarea class="w-full p-3 bg-surface-container-lowest border border-[#D9D9D9] hover:border-[#1677FF] focus:border-[#1677FF] focus:ring-2 focus:ring-[#1677FF]/20 rounded text-body-md font-body-md text-text-primary outline-none transition-colors placeholder:text-status-neutral resize-none" placeholder="Nhập ghi chú yêu cầu kiểm tra kỹ thuật, định mức tiêu chuẩn hoặc chỉ dẫn cho nhà thầu..." rows="3"></textarea>
+</div>
+<!-- Role Permissions Context Pill -->
+<div class="p-3 bg-[#E6F4FF]/50 border border-[#91CAFF] rounded flex items-center gap-2.5 text-body-sm font-body-sm text-[#0050B3]">
+<span class="material-symbols-outlined text-[18px]" data-icon="info">info</span>
+<span>Khởi tạo dưới vai trò <strong>Reviewer</strong>. Submitter và Approver sẽ nhận thông báo để phối hợp.</span>
+</div>
+<!-- Modal Footer -->
+<div class="mt-3 pt-4 border-t border-[#F0F0F0] flex items-center justify-end gap-3">
+<!-- Nút 'Hủy' (Button default viền #D9D9D9) -->
+<button class="h-9 px-4 rounded border border-[#D9D9D9] hover:border-[#1677FF] hover:text-[#1677FF] text-text-primary bg-surface-container-lowest text-body-md font-body-md font-medium transition-colors" onclick="document.getElementById('createChecklistModal').classList.add('hidden')" type="button">
+            Hủy
+          </button>
+<!-- Nút 'Tạo Checklist' (Button type='primary', nền #1677FF) -->
+<button class="h-9 px-5 rounded bg-[#1677FF] hover:bg-[#0057c2] active:bg-[#003fa3] text-white text-body-md font-body-md font-medium shadow-xs transition-colors" type="submit">
+            Tạo Checklist
+          </button>
+</div>
+</form>
+</div>
+</div>
+</body></html>

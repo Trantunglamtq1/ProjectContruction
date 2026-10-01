@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Đăng ký tài khoản - ConstrutInspect QA/QC Enterprise</title>
+<!-- Google Fonts: Public Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary": "#505e67",
+            "outline-variant": "#c1c6d7",
+            "on-surface-variant": "#414755",
+            "tertiary-fixed-dim": "#bac8d3",
+            "status-error": "#FF4D4F",
+            "secondary-fixed-dim": "#b3c5ff",
+            "on-secondary-container": "#fefcff",
+            "secondary": "#0053d0",
+            "on-tertiary": "#ffffff",
+            "status-neutral": "#8C8C8C",
+            "on-error-container": "#93000a",
+            "tertiary-container": "#697680",
+            "secondary-container": "#306ded",
+            "primary-fixed-dim": "#afc6ff",
+            "primary-container": "#006ef2",
+            "inverse-surface": "#2f3031",
+            "surface-dim": "#dbdad9",
+            "on-secondary-fixed-variant": "#003fa3",
+            "status-success": "#52C41A",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "primary-fixed": "#d9e2ff",
+            "on-tertiary-container": "#fcfcff",
+            "on-secondary-fixed": "#001849",
+            "outline": "#727786",
+            "surface-container-low": "#f4f3f3",
+            "inverse-primary": "#afc6ff",
+            "surface-container-lowest": "#ffffff",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "error": "#ba1a1a",
+            "background": "#faf9f9",
+            "surface-white": "#FFFFFF",
+            "on-tertiary-fixed": "#101d25",
+            "primary": "#0057c2",
+            "on-secondary": "#ffffff",
+            "text-primary": "#1F2937",
+            "secondary-fixed": "#dae1ff",
+            "on-error": "#ffffff",
+            "text-secondary": "#595959",
+            "on-primary-fixed-variant": "#004398",
+            "surface": "#faf9f9",
+            "on-primary-fixed": "#001a43",
+            "on-primary-container": "#fefcff",
+            "surface-container-highest": "#e3e2e2",
+            "surface-variant": "#e3e2e2",
+            "viewport-overlay-stroke": "#1677FF",
+            "on-surface": "#1b1c1c",
+            "border-subtle": "#E4E7ED",
+            "on-background": "#1b1c1c",
+            "surface-container": "#efeded",
+            "inverse-on-surface": "#f2f0f0",
+            "tertiary-fixed": "#d6e4ef",
+            "status-warning": "#FAAD14",
+            "surface-tint": "#0059c7",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "border-strong": "#D9D9D9",
+            "canvas-background": "#F5F7FA",
+            "surface-container-high": "#e9e8e8",
+            "surface-bright": "#faf9f9"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "1.5rem",
+            "gutter-lg": "1.5rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"],
+            "display": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "headline-sm": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "display-mobile": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "headline-lg": ["Public Sans"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+            "body-md": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+            "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+            "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+            "caption": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+            "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "display-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+            "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Technical blueprint grid substrate */
+    .blueprint-grid {
+      background-color: #F5F7FA;
+      background-image: 
+        linear-gradient(to right, rgba(22, 119, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(22, 119, 255, 0.04) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    
+    .technical-lines {
+      background-image: radial-gradient(circle at 50% 0%, rgba(22, 119, 255, 0.07) 0%, transparent 70%);
+    }
+
+    /* Ant Design Ant-Input focus mimicking without generic rings */
+    .antd-input:focus {
+      border-color: #1677FF !important;
+      box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15) !important;
+      outline: none;
+    }
+  </style>
+</head>
+<body class="blueprint-grid technical-lines min-h-screen flex flex-col justify-between text-text-primary antialiased selection:bg-primary-fixed selection:text-primary">
+<!-- Rapid Navigation Switcher Bar (For Architecture / QA Audit Reviewers) -->
+<header class="w-full bg-surface-container-lowest border-b border-border-subtle py-2 px-space-md z-20 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-sm">
+<div class="h-6 w-6 rounded bg-primary text-on-primary flex items-center justify-center font-bold text-caption">CI</div>
+<span class="font-headline-sm text-headline-sm text-text-primary tracking-tight font-semibold">ConstrutInspect QA/QC</span>
+<span class="ml-2 px-1.5 py-0.5 rounded bg-surface-container text-text-secondary font-label-sm text-label-sm border border-border-subtle">v2.4-STABLE</span>
+</div>
+<nav aria-label="Auth Route Switcher" class="flex items-center gap-1.5">
+<span class="font-caption text-caption text-text-secondary mr-1">Luồng màn hình:</span>
+<a class="px-2.5 py-1 rounded-lg bg-primary-fixed text-primary font-caption text-caption font-semibold flex items-center gap-1 border border-primary/20" href="/auth/register">
+<span class="material-symbols-outlined text-caption" data-icon="how_to_reg">how_to_reg</span>
+        Màn 01: Đăng ký
+      </a>
+<a class="px-2.5 py-1 rounded-lg hover:bg-surface-container text-text-secondary font-caption text-caption transition-colors flex items-center gap-1" href="/auth/login">
+<span class="material-symbols-outlined text-caption" data-icon="login">login</span>
+        Màn 02: Đăng nhập
+      </a>
+<a class="px-2.5 py-1 rounded-lg hover:bg-surface-container text-text-secondary font-caption text-caption transition-colors flex items-center gap-1" href="/auth/pending-approval">
+<span class="material-symbols-outlined text-caption" data-icon="hourglass_top">hourglass_top</span>
+        Màn 03: Chờ duyệt
+      </a>
+<a class="px-2.5 py-1 rounded-lg hover:bg-surface-container text-text-secondary font-caption text-caption transition-colors flex items-center gap-1" href="/drawings/viewer">
+<span class="material-symbols-outlined text-caption" data-icon="architecture">architecture</span>
+        Màn 05: Bản vẽ &amp; Marker
+      </a>
+</nav>
+</header>
+<!-- Main Centered Authentication Canvas -->
+<main class="flex-1 flex items-center justify-center py-10 px-space-md">
+<!-- Ant Design Style Centered Register Card (480px) -->
+<div class="w-full max-w-[480px] bg-surface-container-lowest rounded-lg border border-border-subtle shadow-[0_4px_16px_rgba(0,0,0,0.06)] overflow-hidden">
+<!-- Top Decorative Accent Bar -->
+<div class="h-1 w-full bg-primary"></div>
+<div class="p-space-xl">
+<!-- Header Branding & Identity -->
+<div class="text-center mb-space-lg">
+<div class="inline-flex items-center justify-center w-12 h-12 rounded bg-primary-fixed text-primary mb-3 shadow-inner">
+<span class="material-symbols-outlined text-3xl" data-icon="verified">verified</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-text-primary tracking-tight">Đăng ký tài khoản</h1>
+<p class="font-body-md text-body-md text-text-secondary mt-1">Tạo tài khoản kỹ sư / cán bộ tham gia hệ thống ConstrutInspect QA/QC</p>
+</div>
+<!-- Registration Form -->
+<form class="space-y-4" id="registerForm" onsubmit="event.preventDefault(); validateForm();">
+<!-- Field 1: Họ và tên -->
+<div class="space-y-1">
+<label class="block font-body-md text-body-md font-medium text-text-primary" for="fullName">
+<span class="text-status-error mr-1 font-label-md">*</span>Họ và tên
+            </label>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-status-neutral flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-body-lg" data-icon="person">person</span>
+</span>
+<input class="antd-input w-full pl-9 pr-3 py-2 text-body-md font-body-md bg-surface-white border border-border-strong rounded-lg placeholder-text-secondary/50 transition-all text-text-primary" id="fullName" name="fullName" placeholder="Ví dụ: Nguyễn Văn Kỹ Sư" required="" type="text"/>
+</div>
+<p class="hidden text-status-error font-body-sm text-body-sm flex items-center gap-1 mt-0.5" id="fullNameError">
+<span class="material-symbols-outlined text-body-sm" data-icon="error">error</span>Vui lòng nhập họ và tên hợp lệ theo hồ sơ năng lực.
+            </p>
+</div>
+<!-- Field 2: Tên đăng nhập -->
+<div class="space-y-1">
+<label class="block font-body-md text-body-md font-medium text-text-primary" for="username">
+<span class="text-status-error mr-1 font-label-md">*</span>Tên đăng nhập
+            </label>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-status-neutral flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-body-lg" data-icon="badge">badge</span>
+</span>
+<input class="antd-input w-full pl-9 pr-3 py-2 text-body-md font-body-md bg-surface-white border border-border-strong rounded-lg placeholder-text-secondary/50 transition-all text-text-primary" id="username" name="username" pattern="^[a-zA-Z0-9._]+$" placeholder="nguyen.vanky" required="" type="text"/>
+</div>
+<div class="flex items-center justify-between">
+<p class="font-body-sm text-body-sm text-text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-body-sm" data-icon="info">info</span>Tên đăng nhập viết liền không dấu, dùng trong biên bản ký số.
+              </p>
+</div>
+</div>
+<!-- Field 3: Email công tác -->
+<div class="space-y-1">
+<label class="block font-body-md text-body-md font-medium text-text-primary" for="workEmail">
+<span class="text-status-error mr-1 font-label-md">*</span>Email công tác
+            </label>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-status-neutral flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-body-lg" data-icon="mail">mail</span>
+</span>
+<input class="antd-input w-full pl-9 pr-3 py-2 text-body-md font-body-md bg-surface-white border border-border-strong rounded-lg placeholder-text-secondary/50 transition-all text-text-primary" id="workEmail" name="workEmail" placeholder="ky.su@constructcorp.vn" required="" type="email"/>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary">Dùng nhận thông báo duyệt hồ sơ nghiệm thu &amp; báo cáo lỗi công trường.</p>
+</div>
+<!-- Field 4: Mật khẩu & Strength Bar -->
+<div class="space-y-1.5">
+<label class="block font-body-md text-body-md font-medium text-text-primary" for="password">
+<span class="text-status-error mr-1 font-label-md">*</span>Mật khẩu
+            </label>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-status-neutral flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-body-lg" data-icon="lock">lock</span>
+</span>
+<input class="antd-input w-full pl-9 pr-10 py-2 text-body-md font-body-md bg-surface-white border border-border-strong rounded-lg placeholder-text-secondary/50 transition-all text-text-primary" id="password" minlength="6" name="password" oninput="updatePasswordStrength(this.value)" placeholder="Nhập tối thiểu 6 ký tự bảo mật" required="" type="password"/>
+<button aria-label="Hiện hoặc ẩn mật khẩu" class="absolute right-3 text-status-neutral hover:text-text-primary flex items-center focus:outline-none" onclick="togglePasswordVisibility('password', 'toggleEyeIcon1')" type="button">
+<span class="material-symbols-outlined text-body-lg" data-icon="visibility" id="toggleEyeIcon1">visibility</span>
+</button>
+</div>
+<!-- Technical Password Strength Indicator Meter -->
+<div class="space-y-1 pt-1">
+<div class="grid grid-cols-4 gap-1.5 h-1.5 w-full">
+<div class="h-full rounded-full bg-border-strong transition-colors duration-200" id="bar1"></div>
+<div class="h-full rounded-full bg-border-strong transition-colors duration-200" id="bar2"></div>
+<div class="h-full rounded-full bg-border-strong transition-colors duration-200" id="bar3"></div>
+<div class="h-full rounded-full bg-border-strong transition-colors duration-200" id="bar4"></div>
+</div>
+<div class="flex justify-between items-center font-caption text-caption text-text-secondary">
+<span id="strengthText">Độ mạnh: Chưa nhập</span>
+<span class="font-label-sm text-label-sm">Yêu cầu ≥ 6 ký tự</span>
+</div>
+</div>
+</div>
+<!-- Field 5: Xác nhận mật khẩu -->
+<div class="space-y-1">
+<label class="block font-body-md text-body-md font-medium text-text-primary" for="confirmPassword">
+<span class="text-status-error mr-1 font-label-md">*</span>Xác nhận mật khẩu
+            </label>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-status-neutral flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-body-lg" data-icon="check_circle">check_circle</span>
+</span>
+<input class="antd-input w-full pl-9 pr-10 py-2 text-body-md font-body-md bg-surface-white border border-border-strong rounded-lg placeholder-text-secondary/50 transition-all text-text-primary" id="confirmPassword" name="confirmPassword" oninput="checkPasswordMatch()" placeholder="Nhập lại mật khẩu vừa đặt" required="" type="password"/>
+<button aria-label="Hiện hoặc ẩn mật khẩu xác nhận" class="absolute right-3 text-status-neutral hover:text-text-primary flex items-center focus:outline-none" onclick="togglePasswordVisibility('confirmPassword', 'toggleEyeIcon2')" type="button">
+<span class="material-symbols-outlined text-body-lg" data-icon="visibility" id="toggleEyeIcon2">visibility</span>
+</button>
+</div>
+<p class="hidden text-status-error font-body-sm text-body-sm flex items-center gap-1 mt-0.5" id="matchError">
+<span class="material-symbols-outlined text-body-sm" data-icon="cancel">cancel</span>Mật khẩu xác nhận không khớp.
+            </p>
+</div>
+<!-- Checkbox Điều khoản & Tiêu chuẩn số liệu -->
+<div class="pt-2">
+<label class="flex items-start gap-2.5 cursor-pointer">
+<input class="mt-1 w-4 h-4 rounded text-primary focus:ring-primary border-border-strong transition-all cursor-pointer" id="agreement" required="" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-text-secondary leading-snug select-none">
+                Tôi đồng ý với <a class="text-primary hover:underline font-medium" href="#">Quy chế sử dụng</a> và cam kết tuân thủ quy chuẩn an toàn số liệu kỹ thuật, xác nhận chữ ký điện tử trên hồ sơ nghiệm thu.
+              </span>
+</label>
+</div>
+<!-- Technical Alert Note (Ant Design Alert Type: Info) -->
+<div class="p-space-sm bg-surface-container border border-border-subtle rounded-lg flex items-start gap-2.5 my-2">
+<span class="material-symbols-outlined text-primary text-headline-sm flex-shrink-0 mt-0.5" data-icon="info">info</span>
+<div class="space-y-0.5">
+<div class="font-body-sm text-body-sm font-semibold text-text-primary">Quy định phê duyệt tài khoản:</div>
+<p class="font-body-sm text-body-sm text-text-secondary leading-relaxed">
+                Tài khoản mới tạo sẽ có trạng thái <span class="font-label-sm text-label-sm px-1 rounded bg-surface-container-highest font-medium text-text-primary">Chờ duyệt quyền (RoleId = null)</span>. Quản trị viên (Admin) sẽ phân quyền <strong class="font-semibold text-text-primary">Submitter</strong>, <strong class="font-semibold text-text-primary">Reviewer</strong> hoặc <strong class="font-semibold text-text-primary">Approver</strong> trước khi bạn có thể truy cập dự án.
+              </p>
+</div>
+</div>
+<!-- Main Submission Button (Ant Design Type Primary) -->
+<div class="pt-2">
+<button class="w-full h-10 bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-headline-sm font-medium rounded-lg transition-all duration-150 flex items-center justify-center gap-2 shadow-[0_2px_0_rgba(0,0,0,0.043)] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-primary/20" id="submitBtn" type="submit">
+<span class="material-symbols-outlined text-headline-sm" data-icon="person_add">person_add</span>
+<span>Đăng ký tài khoản</span>
+</button>
+</div>
+</form>
+<!-- Divider -->
+<div class="relative my-6">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-border-subtle"></div>
+</div>
+<div class="relative flex justify-center text-caption font-caption">
+<span class="bg-surface-container-lowest px-3 text-text-secondary">Hoặc</span>
+</div>
+</div>
+<!-- Footer Card Redirection -->
+<div class="text-center">
+<p class="font-body-md text-body-md text-text-secondary">
+            Đã có tài khoản kỹ sư / giám sát?
+            <a class="text-primary hover:text-primary-container font-semibold transition-colors inline-flex items-center gap-0.5 ml-1" href="/auth/login">
+              Đăng nhập ngay
+              <span class="material-symbols-outlined text-caption" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</p>
+</div>
+</div>
+<!-- Technical Sub-footer Bar -->
+<div class="bg-surface-container-low px-space-xl py-2.5 border-t border-border-subtle flex items-center justify-between text-caption font-caption text-text-secondary">
+<div class="flex items-center gap-1.5">
+<span class="inline-block w-2 h-2 rounded-full bg-status-success"></span>
+<span>Cổng bảo mật SSL 256-bit</span>
+</div>
+<div class="font-label-sm text-label-sm">
+          FORM-ID: REG-QAQC-01
+        </div>
+</div>
+</div>
+</main>
+<!-- Global Footer -->
+<footer class="w-full py-4 text-center border-t border-border-subtle bg-surface-container-lowest/80 text-text-secondary font-body-sm text-body-sm">
+<div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2">
+<p>© 2025 ConstrutInspect QA/QC Systems. Nền tảng nghiệm thu &amp; kiểm soát chất lượng công trình.</p>
+<div class="flex items-center gap-4 text-caption font-caption">
+<a class="hover:text-primary transition-colors" href="#">Tiêu chuẩn TCVN / ASTM</a>
+<span class="text-border-strong">•</span>
+<a class="hover:text-primary transition-colors" href="#">Điều khoản bảo mật</a>
+<span class="text-border-strong">•</span>
+<a class="hover:text-primary transition-colors" href="#">Hỗ trợ kỹ thuật: 1900-888-QAQC</a>
+</div>
+</div>
+</footer>
+<!-- Micro-Interactions & Form Validation Scripts -->
+<script>
+    // Toggle Password Visibility
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+      } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+      }
+    }
+
+    // Dynamic Password Strength Meter
+    function updatePasswordStrength(val) {
+      const bar1 = document.getElementById('bar1');
+      const bar2 = document.getElementById('bar2');
+      const bar3 = document.getElementById('bar3');
+      const bar4 = document.getElementById('bar4');
+      const strengthText = document.getElementById('strengthText');
+
+      // Reset
+      [bar1, bar2, bar3, bar4].forEach(b => {
+        b.className = 'h-full rounded-full bg-border-strong transition-colors duration-200';
+      });
+
+      if (!val || val.length === 0) {
+        strengthText.textContent = 'Độ mạnh: Chưa nhập';
+        strengthText.className = 'text-text-secondary font-caption text-caption';
+        return;
+      }
+
+      let score = 0;
+      if (val.length >= 6) score++;
+      if (val.length >= 8) score++;
+      if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+
+      if (score === 1) {
+        bar1.className = 'h-full rounded-full bg-status-error transition-colors duration-200';
+        strengthText.textContent = 'Độ mạnh: Yếu';
+        strengthText.className = 'text-status-error font-caption text-caption font-medium';
+      } else if (score === 2) {
+        bar1.className = 'h-full rounded-full bg-status-warning transition-colors duration-200';
+        bar2.className = 'h-full rounded-full bg-status-warning transition-colors duration-200';
+        strengthText.textContent = 'Độ mạnh: Trung bình';
+        strengthText.className = 'text-status-warning font-caption text-caption font-medium';
+      } else if (score >= 3) {
+        bar1.className = 'h-full rounded-full bg-status-success transition-colors duration-200';
+        bar2.className = 'h-full rounded-full bg-status-success transition-colors duration-200';
+        bar3.className = 'h-full rounded-full bg-status-success transition-colors duration-200';
+        if (score === 4) {
+          bar4.className = 'h-full rounded-full bg-status-success transition-colors duration-200';
+          strengthText.textContent = 'Độ mạnh: Rất mạnh (Kỹ thuật)';
+        } else {
+          strengthText.textContent = 'Độ mạnh: Khá an toàn';
+        }
+        strengthText.className = 'text-status-success font-caption text-caption font-medium';
+      }
+
+      checkPasswordMatch();
+    }
+
+    // Password Match Validation
+    function checkPasswordMatch() {
+      const pwd = document.getElementById('password').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const errorMsg = document.getElementById('matchError');
+
+      if (confirm.length > 0 && pwd !== confirm) {
+        errorMsg.classList.remove('hidden');
+      } else {
+        errorMsg.classList.add('hidden');
+      }
+    }
+
+    // Form Submission Handling
+    function validateForm() {
+      const pwd = document.getElementById('password').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const agreement = document.getElementById('agreement').checked;
+
+      if (pwd !== confirm) {
+        alert('Lỗi xác nhận: Mật khẩu và xác nhận mật khẩu chưa đồng bộ.');
+        return;
+      }
+
+      if (!agreement) {
+        alert('Vui lòng đồng ý với Quy chế sử dụng và cam kết số liệu kỹ thuật.');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <span class="inline-block animate-spin mr-1">
+          <span class="material-symbols-outlined text-headline-sm" data-icon="progress_activity">progress_activity</span>
+        </span>
+        <span>Đang khởi tạo tài khoản...</span>
+      `;
+
+      // Mock registration submission API call
+      setTimeout(() => {
+        alert('Tạo tài khoản thành công! Bạn đang được chuyển hướng sang màn hình Chờ duyệt quyền (RoleId = null).');
+        window.location.href = '/auth/pending-approval';
+      }, 1200);
+    }
+  </script>
+</body></html>

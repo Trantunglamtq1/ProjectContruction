@@ -1,0 +1,363 @@
+<!DOCTYPE html><html class="light" lang="vi"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ConstrutInspect - Đăng nhập hệ thống (Login)</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Fonts: Public Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary": "#505e67",
+            "outline-variant": "#c1c6d7",
+            "on-surface-variant": "#414755",
+            "tertiary-fixed-dim": "#bac8d3",
+            "status-error": "#FF4D4F",
+            "secondary-fixed-dim": "#b3c5ff",
+            "on-secondary-container": "#fefcff",
+            "secondary": "#0053d0",
+            "on-tertiary": "#ffffff",
+            "status-neutral": "#8C8C8C",
+            "on-error-container": "#93000a",
+            "tertiary-container": "#697680",
+            "secondary-container": "#306ded",
+            "primary-fixed-dim": "#afc6ff",
+            "primary-container": "#006ef2",
+            "inverse-surface": "#2f3031",
+            "surface-dim": "#dbdad9",
+            "on-secondary-fixed-variant": "#003fa3",
+            "status-success": "#52C41A",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "primary-fixed": "#d9e2ff",
+            "on-tertiary-container": "#fcfcff",
+            "on-secondary-fixed": "#001849",
+            "outline": "#727786",
+            "surface-container-low": "#f4f3f3",
+            "inverse-primary": "#afc6ff",
+            "surface-container-lowest": "#ffffff",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "error": "#ba1a1a",
+            "background": "#faf9f9",
+            "surface-white": "#FFFFFF",
+            "on-tertiary-fixed": "#101d25",
+            "primary": "#0057c2",
+            "on-secondary": "#ffffff",
+            "text-primary": "#1F2937",
+            "secondary-fixed": "#dae1ff",
+            "on-error": "#ffffff",
+            "text-secondary": "#595959",
+            "on-primary-fixed-variant": "#004398",
+            "surface": "#faf9f9",
+            "on-primary-fixed": "#001a43",
+            "on-primary-container": "#fefcff",
+            "surface-container-highest": "#e3e2e2",
+            "surface-variant": "#e3e2e2",
+            "viewport-overlay-stroke": "#1677FF",
+            "on-surface": "#1b1c1c",
+            "border-subtle": "#E4E7ED",
+            "on-background": "#1b1c1c",
+            "surface-container": "#efeded",
+            "inverse-on-surface": "#f2f0f0",
+            "tertiary-fixed": "#d6e4ef",
+            "status-warning": "#FAAD14",
+            "surface-tint": "#0059c7",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "border-strong": "#D9D9D9",
+            "canvas-background": "#F5F7FA",
+            "surface-container-high": "#e9e8e8",
+            "surface-bright": "#faf9f9"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "1.5rem",
+            "gutter-lg": "1.5rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"],
+            "display": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "headline-sm": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "display-mobile": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "headline-lg": ["Public Sans"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "display-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-canvas-background text-text-primary min-h-screen flex flex-col font-body-md text-body-md antialiased selection:bg-primary-fixed selection:text-primary">
+<!-- Top Mock Test Routing Bar -->
+<aside aria-label="Auth Screens Quick Switcher" class="w-full bg-surface-container-lowest border-b border-border-subtle py-1.5 px-space-lg flex items-center justify-between z-50 text-caption">
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-container text-text-secondary font-label-sm text-label-sm font-medium">
+        AUTH PIPELINE
+      </span>
+<span class="font-body-sm text-body-sm text-text-secondary">Chuyển đổi giao diện kiểm thử luồng xác thực:</span>
+</div>
+<nav class="flex items-center gap-space-md font-label-sm text-label-sm">
+<a class="text-text-secondary hover:text-primary transition-colors duration-150 flex items-center gap-1" href="#register">
+<span class="material-symbols-outlined text-[14px]">how_to_reg</span>
+        Màn 01: Đăng ký (/auth/register)
+      </a>
+<span class="text-border-strong">•</span>
+<a class="text-primary font-semibold flex items-center gap-1 bg-primary-fixed px-2 py-0.5 rounded" href="#login">
+<span class="material-symbols-outlined text-[14px]">login</span>
+        Màn 02: Đăng nhập (/auth/login)
+      </a>
+<span class="text-border-strong">•</span>
+<a class="text-text-secondary hover:text-primary transition-colors duration-150 flex items-center gap-1" href="#pending">
+<span class="material-symbols-outlined text-[14px]">hourglass_top</span>
+        Màn 03: Chờ duyệt quyền (/pending-approval)
+      </a>
+</nav>
+</aside>
+<!-- Main Container -->
+<main class="flex-1 flex items-center justify-center p-space-md lg:p-space-xl">
+<div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 bg-surface-container-lowest border border-border-subtle rounded-lg shadow-sm overflow-hidden min-h-[720px]">
+<!-- Visual Split Section: Engineering Blueprint QA/QC Showcase -->
+<section class="lg:col-span-5 bg-gradient-to-br from-[#00224f] via-[#003882] to-primary p-space-xl flex flex-col justify-between text-on-primary relative overflow-hidden">
+<!-- Abstract Tech Watermark & Coordinate Lines -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>
+<div class="relative z-10">
+<header class="flex items-center gap-space-sm mb-space-xl">
+<div class="w-10 h-10 rounded bg-surface-container-lowest/10 backdrop-blur border border-white/20 flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[24px]">verified_user</span>
+</div>
+<div>
+<span class="font-headline-lg text-headline-lg font-bold tracking-tight block">ConstrutInspect</span>
+<span class="font-label-sm text-label-sm text-primary-fixed font-normal uppercase tracking-wider block">Enterprise QA/QC Engine</span>
+</div>
+</header>
+<div class="space-y-space-md mb-space-lg">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/10 text-white border border-white/20 font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-status-success animate-pulse"></span>
+              Phù hợp Nghị định 06/2021/NĐ-CP
+            </div>
+<h1 class="font-display text-display text-white leading-tight font-bold">
+              Số hoá toàn trình công tác nghiệm thu công trình.
+            </h1>
+<p class="font-body-md text-body-md text-primary-fixed leading-relaxed">
+              Giải pháp tích hợp đồng bộ hồ sơ chất lượng, định vị sai lệch trên bản vẽ kỹ thuật CAD/PDF và luồng phê duyệt đa cấp thời gian thực.
+            </p>
+</div>
+<!-- Technical Core Pillars -->
+<div class="grid grid-cols-1 gap-space-sm pt-space-md border-t border-white/15">
+<div class="flex items-start gap-space-sm p-space-sm rounded bg-white/5 border border-white/10">
+<span class="material-symbols-outlined text-[20px] text-primary-fixed shrink-0">architecture</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-white font-semibold">Bản vẽ kỹ thuật &amp; Marker</h2>
+<p class="font-body-sm text-body-sm text-primary-fixed/80">Khoanh vùng tọa độ đối tượng kiểm tra, tự động trích xuất mã ID cấu kiện.</p>
+</div>
+</div>
+<div class="flex items-start gap-space-sm p-space-sm rounded bg-white/5 border border-white/10">
+<span class="material-symbols-outlined text-[20px] text-primary-fixed shrink-0">dynamic_form</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-white font-semibold">Biểu mẫu FormIO &amp; Checklist</h2>
+<p class="font-body-sm text-body-sm text-primary-fixed/80">Mẫu biên bản số hoá động, kiểm soát tiêu chí nghiệm thu chặt chẽ.</p>
+</div>
+</div>
+<div class="flex items-start gap-space-sm p-space-sm rounded bg-white/5 border border-white/10">
+<span class="material-symbols-outlined text-[20px] text-primary-fixed shrink-0">timeline</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-white font-semibold">Luồng phê duyệt Elsa Workflow</h2>
+<p class="font-body-sm text-body-sm text-primary-fixed/80">Máy trạng thái xử lý tự động từ Submitter → Reviewer → Approver.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- System Version Stamp -->
+<footer class="relative z-10 pt-space-lg flex items-center justify-between text-caption font-label-sm text-primary-fixed/70 border-t border-white/10">
+<span class="">SYS_VER: 2.5.0-PROD</span>
+<span class="">ISO 19650 &amp; NĐ 06/2021</span>
+</footer>
+</section>
+<!-- Auth Form Section (Ant Design Style) -->
+<section class="lg:col-span-7 p-space-lg lg:p-space-xl flex flex-col justify-between bg-surface-container-lowest">
+<div>
+<!-- Header and Title -->
+<div class="mb-space-lg pb-space-sm border-b border-border-subtle flex items-start justify-between">
+<div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-text-primary">Đăng nhập hệ thống</h2>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Hệ thống kiểm soát chất lượng &amp; Nghiệm thu công trình</p>
+</div>
+
+</div>
+<!-- Ant Design Style Alert: Security Notice -->
+<div class="mb-space-md p-space-sm bg-[#e6f4ff] border border-[#91caff] rounded flex items-start gap-space-sm text-[#003eb3]">
+<span class="material-symbols-outlined text-[18px] text-[#1677FF] mt-0.5">info</span>
+<div class="flex-1">
+<p class="font-caption text-caption text-[#003eb3] leading-snug">
+<strong>Bảo mật thông tin:</strong> Hệ thống sử dụng JWT Authentication với phân quyền nghiêm ngặt theo Claims. Phiên làm việc được kiểm soát tự động.
+              </p>
+</div>
+</div>
+<!-- Quick Role Switcher Box (Test Simulator) -->
+
+<!-- Ant Design Form -->
+<form class="space-y-space-md" id="loginForm" onsubmit="handleFormSubmit(event)">
+<!-- Field 1: Username / Email -->
+<div>
+<label class="block font-body-sm text-body-sm font-medium text-text-primary mb-1.5" for="username">
+<span class="text-status-error">*</span> Tên đăng nhập hoặc Email công tác
+              </label>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-text-secondary pointer-events-none flex items-center">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</span>
+<input class="w-full h-10 pl-9 pr-3 text-body-md font-body-md bg-surface-container-lowest border border-border-strong rounded hover:border-viewport-overlay-stroke focus:border-viewport-overlay-stroke focus:ring-2 focus:ring-viewport-overlay-stroke/20 transition-all duration-150 outline-none placeholder:text-status-neutral" id="username" name="username" placeholder="Nhập tên đăng nhập hoặc email công tác" required="" type="text" value="">
+</div>
+</div>
+<!-- Field 2: Password -->
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="block font-body-sm text-body-sm font-medium text-text-primary" for="password">
+<span class="text-status-error">*</span> Mật khẩu
+                </label>
+<a class="font-caption text-caption text-primary hover:underline" href="#forgot-password">
+                  Quên mật khẩu?
+                </a>
+</div>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-text-secondary pointer-events-none flex items-center">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</span>
+<input class="w-full h-10 pl-9 pr-10 text-body-md font-body-md bg-surface-container-lowest border border-border-strong rounded hover:border-viewport-overlay-stroke focus:border-viewport-overlay-stroke focus:ring-2 focus:ring-viewport-overlay-stroke/20 transition-all duration-150 outline-none placeholder:text-status-neutral" id="password" name="password" placeholder="Nhập mật khẩu" required="" type="password" value="">
+<button class="absolute right-3 text-text-secondary hover:text-text-primary flex items-center" id="togglePasswordBtn" onclick="togglePasswordVisibility()" type="button">
+<span class="material-symbols-outlined text-[18px]" id="passwordToggleIcon">visibility</span>
+</button>
+</div>
+</div>
+<!-- Remember me checkbox -->
+<div class="flex items-center justify-between pt-1">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input checked="" class="w-4 h-4 rounded text-primary focus:ring-primary/20 border-border-strong" type="checkbox">
+<span class="font-body-sm text-body-sm text-text-secondary">Ghi nhớ đăng nhập trên thiết bị này</span>
+</label>
+<!-- Role Route Badge Preview -->
+
+</div>
+<!-- Submit Button (Ant Design Primary #1677FF) -->
+<div class="pt-2">
+<button class="w-full h-10 bg-[#1677FF] hover:bg-[#4096ff] active:bg-[#0958d9] text-white font-headline-sm text-headline-sm font-semibold rounded flex items-center justify-center gap-2 shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#1677FF]/40" id="submitBtn" type="submit">
+<span class="material-symbols-outlined text-[20px]">login</span>
+<span class="">Đăng nhập</span>
+</button>
+</div>
+<!-- Link to Register Screen 01 -->
+<div class="text-center pt-2">
+<span class="font-body-sm text-body-sm text-text-secondary">Chưa có tài khoản?</span>
+<a class="font-body-sm text-body-sm text-[#1677FF] hover:underline font-medium ml-1" href="#register-screen-01">
+                Đăng ký tài khoản mới
+              </a>
+</div>
+</form>
+</div>
+<!-- Footer Notice -->
+<footer class="mt-space-lg pt-space-md border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between text-caption text-text-secondary">
+<span class="">ConstrutInspect QA/QC v2.5</span>
+<span class="flex items-center gap-1 mt-1 sm:mt-0 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px] text-status-success">verified</span>
+            Chuẩn an toàn dữ liệu xây dựng Việt Nam
+          </span>
+</footer>
+</section>
+</div>
+</main>
+<!-- Interactive Logic for Demo Role Switch & Form -->
+<script>
+    function selectRole(email, pass, roleLabel, targetRoute) {
+      document.getElementById('username').value = email;
+      document.getElementById('password').value = pass;
+      
+      const badge = document.getElementById('targetRouteBadge');
+      badge.textContent = 'Route: ' + targetRoute;
+
+      // Subtle feedback animation
+      badge.classList.add('scale-105');
+      setTimeout(() => badge.classList.remove('scale-105'), 200);
+    }
+
+    function togglePasswordVisibility() {
+      const passwordInput = document.getElementById('password');
+      const toggleIcon = document.getElementById('passwordToggleIcon');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.textContent = 'visibility_off';
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.textContent = 'visibility';
+      }
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const originalHtml = btn.innerHTML;
+      
+      btn.disabled = true;
+      btn.innerHTML = `<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span><span>Đang xác thực Claims...</span>`;
+      
+      setTimeout(() => {
+        const username = document.getElementById('username').value;
+        if (username.includes('newbie')) {
+          alert('Tài khoản mới (RoleId = null). Chuyển hướng tới Màn 03: Chờ duyệt quyền (/pending-approval).');
+        } else if (username.includes('admin')) {
+          alert('Đăng nhập thành công với vai trò: Admin -> Chuyển hướng /admin/users.');
+        } else if (username.includes('reviewer')) {
+          alert('Đăng nhập thành công với vai trò: Reviewer -> Chuyển hướng /checklists.');
+        } else if (username.includes('approver')) {
+          alert('Đăng nhập thành công với vai trò: Approver -> Chuyển hướng /inspections.');
+        } else {
+          alert('Đăng nhập thành công với vai trò: Submitter -> Chuyển hướng /drawings.');
+        }
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }, 700);
+    }
+  </script>
+
+
+</body></html>

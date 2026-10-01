@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Viewport Bản vẽ &amp; Khoanh vùng Marker | ConstrutInspect</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "status-success": "#52C41A",
+            "on-surface-variant": "#414755",
+            "border-strong": "#D9D9D9",
+            "surface-tint": "#0059c7",
+            "error": "#ba1a1a",
+            "on-tertiary": "#ffffff",
+            "outline": "#727786",
+            "on-secondary-fixed": "#001849",
+            "on-primary": "#ffffff",
+            "tertiary-fixed-dim": "#bac8d3",
+            "on-secondary-fixed-variant": "#003fa3",
+            "primary-fixed": "#d9e2ff",
+            "outline-variant": "#c1c6d7",
+            "surface-dim": "#dbdad9",
+            "inverse-surface": "#2f3031",
+            "primary-container": "#006ef2",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "surface-container-highest": "#e3e2e2",
+            "background": "#faf9f9",
+            "surface-container-lowest": "#ffffff",
+            "tertiary": "#505e67",
+            "surface-bright": "#faf9f9",
+            "secondary-fixed": "#dae1ff",
+            "on-tertiary-container": "#fcfcff",
+            "on-background": "#1b1c1c",
+            "inverse-primary": "#afc6ff",
+            "on-primary-container": "#fefcff",
+            "surface-container": "#efeded",
+            "viewport-overlay-stroke": "#1677FF",
+            "inverse-on-surface": "#f2f0f0",
+            "surface-variant": "#e3e2e2",
+            "status-neutral": "#8C8C8C",
+            "secondary-fixed-dim": "#b3c5ff",
+            "primary-fixed-dim": "#afc6ff",
+            "primary": "#0057c2",
+            "status-warning": "#FAAD14",
+            "secondary-container": "#306ded",
+            "surface-white": "#FFFFFF",
+            "on-primary-fixed-variant": "#004398",
+            "surface-container-high": "#e9e8e8",
+            "status-error": "#FF4D4F",
+            "on-secondary": "#ffffff",
+            "tertiary-container": "#697680",
+            "surface": "#faf9f9",
+            "on-secondary-container": "#fefcff",
+            "secondary": "#0053d0",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "on-primary-fixed": "#001a43",
+            "on-tertiary-fixed": "#101d25",
+            "text-primary": "#1F2937",
+            "canvas-background": "#F5F7FA",
+            "surface-container-low": "#f4f3f3",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "text-secondary": "#595959",
+            "tertiary-fixed": "#d6e4ef",
+            "border-subtle": "#E4E7ED",
+            "on-surface": "#1b1c1c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin-mobile": "1rem",
+            "gutter-lg": "1.5rem",
+            "space-xl": "2rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1.5rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "headline-lg-mobile": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "headline-lg": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "headline-sm": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "display-mobile": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "display-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 18px;
+    }
+    .grid-blueprint-bg {
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(22, 119, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(22, 119, 255, 0.05) 1px, transparent 1px);
+    }
+  </style>
+</head>
+<body class="bg-canvas-background text-text-primary h-full overflow-hidden flex flex-col font-body-md text-body-md select-none">
+<!-- TOPBAR ĐIỀU HƯỚNG VIEWPORT (Ant Design Engineering Spec) -->
+<header class="bg-surface-white border-b border-border-subtle h-14 flex items-center justify-between px-space-md z-30 shrink-0">
+<!-- Trái: Điều hướng & Breadcrumb & Tên file PDF -->
+<div class="flex items-center gap-space-md">
+<a class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded hover:bg-canvas-background text-text-secondary hover:text-text-primary transition-colors text-body-sm font-body-sm border border-border-subtle" href="/drawings">
+<span class="material-symbols-outlined">arrow_back</span>
+<span>Quay lại Danh sách Bản vẽ</span>
+</a>
+<div class="h-4 w-[1px] bg-border-subtle"></div>
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-1 text-body-sm text-text-secondary">
+<span>Khu Đô Thị Sunrise</span>
+<span class="material-symbols-outlined !text-[14px]">chevron_right</span>
+<span>Block A</span>
+<span class="material-symbols-outlined !text-[14px]">chevron_right</span>
+<span class="text-text-primary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-primary !text-[16px]">picture_as_pdf</span>
+          MatBang_Tang5_BlockA.pdf
+        </span>
+</nav>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-primary-fixed text-primary border border-outline-variant">
+        REV_04
+      </span>
+</div>
+<!-- Giữa / Phải: Toolbar Viewport (Pan, Zoom, Thước đo, Marker mode) -->
+<div class="flex items-center gap-space-sm">
+<!-- Bộ điều hướng Trang PDF -->
+<div class="flex items-center bg-canvas-background border border-border-subtle rounded px-1 py-0.5">
+<button class="p-1 hover:bg-surface-white text-text-secondary hover:text-text-primary rounded disabled:opacity-30" title="Trang trước">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<span class="px-2 font-label-sm text-label-sm text-text-primary font-medium">Trang 2 / 12</span>
+<button class="p-1 hover:bg-surface-white text-text-secondary hover:text-text-primary rounded" title="Trang sau">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<div class="h-4 w-[1px] bg-border-subtle mx-1"></div>
+<!-- Công cụ Zoom & Reset -->
+<div class="flex items-center bg-canvas-background border border-border-subtle rounded p-0.5">
+<button class="p-1.5 hover:bg-surface-white text-text-secondary hover:text-text-primary rounded" title="Thu nhỏ (Zoom Out)">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<span class="px-2 font-label-sm text-label-sm text-text-primary">100%</span>
+<button class="p-1.5 hover:bg-surface-white text-text-secondary hover:text-text-primary rounded" title="Phóng to (Zoom In)">
+<span class="material-symbols-outlined">add</span>
+</button>
+<div class="h-3 w-[1px] bg-border-subtle my-auto mx-1"></div>
+<button class="px-2 py-1 hover:bg-surface-white text-text-secondary hover:text-text-primary text-body-sm rounded" title="Tỉ lệ chuẩn 100%">
+          Reset
+        </button>
+</div>
+<div class="h-4 w-[1px] bg-border-subtle mx-1"></div>
+<!-- Công cụ Đo lường & Khoanh vùng Marker (State Active Highlight #1677FF) -->
+<div class="flex items-center gap-1.5">
+<button class="p-2 border border-border-subtle hover:bg-canvas-background text-text-secondary hover:text-text-primary rounded" title="Thước đo khoảng cách (Measure tool)">
+<span class="material-symbols-outlined">square_foot</span>
+</button>
+<button class="p-2 border border-border-subtle hover:bg-canvas-background text-text-secondary hover:text-text-primary rounded" title="Bàn tay di chuyển (Pan)">
+<span class="material-symbols-outlined">pan_tool</span>
+</button>
+<!-- Chế độ khoanh vùng Marker (ĐANG BẬT) -->
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded font-medium text-body-sm bg-[#1677FF] text-white shadow-sm border border-[#1677FF]">
+<span class="material-symbols-outlined !text-[18px]">highlight_alt</span>
+<span>Chế độ Marker</span>
+<span class="inline-block w-2 h-2 rounded-full bg-status-success animate-pulse"></span>
+</button>
+</div>
+<div class="h-4 w-[1px] bg-border-subtle mx-1"></div>
+<!-- Xuất & Lớp hiển thị -->
+<button class="p-2 border border-border-subtle hover:bg-canvas-background text-text-secondary hover:text-text-primary rounded" title="Bật/Tắt Lớp bản vẽ">
+<span class="material-symbols-outlined">layers</span>
+</button>
+<button class="p-2 border border-border-subtle hover:bg-canvas-background text-text-secondary hover:text-text-primary rounded" title="Tải xuống PDF bản vẽ đã đánh dấu">
+<span class="material-symbols-outlined">file_download</span>
+</button>
+</div>
+</header>
+<!-- BODY VIEWPORT CHÍNH: SPLIT WORKSPACE (30% Sidebar / 70% CAD-PDF Canvas) -->
+<main class="flex-1 flex overflow-hidden relative">
+<!-- CỘT TRÁI SIDEBAR (30% WIDTH - OBJECT HIERARCHY TREE) -->
+<aside class="w-[30%] min-w-[340px] max-w-[420px] bg-surface-white border-r border-border-subtle flex flex-col z-20 shadow-sm">
+<!-- Header Cột Trái -->
+<div class="p-space-md border-b border-border-subtle bg-surface-white">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-text-primary font-semibold">Danh sách Object đã tạo</h2>
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#F0F7FF] text-[#1677FF] border border-[#B3D8FF]">
+              4 object
+            </span>
+</div>
+<button class="text-text-secondary hover:text-text-primary p-1" title="Bộ lọc và tìm kiếm">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+<!-- Nút nổi bật: + Khoanh vùng Object mới -->
+<button class="w-full flex items-center justify-center gap-2 bg-[#1677FF] hover:bg-[#005cd6] text-white py-2 px-3 rounded font-medium text-body-md transition-colors shadow-sm focus:ring-2 focus:ring-[#1677FF]/20">
+<span class="material-symbols-outlined">add_box</span>
+<span>+ Khoanh vùng Object mới</span>
+</button>
+</div>
+<!-- Search & Bộ lọc nhanh đối tượng -->
+<div class="px-space-md py-2 bg-canvas-background/60 border-b border-border-subtle flex items-center gap-2">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-text-secondary text-[16px]">search</span>
+<input class="w-full bg-surface-white border border-border-strong rounded py-1 pl-8 pr-2 text-body-sm font-body-sm placeholder:text-text-secondary focus:border-primary focus:outline-none" placeholder="Tìm theo tên object, trục..." type="text"/>
+</div>
+<select class="bg-surface-white border border-border-strong text-body-sm rounded py-1 px-2 text-text-secondary focus:border-primary focus:outline-none">
+<option>Tất cả trang</option>
+<option selected="">Trang 2 (Hiện tại)</option>
+<option>Trang 1</option>
+</select>
+</div>
+<!-- Danh sách List các Object (Data-rich Technical Cards) -->
+<div class="flex-1 overflow-y-auto divide-y divide-border-subtle">
+<!-- Object 1: Cột bê tông C12 - Trục A3 -->
+<div class="p-space-md hover:bg-canvas-background transition-colors cursor-pointer group">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#1677FF] text-[20px]">view_in_ar</span>
+<h3 class="font-headline-sm text-body-md font-semibold text-text-primary group-hover:text-primary">
+                Cột bê tông C12 - Trục A3
+              </h3>
+</div>
+<span class="font-label-sm text-label-sm text-text-secondary bg-canvas-background border border-border-subtle px-1.5 py-0.5 rounded">
+              P.01
+            </span>
+</div>
+<!-- Thông số kỹ thuật Bounding Box Marker -->
+<div class="mt-2 text-label-sm font-label-sm text-text-secondary flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">crop_free</span>
+<span>Marker [x: 120, y: 340, w: 90, h: 140]</span>
+</div>
+<!-- Status badge: 1 Inspection liên kết -->
+<div class="mt-3 flex items-center justify-between">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-sm font-label-sm bg-[#F6FFED] border border-[#B7EB8F] text-status-success font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-status-success"></span>
+<span>1 Inspection liên kết (#INS-2023-094)</span>
+</div>
+<button class="text-text-secondary hover:text-text-primary p-1">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- Object 2: Dầm D5 - Nhịp 4-5 (ACTIVE SELECTED OBJECT) -->
+<div class="p-space-md bg-[#F0F7FF] border-l-4 border-l-[#1677FF] transition-all">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#1677FF] text-[20px]">view_in_ar</span>
+<div>
+<h3 class="font-headline-sm text-body-md font-semibold text-text-primary">
+                  Dầm D5 - Nhịp 4-5
+                </h3>
+<span class="inline-block mt-0.5 text-caption font-caption text-primary font-medium">Đang chọn trên Canvas</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-primary bg-surface-white border border-[#1677FF]/40 px-1.5 py-0.5 rounded font-semibold">
+              P.02
+            </span>
+</div>
+<!-- Thông số tọa độ -->
+<div class="mt-2 text-label-sm font-label-sm text-text-secondary flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">crop_free</span>
+<span>Marker [x: 320, y: 180, w: 260, h: 75]</span>
+</div>
+<!-- Tag: Chưa có Inspection -->
+<div class="mt-2">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-sm font-label-sm bg-[#FFFBE6] border border-[#FFE58F] text-[#D48806] font-semibold">
+<span class="material-symbols-outlined text-[12px]">warning</span>
+              Chưa có Inspection
+            </span>
+</div>
+<!-- Quick Action CTA: Tạo Inspection ngay -->
+<div class="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-between">
+<a class="inline-flex items-center gap-1.5 text-body-sm font-body-sm font-medium text-white bg-[#1677FF] hover:bg-[#0057c2] px-3 py-1.5 rounded transition-all shadow-sm" href="/inspections/create?objectId=DAM_D5_N45">
+<span class="material-symbols-outlined text-[16px]">assignment_add</span>
+<span>Tạo Inspection ngay</span>
+</a>
+<div class="flex items-center gap-1">
+<button class="p-1 hover:bg-surface-white text-text-secondary hover:text-text-primary rounded" title="Sửa tên / mô tả">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-white text-status-error hover:bg-error-container rounded" title="Xóa Object">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Object 3: Sàn Bê Tông Khu Vực Sảnh E -->
+<div class="p-space-md hover:bg-canvas-background transition-colors cursor-pointer group">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-secondary text-[20px]">view_in_ar</span>
+<h3 class="font-headline-sm text-body-md font-semibold text-text-primary group-hover:text-primary">
+                Sàn Bê Tông Khu Vực Sảnh E
+              </h3>
+</div>
+<span class="font-label-sm text-label-sm text-text-secondary bg-canvas-background border border-border-subtle px-1.5 py-0.5 rounded">
+              P.02
+            </span>
+</div>
+<div class="mt-2 text-label-sm font-label-sm text-text-secondary flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">crop_free</span>
+<span>Marker [x: 610, y: 390, w: 220, h: 180]</span>
+</div>
+<div class="mt-3 flex items-center justify-between">
+<!-- Tag: Đã nghiệm thu -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-sm font-label-sm bg-[#F6FFED] border border-[#B7EB8F] text-[#52C41A] font-semibold">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+              Đã nghiệm thu
+            </span>
+<span class="text-caption font-caption text-text-secondary">#INS-2023-088</span>
+</div>
+</div>
+<!-- Object 4 (Bổ sung phụ trợ): Hộp kỹ thuật ME tầng 5 (Đang tạo) -->
+<div class="p-space-md hover:bg-canvas-background transition-colors cursor-pointer group border-l-2 border-l-status-warning bg-status-warning/5">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-warning text-[20px]">pending</span>
+<h3 class="font-headline-sm text-body-md font-semibold text-text-primary">
+                Hộp kỹ thuật ME tầng 5
+              </h3>
+</div>
+<span class="font-label-sm text-label-sm text-status-warning bg-surface-white border border-status-warning/40 px-1.5 py-0.5 rounded font-semibold">
+              P.02
+            </span>
+</div>
+<div class="mt-1 text-caption text-status-warning font-medium">
+            Đang xác nhận tọa độ trên viewport...
+          </div>
+</div>
+</div>
+<!-- Footer Cột Trái: Trạng thái & Thống kê đồng bộ -->
+<div class="p-space-sm bg-canvas-background border-t border-border-subtle flex items-center justify-between text-caption font-caption text-text-secondary">
+<span class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-success"></span>
+          Đã đồng bộ máy chủ BIM
+        </span>
+<button class="hover:underline text-primary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">refresh</span> Làm mới
+        </button>
+</div>
+</aside>
+<!-- KHUNG PHẢI CANVAS (70% FLUID - CAD/PDF TECHNICAL BLUEPRINT WORKSPACE) -->
+<section class="flex-1 bg-[#EAEFF5] relative overflow-hidden flex flex-col">
+<!-- Viewport Floating Info Pill -->
+<div class="absolute top-4 left-6 z-10 bg-surface-white/95 backdrop-blur px-3 py-1.5 rounded shadow border border-border-strong flex items-center gap-3 text-body-sm font-body-sm">
+<div class="flex items-center gap-1.5 text-text-primary font-medium">
+<span class="material-symbols-outlined text-primary text-[18px]">architecture</span>
+<span>Bản vẽ Kết cấu &amp; Cơ điện M&amp;E (Mặt bằng tầng 5)</span>
+</div>
+<div class="h-3 w-[1px] bg-border-strong"></div>
+<div class="font-label-sm text-label-sm text-text-secondary">Tỷ lệ: 1:100 (Khổ A0)</div>
+</div>
+<!-- Quick Canvas Overlay Controls (Bottom Right) -->
+<div class="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
+<div class="bg-surface-white border border-border-strong rounded shadow flex flex-col overflow-hidden">
+<button class="p-2 hover:bg-canvas-background text-text-secondary hover:text-text-primary" title="Tâm nhìn về giữa">
+<span class="material-symbols-outlined">filter_center_focus</span>
+</button>
+<div class="h-[1px] bg-border-subtle"></div>
+<button class="p-2 hover:bg-canvas-background text-text-secondary hover:text-text-primary" title="Bật lưới Grid kỹ thuật">
+<span class="material-symbols-outlined">grid_4x4</span>
+</button>
+<div class="h-[1px] bg-border-subtle"></div>
+<button class="p-2 hover:bg-canvas-background text-text-secondary hover:text-text-primary" title="Toàn màn hình">
+<span class="material-symbols-outlined">fullscreen</span>
+</button>
+</div>
+</div>
+<!-- CAD / PDF Canvas Workspace Area (Tương tác mô phỏng) -->
+<div class="flex-1 overflow-auto flex items-center justify-center p-12 relative cursor-crosshair">
+<!-- White Paper Sheet (Giả lập bản vẽ PDF khổ lớn A0) -->
+<div class="w-[1080px] h-[720px] bg-white rounded shadow-xl border border-[#CBD5E1] relative grid-blueprint-bg shrink-0 overflow-hidden">
+<!-- Mock CAD Drawing Vector Lines & Architecture Blueprint Elements -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none opacity-85" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<pattern height="8" id="hatch" patterntransform="rotate(45 0 0)" patternunits="userSpaceOnUse" width="8">
+<line stroke="#94A3B8" stroke-width="0.75" x1="0" x2="0" y1="0" y2="8"></line>
+</pattern>
+</defs>
+<!-- Outer Axis Grids & Grid Heads (Trục 1, 2, 3, 4, 5 & Trục A, B, C, D) -->
+<line stroke="#64748B" stroke-dasharray="6,4" stroke-width="1.5" x1="80" x2="1000" y1="60" y2="60"></line>
+<line stroke="#64748B" stroke-dasharray="6,4" stroke-width="1.5" x1="80" x2="1000" y1="660" y2="660"></line>
+<line stroke="#64748B" stroke-dasharray="6,4" stroke-width="1.5" x1="80" x2="80" y1="60" y2="660"></line>
+<line stroke="#64748B" stroke-dasharray="6,4" stroke-width="1.5" x1="1000" x2="1000" y1="60" y2="660"></line>
+<!-- Grid Bubble Labels -->
+<circle cx="80" cy="40" fill="#FFFFFF" r="14" stroke="#0F172A" stroke-width="1.5"></circle>
+<text fill="#0F172A" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold" text-anchor="middle" x="80" y="44">A</text>
+<circle cx="320" cy="40" fill="#FFFFFF" r="14" stroke="#0F172A" stroke-width="1.5"></circle>
+<text fill="#0F172A" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold" text-anchor="middle" x="320" y="44">B</text>
+<circle cx="610" cy="40" fill="#FFFFFF" r="14" stroke="#0F172A" stroke-width="1.5"></circle>
+<text fill="#0F172A" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold" text-anchor="middle" x="610" y="44">C</text>
+<circle cx="920" cy="40" fill="#FFFFFF" r="14" stroke="#0F172A" stroke-width="1.5"></circle>
+<text fill="#0F172A" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold" text-anchor="middle" x="920" y="44">D</text>
+<!-- Numeric Grids Left -->
+<circle cx="50" cy="180" fill="#FFFFFF" r="14" stroke="#0F172A" stroke-width="1.5"></circle>
+<text fill="#0F172A" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold" text-anchor="middle" x="50" y="184">4</text>
+<circle cx="50" cy="420" fill="#FFFFFF" r="14" stroke="#0F172A" stroke-width="1.5"></circle>
+<text fill="#0F172A" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold" text-anchor="middle" x="50" y="424">5</text>
+<!-- Walls, Columns, Shafts, Beams Technical Vectors -->
+<!-- Perimeter External Walls -->
+<rect fill="none" height="520" stroke="#1E293B" stroke-width="3" width="840" x="120" y="100"></rect>
+<rect fill="none" height="490" stroke="#475569" stroke-width="1" width="810" x="135" y="115"></rect>
+<!-- Core Concrete Columns -->
+<rect fill="url(#hatch)" height="50" stroke="#0F172A" stroke-width="1.5" width="40" x="120" y="340"></rect>
+<rect fill="url(#hatch)" height="45" stroke="#0F172A" stroke-width="1.5" width="45" x="320" y="100"></rect>
+<rect fill="url(#hatch)" height="45" stroke="#0F172A" stroke-width="1.5" width="45" x="610" y="100"></rect>
+<rect fill="url(#hatch)" height="45" stroke="#0F172A" stroke-width="1.5" width="45" x="320" y="340"></rect>
+<rect fill="url(#hatch)" height="45" stroke="#0F172A" stroke-width="1.5" width="45" x="610" y="340"></rect>
+<!-- Concrete Beams Lines -->
+<line stroke="#334155" stroke-width="2" x1="320" x2="580" y1="180" y2="180"></line>
+<line stroke="#334155" stroke-width="2" x1="320" x2="580" y1="210" y2="210"></line>
+<text fill="#64748B" font-family="'Public Sans', sans-serif" font-size="11" x="440" y="200">DẦM CHÍNH D5 (400x700)</text>
+<!-- Lift Shaft & Stair Core -->
+<rect fill="none" height="130" stroke="#0F172A" stroke-width="2.5" width="160" x="680" y="200"></rect>
+<line stroke="#94A3B8" stroke-width="1" x1="680" x2="840" y1="200" y2="330"></line>
+<line stroke="#94A3B8" stroke-width="1" x1="840" x2="680" y1="200" y2="330"></line>
+<text fill="#475569" font-family="'Public Sans', sans-serif" font-size="12" font-weight="600" x="715" y="270">THANG MÁY TM-01</text>
+<!-- Dimension lines -->
+<line marker-end="dot" marker-start="dot" stroke="#64748B" stroke-width="1" x1="120" x2="320" y1="80" y2="80"></line>
+<text fill="#64748B" font-family="'JetBrains Mono', monospace" font-size="10" x="210" y="75">6,000 mm</text>
+<line stroke="#64748B" stroke-width="1" x1="320" x2="610" y1="80" y2="80"></line>
+<text fill="#64748B" font-family="'JetBrains Mono', monospace" font-size="10" x="455" y="75">8,400 mm</text>
+</svg>
+<!-- MARKER OVERLAYS HTML5 / DOM RENDERED -->
+<!-- 1. Marker Cột C12 (Nét liền xanh, có Tag) -->
+<div class="absolute border-[1.5px] border-[#1677FF] bg-[rgba(22,119,255,0.12)] rounded-sm pointer-events-auto" style="left: 110px; top: 320px; width: 100px; height: 130px;">
+<div class="absolute -top-6 left-0 bg-[#1677FF] text-white text-label-sm font-label-sm px-1.5 py-0.5 rounded shadow flex items-center gap-1">
+<span class="material-symbols-outlined !text-[12px]">check_circle</span>
+<span>Cột C12</span>
+</div>
+</div>
+<!-- 2. Marker Dầm D5 (Active selection: Viền nét đứt 2px dashed #003EB3 + Resize Handles) -->
+<div class="absolute border-2 border-dashed border-[#003EB3] bg-[rgba(22,119,255,0.2)] rounded-sm pointer-events-auto cursor-move ring-2 ring-[#1677FF]/30" style="left: 310px; top: 165px; width: 280px; height: 85px;">
+<!-- Tag tên marker nổi bật -->
+<div class="absolute -top-7 left-0 bg-[#003EB3] text-white text-label-sm font-label-sm px-2 py-0.5 rounded font-semibold shadow flex items-center gap-1.5">
+<span class="material-symbols-outlined !text-[14px]">select_all</span>
+<span>Dầm D5 [Đang chọn]</span>
+</div>
+<!-- Resize Handles ở 4 góc -->
+<div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-[#003EB3] rounded-xs shadow"></div>
+<div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-[#003EB3] rounded-xs shadow"></div>
+<div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-[#003EB3] rounded-xs shadow"></div>
+<div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-[#003EB3] rounded-xs shadow"></div>
+</div>
+<!-- 3. Vùng chọn Mới đang khoanh vùng (Tạo Object mới: X: 420, Y: 215, W: 180, H: 110) -->
+<div class="absolute border-2 border-[#1677FF] bg-[rgba(22,119,255,0.22)] rounded-sm pointer-events-auto animate-pulse" style="left: 420px; top: 215px; width: 180px; height: 110px;">
+<div class="absolute -top-6 left-0 bg-status-warning text-on-surface text-label-sm font-label-sm px-2 py-0.5 rounded font-bold shadow flex items-center gap-1">
+<span class="material-symbols-outlined !text-[14px]">crop</span>
+<span>Vùng chọn mới (420, 215)</span>
+</div>
+<div class="absolute bottom-1 right-2 text-label-sm font-label-sm text-primary font-bold bg-white/80 px-1 rounded">
+              180 x 110 px
+            </div>
+</div>
+<!-- Title Stamp Kỹ Thuật (Góc phải dưới bản vẽ) -->
+<div class="absolute bottom-4 right-4 bg-white border border-[#0F172A] p-2 text-label-sm font-label-sm w-64 shadow-sm">
+<div class="font-bold border-b border-[#0F172A] pb-1 text-[#0F172A] text-body-sm">CONSTRUTINSPECT QA/QC</div>
+<div class="flex justify-between py-0.5 text-text-secondary">
+<span>BẢN VẼ:</span>
+<span class="font-semibold text-text-primary">MB-T5-KCCĐ</span>
+</div>
+<div class="flex justify-between py-0.5 text-text-secondary">
+<span>KỸ SƯ GS:</span>
+<span class="text-text-primary">Nguyễn Văn An</span>
+</div>
+<div class="flex justify-between py-0.5 text-text-secondary">
+<span>TRẠNG THÁI:</span>
+<span class="text-status-success font-bold">APPROVED FOR QC</span>
+</div>
+</div>
+</div>
+</div>
+<!-- POPUP / MODAL 'ĐẶT TÊN OBJECT MỚI' (Active Engineering Dialog) -->
+<!-- Neo trực tiếp hoặc căn giữa trực quan với giao diện Ant Design Card System -->
+<div class="absolute top-16 right-10 w-[420px] bg-surface-white rounded shadow-2xl border border-border-strong z-30 flex flex-col">
+<!-- Modal Header -->
+<div class="px-space-md py-3 border-b border-border-subtle flex items-center justify-between bg-canvas-background/50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">add_location_alt</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary font-semibold">Đặt tên Object mới</h3>
+</div>
+<button class="text-text-secondary hover:text-text-primary p-1 rounded hover:bg-canvas-background" title="Đóng modal">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Modal Body: Form Input Ant Design Standard -->
+<div class="p-space-md space-y-4">
+<!-- Thông số vùng chọn tự động nhận diện -->
+<div class="bg-[#F0F7FF] border border-[#B3D8FF] p-2.5 rounded text-body-sm font-body-sm text-text-secondary">
+<div class="flex items-center justify-between mb-1">
+<span class="font-medium text-text-primary">Vị trí trích xuất bản vẽ:</span>
+<span class="px-1.5 py-0.2 bg-white text-primary font-label-sm text-label-sm rounded font-semibold border border-[#B3D8FF]">
+                Trang số 2
+              </span>
+</div>
+<div class="font-label-sm text-label-sm text-primary flex items-center gap-1.5 mt-1">
+<span class="material-symbols-outlined text-[15px]">straighten</span>
+<span>Tọa độ: X: 420 | Y: 215 — Kích thước: 180px × 110px</span>
+</div>
+</div>
+<!-- Form Input: Tên Object * -->
+<div>
+<label class="block text-body-sm font-body-sm font-semibold text-text-primary mb-1">
+              Tên Object <span class="text-status-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full bg-surface-white border border-[#1677FF] rounded py-1.5 px-3 text-body-md font-body-md text-text-primary focus:outline-none focus:ring-2 focus:ring-[#1677FF]/20 shadow-sm" placeholder="Ví dụ: Cột C12, Dầm D5, Hộp kỹ thuật ME..." type="text" value="Hộp kỹ thuật ME tầng 5"/>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-primary text-[18px]">done</span>
+</div>
+<p class="text-caption font-caption text-text-secondary mt-1">Tên đối tượng phải là duy nhất trên phân khu trục này.</p>
+</div>
+<!-- Phân loại kỹ thuật (Dropdown Ant Design) -->
+<div>
+<label class="block text-body-sm font-body-sm font-semibold text-text-primary mb-1">
+              Hạng mục công việc / Gói thầu
+            </label>
+<select class="w-full bg-surface-white border border-border-strong rounded py-1.5 px-3 text-body-sm font-body-sm text-text-primary focus:border-primary focus:outline-none">
+<option selected="">Cơ điện M&amp;E - Hộp Gen &amp; Ống xuyên sàn</option>
+<option>Kết cấu bê tông cốt thép</option>
+<option>Hoàn thiện kiến trúc</option>
+</select>
+</div>
+<!-- Form Input: Mô tả bổ sung (Textarea) -->
+<div>
+<label class="block text-body-sm font-body-sm font-medium text-text-primary mb-1">
+              Mô tả bổ sung &amp; Yêu cầu kiểm tra
+            </label>
+<textarea class="w-full bg-surface-white border border-border-strong rounded py-1.5 px-3 text-body-sm font-body-sm text-text-primary focus:border-primary focus:outline-none placeholder:text-text-secondary" placeholder="Ghi chú vị trí trục giao, cao độ đáy dầm hoặc lưu ý nghiệm thu cốt thép..." rows="2">Nghiệm thu vị trí ống luồn ME xuyên dầm trục B-C trước khi đổ bê tông sàn đợt 2.</textarea>
+</div>
+</div>
+<!-- Modal Footer: Hành động Lưu, Hủy & Chuyển sang Màn 08 -->
+<div class="px-space-md py-3 bg-canvas-background border-t border-border-subtle flex flex-col gap-2">
+<!-- Hàng nút chính: Hủy & Lưu Object -->
+<div class="flex items-center justify-end gap-2">
+<button class="px-3 py-1.5 border border-border-strong bg-surface-white hover:bg-canvas-background text-text-secondary hover:text-text-primary rounded text-body-sm font-body-sm transition-colors" type="button">
+              Hủy
+            </button>
+<button class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#1677FF] hover:bg-[#005cd6] text-white rounded text-body-sm font-body-sm font-medium transition-all shadow-sm focus:ring-2 focus:ring-[#1677FF]/20" type="button">
+<span class="material-symbols-outlined text-[16px]">save</span>
+<span>Lưu Object (CreateObjectFromMarker)</span>
+</button>
+</div>
+<!-- Nút đặc biệt: Tạo Form Nghiệm thu cho Object này (Dẫn sang Màn 08 FormIO) -->
+<a class="w-full mt-1 inline-flex items-center justify-center gap-2 py-2 px-3 bg-[#F6FFED] hover:bg-[#d9f7be] border border-[#B7EB8F] text-status-success hover:text-[#389e0d] rounded text-body-sm font-body-sm font-semibold transition-colors" href="/drawings/matbang-tang5/inspections/form-create?objectId=ME_SHAFT_L5&amp;markerId=MK_420_215">
+<span class="material-symbols-outlined text-[18px]">dynamic_form</span>
+<span>Tạo Form Nghiệm thu cho Object này →</span>
+</a>
+</div>
+</div>
+</section>
+</main>
+</body></html>

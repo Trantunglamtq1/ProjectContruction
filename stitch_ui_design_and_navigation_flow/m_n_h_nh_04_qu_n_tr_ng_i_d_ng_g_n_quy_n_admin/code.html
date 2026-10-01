@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ConstrutInspect - Quản trị Người dùng &amp; Gán quyền</title>
+<!-- Google Fonts: Public Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined (Exact Link Mandate) -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind CSS Theme Configuration Verbatim -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface": "#1b1c1c",
+            "surface": "#faf9f9",
+            "error": "#ba1a1a",
+            "secondary": "#0053d0",
+            "primary-container": "#006ef2",
+            "background": "#faf9f9",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-fixed": "#101d25",
+            "on-secondary-fixed-variant": "#003fa3",
+            "outline": "#727786",
+            "surface-tint": "#0059c7",
+            "surface-container-low": "#f4f3f3",
+            "tertiary-fixed": "#d6e4ef",
+            "status-success": "#52C41A",
+            "on-primary-fixed": "#001a43",
+            "surface-white": "#FFFFFF",
+            "status-warning": "#FAAD14",
+            "inverse-primary": "#afc6ff",
+            "surface-container-highest": "#e3e2e2",
+            "on-tertiary": "#ffffff",
+            "on-error-container": "#93000a",
+            "primary-fixed": "#d9e2ff",
+            "tertiary-fixed-dim": "#bac8d3",
+            "surface-dim": "#dbdad9",
+            "surface-container": "#efeded",
+            "surface-container-high": "#e9e8e8",
+            "viewport-overlay-fill": "rgba(22, 119, 255, 0.16)",
+            "on-secondary-fixed": "#001849",
+            "text-primary": "#1F2937",
+            "on-background": "#1b1c1c",
+            "secondary-fixed": "#dae1ff",
+            "inverse-surface": "#2f3031",
+            "on-primary-container": "#fefcff",
+            "viewport-overlay-stroke": "#1677FF",
+            "primary-fixed-dim": "#afc6ff",
+            "surface-variant": "#e3e2e2",
+            "text-secondary": "#595959",
+            "on-secondary-container": "#fefcff",
+            "on-tertiary-container": "#fcfcff",
+            "error-container": "#ffdad6",
+            "inverse-on-surface": "#f2f0f0",
+            "canvas-background": "#F5F7FA",
+            "on-primary-fixed-variant": "#004398",
+            "status-neutral": "#8C8C8C",
+            "primary": "#0057c2",
+            "on-surface-variant": "#414755",
+            "tertiary": "#505e67",
+            "secondary-container": "#306ded",
+            "border-subtle": "#E4E7ED",
+            "surface-bright": "#faf9f9",
+            "secondary-fixed-dim": "#b3c5ff",
+            "on-secondary": "#ffffff",
+            "on-primary": "#ffffff",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed-variant": "#3b4851",
+            "outline-variant": "#c1c6d7",
+            "tertiary-container": "#697680",
+            "status-error": "#FF4D4F",
+            "border-strong": "#D9D9D9"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "margin": "1.5rem",
+            "gutter": "1rem",
+            "margin-mobile": "1rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "1.5rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "display-mobile": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "body-md": ["Public Sans"],
+            "caption": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "label-sm": ["JetBrains Mono"],
+            "headline-lg": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "label-md": ["JetBrains Mono"],
+            "headline-lg-mobile": ["Public Sans"],
+            "display": ["Public Sans"],
+            "headline-sm": ["Public Sans"]
+          },
+          "fontSize": {
+            "display-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 18px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    /* Ant Design Master Layout Overrides & Strict Color Standards */
+    .ant-tag-admin { background-color: #F9F0FF; color: #722ED1; border: 1px solid #D3ADF7; }
+    .ant-tag-submitter { background-color: #E6F4FF; color: #1677FF; border: 1px solid #91CAFF; }
+    .ant-tag-reviewer { background-color: #E6FFFB; color: #13C2C2; border: 1px solid #87E8DE; }
+    .ant-tag-approver { background-color: #FFF7E6; color: #FA8C16; border: 1px solid #FFD591; }
+    .ant-tag-unassigned { background-color: #F5F5F5; color: #8C8C8C; border: 1px dashed #D9D9D9; }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #c1c6d7;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-canvas-background text-text-primary font-body-md text-body-md antialiased min-h-screen flex flex-col selection:bg-primary-fixed selection:text-primary">
+<!-- ================= TOP APP BAR (ANT DESIGN MASTER HEADER) ================= -->
+<header class="bg-surface-container-lowest border-b border-border-subtle flex justify-between items-center w-full px-space-lg h-14 z-50 sticky top-0 shadow-sm">
+<!-- Left: Brand Logo & Breadcrumb Navigation -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded bg-[#1677FF] flex items-center justify-center text-white shadow-sm">
+<span class="material-symbols-outlined text-white" data-icon="corporate_fare" style="font-size: 20px;">corporate_fare</span>
+</div>
+<span class="font-headline-sm text-headline-sm font-bold text-text-primary tracking-tight">ConstrutInspect</span>
+<span class="text-caption font-caption text-text-secondary border border-border-subtle rounded px-1.5 py-0.5 bg-canvas-background ml-1">QA/QC</span>
+</div>
+<div class="h-4 w-[1px] bg-border-subtle hidden md:block"></div>
+<!-- Ant Design Breadcrumb -->
+<nav aria-label="Breadcrumb" class="hidden md:flex items-center gap-2 text-body-sm font-body-sm text-text-secondary">
+<a class="hover:text-[#1677FF] transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-text-secondary" data-icon="home" style="font-size: 16px;">home</span>
+          Trang chủ
+        </a>
+<span class="text-status-neutral">/</span>
+<span class="text-text-secondary">Quản trị hệ thống</span>
+<span class="text-status-neutral">/</span>
+<span class="text-text-primary font-medium">Quản lý người dùng</span>
+</nav>
+</div>
+<!-- Right: Search, Notifications & User Info (Admin) -->
+<div class="flex items-center gap-space-md">
+<!-- Search Top Bar Input -->
+<div class="relative hidden lg:block w-56">
+<input class="w-full h-8 pl-8 pr-3 text-body-sm font-body-sm bg-canvas-background border border-border-strong rounded focus:border-[#1677FF] focus:outline-none focus:ring-1 focus:ring-[#1677FF] transition-all" placeholder="Tìm kiếm tài liệu, dự án..." type="text"/>
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-text-secondary" data-icon="search" style="font-size: 16px;">search</span>
+</div>
+<button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-container rounded transition-colors relative" title="Thông báo">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-status-error rounded-full ring-2 ring-white"></span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-container rounded transition-colors" title="Trợ giúp kĩ thuật">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="h-5 w-[1px] bg-border-subtle"></div>
+<!-- User Profile (Admin) with Exact Tag purple '#F9F0FF' / '#722ED1' -->
+<div class="flex items-center gap-3 pl-1">
+<div class="relative">
+<img alt="Admin Avatar" class="w-8 h-8 rounded-full border border-border-subtle object-cover shadow-xs" data-alt="Chân dung cán bộ giám sát kiểm định chất lượng chuyên nghiệp trong đồng phục kỹ sư công trường với nụ cười tự tin và tác phong nghiêm túc chuẩn mực" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_s2qfAOv4MMDaUe3B081TR3j43DVR4onKDnmZvAHm7vmjuAPf-zA2G974dDTtdNe2oi-rLXTnvvxOXC7wrddlqp8LZ5R05GbTErf-SmPUswD2UG4sFln-5OX9z6ZZqrmFzBrMGijcGGGFej5_UvV-Aq81lC2y15EDWvAMNFuDg_F7hW3nOAP09MdPH09D7YmT-EWszWXo2cgkcekts8p7hzEGe9ajPwbDbLtqQRsqsCxS8Ucn0qG-"/>
+<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-status-success rounded-full ring-2 ring-white"></span>
+</div>
+<div class="flex flex-col text-left">
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md font-semibold text-text-primary leading-tight">Admin Quản Trị</span>
+<!-- Tag Role màu purple '#F9F0FF' chữ '#722ED1' -->
+<span class="ant-tag-admin text-label-sm font-label-sm px-2 py-0.5 rounded font-semibold uppercase tracking-wider">Admin</span>
+</div>
+<span class="text-caption font-caption text-text-secondary">admin.qaqc@constructcorp.vn</span>
+</div>
+</div>
+<!-- Logout Button -->
+<button class="ml-2 flex items-center gap-1.5 px-3 py-1.5 rounded text-body-sm font-body-sm text-text-secondary hover:text-status-error hover:bg-error-container/40 border border-transparent hover:border-error-container transition-all" title="Đăng xuất khỏi phiên làm việc">
+<span class="material-symbols-outlined" data-icon="logout" style="font-size: 16px;">logout</span>
+<span class="hidden sm:inline">Đăng xuất</span>
+</button>
+</div>
+</header>
+<!-- ================= MASTER LAYOUT BODY (SIDEBAR + WORKSPACE) ================= -->
+<div class="flex flex-1 overflow-hidden relative">
+<!-- ANT DESIGN SIDEBAR MENU (Admin specific: Only 'Quản lý người dùng' Active) -->
+<aside class="w-64 bg-surface-container-lowest border-r border-border-subtle flex flex-col justify-between shrink-0 select-none">
+<div class="py-space-md px-space-sm flex flex-col gap-1">
+<!-- Subheader category -->
+<div class="px-space-md py-1.5 text-caption font-caption text-status-neutral uppercase tracking-wider font-semibold">
+          Quản trị hệ thống QA/QC
+        </div>
+<!-- Sidebar Items: Only 'Quản lý người dùng' is ACTIVE (#E6F4FF background, #1677FF text) -->
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded font-semibold transition-all bg-[#E6F4FF] text-[#1677FF] border-r-4 border-[#1677FF]" href="/admin/users">
+<span class="material-symbols-outlined text-[#1677FF]" data-icon="manage_accounts">manage_accounts</span>
+<span class="text-body-md font-body-md">Quản lý người dùng</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary hover:text-text-primary hover:bg-canvas-background transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary" data-icon="timeline">timeline</span>
+<span class="text-body-md font-body-md">Luồng phê duyệt Steps</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary hover:text-text-primary hover:bg-canvas-background transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary" data-icon="dynamic_form">dynamic_form</span>
+<span class="text-body-md font-body-md">Mẫu biên bản FormIO</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary hover:text-text-primary hover:bg-canvas-background transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary" data-icon="architecture">architecture</span>
+<span class="text-body-md font-body-md">Bản vẽ &amp; Marker Point</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary hover:text-text-primary hover:bg-canvas-background transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary" data-icon="fact_check">fact_check</span>
+<span class="text-body-md font-body-md">Danh mục nghiệm thu</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-2.5 rounded text-text-secondary hover:text-text-primary hover:bg-canvas-background transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="text-body-md font-body-md">Phân quyền &amp; Kiểm soát</span>
+</a>
+</div>
+<!-- Bottom sidebar info -->
+<div class="p-space-md border-t border-border-subtle bg-[#FAFAFA]">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-[#1677FF]" data-icon="verified_user">verified_user</span>
+<span class="text-caption font-caption font-semibold text-text-primary">Phiên bản Audit Enterprise</span>
+</div>
+<p class="text-caption font-caption text-text-secondary leading-relaxed">
+          Tuân thủ TCVN 9361:2012 &amp; Nghị định 06/2021/NĐ-CP quản lý chất lượng xây dựng.
+        </p>
+</div>
+</aside>
+<!-- ================= MAIN CONTENT WORKSPACE (p-24px, bg-[#F5F7FA]) ================= -->
+<main class="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#F5F7FA] flex flex-col gap-6">
+<!-- 1. Header Section: Title & Description -->
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-surface-container-lowest p-6 rounded-lg border border-border-subtle shadow-xs">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="text-headline-lg font-headline-lg font-semibold text-text-primary tracking-tight">
+              Quản lý người dùng &amp; Phân quyền
+            </h1>
+<span class="bg-[#E6F4FF] text-[#1677FF] border border-[#91CAFF] text-label-sm font-label-sm px-2.5 py-0.5 rounded-full font-semibold">
+              Admin Scope
+            </span>
+</div>
+<p class="text-body-md font-body-md text-text-secondary mt-1">
+            Quản lý danh sách tài khoản, phê duyệt và gán vai trò vận hành trong hệ thống QA/QC.
+          </p>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 bg-[#FAFAFA] border border-border-subtle px-3 py-1.5 rounded">
+<span class="text-caption font-caption text-text-secondary">Tổng số tài khoản:</span>
+<span class="font-label-md text-label-md font-bold text-text-primary">24</span>
+</div>
+<button class="bg-[#1677FF] hover:bg-[#0057c2] text-white px-4 py-2 rounded text-body-md font-body-md font-medium flex items-center gap-2 transition-all shadow-xs">
+<span class="material-symbols-outlined text-white" data-icon="person_add" style="font-size: 18px;">person_add</span>
+<span>Thêm người dùng mới</span>
+</button>
+</div>
+</div>
+<!-- 2. Filter & Search Toolbar (Ant Design Toolbar Standard) -->
+<div class="bg-surface-container-lowest p-4 rounded-lg border border-border-subtle flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-xs">
+<div class="flex flex-wrap items-center gap-3 flex-1">
+<!-- Input.Search với placeholder 'Tìm theo tên/username...' (viền #D9D9D9, focus #1677FF) -->
+<div class="relative w-full sm:w-72">
+<input class="w-full h-9 pl-9 pr-8 text-body-md font-body-md bg-white border border-[#D9D9D9] rounded focus:border-[#1677FF] focus:outline-none focus:ring-1 focus:ring-[#1677FF] placeholder:text-status-neutral transition-all" placeholder="Tìm theo tên/username..." type="text" value="nguyen"/>
+<span class="material-symbols-outlined absolute left-2.5 top-2.5 text-status-neutral" data-icon="search" style="font-size: 18px;">search</span>
+<button class="absolute right-2.5 top-2.5 text-status-neutral hover:text-text-primary">
+<span class="material-symbols-outlined" data-icon="cancel" style="font-size: 16px;">cancel</span>
+</button>
+</div>
+<!-- Select lọc Role (Tất cả vai trò, Admin, Submitter, Reviewer, Approver, Chưa gán) -->
+<div class="relative w-full sm:w-52">
+<select class="w-full h-9 pl-3 pr-8 text-body-md font-body-md bg-white border border-[#D9D9D9] rounded focus:border-[#1677FF] focus:outline-none focus:ring-1 focus:ring-[#1677FF] text-text-primary appearance-none transition-all cursor-pointer">
+<option value="all">Tất cả vai trò</option>
+<option value="admin">Admin</option>
+<option value="submitter">Submitter</option>
+<option value="reviewer">Reviewer</option>
+<option value="approver">Approver</option>
+<option value="null">Chưa gán</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 pointer-events-none text-text-secondary" data-icon="expand_more" style="font-size: 18px;">expand_more</span>
+</div>
+<!-- Filter status helper badges -->
+<div class="hidden xl:flex items-center gap-2 pl-2 border-l border-border-subtle text-caption font-caption text-text-secondary">
+<span>Trạng thái:</span>
+<span class="inline-flex items-center gap-1 bg-[#F6FFED] text-[#52C41A] border border-[#B7EB8F] px-2 py-0.5 rounded text-label-sm font-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#52C41A]"></span> Hoạt động: 23
+            </span>
+<span class="inline-flex items-center gap-1 bg-[#FFF2F0] text-[#FF4D4F] border border-[#FFCCC7] px-2 py-0.5 rounded text-label-sm font-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#FF4D4F]"></span> Khóa: 01
+            </span>
+</div>
+</div>
+<!-- Nút làm mới danh sách (Button default viền #D9D9D9) -->
+<div class="flex items-center gap-2 justify-end">
+<button class="h-9 px-4 bg-white border border-[#D9D9D9] hover:border-[#1677FF] hover:text-[#1677FF] text-text-primary rounded text-body-md font-body-md flex items-center gap-1.5 transition-colors shadow-xs">
+<span class="material-symbols-outlined text-text-secondary" data-icon="refresh" style="font-size: 18px;">refresh</span>
+<span>Làm mới</span>
+</button>
+<button class="h-9 px-3 bg-white border border-[#D9D9D9] hover:border-[#1677FF] hover:text-[#1677FF] text-text-secondary rounded flex items-center justify-center transition-colors" title="Xuất dữ liệu Excel">
+<span class="material-symbols-outlined" data-icon="download" style="font-size: 18px;">download</span>
+</button>
+</div>
+</div>
+<!-- 3. Bảng danh sách người dùng Ant Design Standard Table -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle shadow-xs overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<!-- Header chuẩn Ant Design: Nền #FAFAFA, text #595959 uppercase 12px -->
+<thead>
+<tr class="bg-[#FAFAFA] border-b border-[#E4E7ED] text-text-secondary text-caption font-caption tracking-wider select-none">
+<th class="py-3 px-4 w-14 font-semibold text-center" scope="col">STT</th>
+<th class="py-3 px-4 font-semibold" scope="col">Username</th>
+<th class="py-3 px-4 font-semibold" scope="col">Họ và tên (FullName)</th>
+<th class="py-3 px-4 font-semibold" scope="col">Email công tác</th>
+<th class="py-3 px-4 font-semibold" scope="col">Role hiện tại</th>
+<th class="py-3 px-4 font-semibold" scope="col">Ngày tạo (CreatedAt)</th>
+<th class="py-3 px-4 font-semibold text-right" scope="col">Thao tác</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#E4E7ED] text-body-md font-body-md text-text-primary">
+<!-- Dòng 01: Admin hiện tại đang đăng nhập -->
+<tr class="hover:bg-[#F0F7FF] transition-colors group">
+<td class="py-3.5 px-4 text-center text-status-neutral font-label-md text-label-md">01</td>
+<td class="py-3.5 px-4 font-medium text-text-primary">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md font-semibold text-text-primary">admin.system</span>
+<span class="text-caption font-caption bg-surface-container text-text-secondary px-1.5 py-0.2 rounded border border-border-subtle">Bạn</span>
+</div>
+</td>
+<td class="py-3.5 px-4 font-medium">Admin Quản Trị</td>
+<td class="py-3.5 px-4 text-text-secondary">admin.qaqc@constructcorp.vn</td>
+<td class="py-3.5 px-4">
+<!-- Admin: Tag purple (nền #F9F0FF, chữ #722ED1) -->
+<span class="ant-tag-admin px-2.5 py-0.5 rounded text-label-sm font-label-sm font-semibold inline-block">
+                    Admin
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-text-secondary font-label-sm text-label-sm">2023-11-12 08:30</td>
+<td class="py-3.5 px-4 text-right">
+<!-- Dòng của chính Admin đang đăng nhập: Button type='link' disabled, chữ xám #D9D9D9 kèm Tooltip -->
+<div class="relative inline-block group/tip">
+<button class="text-[#D9D9D9] cursor-not-allowed text-body-md font-body-md font-medium px-2 py-1 flex items-center gap-1 ml-auto" disabled="">
+<span class="material-symbols-outlined text-[#D9D9D9]" data-icon="lock" style="font-size: 15px;">lock</span>
+<span>Đổi Role</span>
+</button>
+<!-- Ant Design Tooltip Floating -->
+<div class="absolute bottom-full right-0 mb-1.5 hidden group-hover/tip:flex flex-col items-center z-30 pointer-events-none">
+<div class="bg-inverse-surface text-white text-caption font-caption py-1 px-2.5 rounded shadow-lg whitespace-nowrap">
+                        Không thể tự đổi Role của chính mình
+                      </div>
+<div class="w-2 h-2 bg-inverse-surface transform rotate-45 -mt-1"></div>
+</div>
+</div>
+</td>
+</tr>
+<!-- Dòng 02: Nguyễn Văn Kỹ Sư (Role = null, chuẩn bị được Gán Role trong Modal) -->
+<tr class="bg-[#FFFDF5] hover:bg-[#FFF9E6] transition-colors border-l-4 border-l-[#FAAD14]">
+<td class="py-3.5 px-4 text-center font-label-md text-label-md text-[#FA8C16] font-semibold">02</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md font-semibold text-text-primary">nguyen.vanky</span>
+<span class="w-2 h-2 rounded-full bg-[#FAAD14]" title="Chờ phân quyền"></span>
+</div>
+</td>
+<td class="py-3.5 px-4 font-semibold text-text-primary">Nguyễn Văn Kỹ Sư</td>
+<td class="py-3.5 px-4 text-text-secondary">ky.su@constructcorp.vn</td>
+<td class="py-3.5 px-4">
+<!-- Chưa gán (Role = null): Tag default nền #F5F5F5, chữ #8C8C8C viền nét đứt -->
+<span class="ant-tag-unassigned px-2.5 py-0.5 rounded text-label-sm font-label-sm font-medium inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-status-neutral" data-icon="help_outline" style="font-size: 13px;">help_outline</span>
+                    Chưa gán
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-text-secondary font-label-sm text-label-sm">2024-03-28 14:15</td>
+<td class="py-3.5 px-4 text-right">
+<!-- Dòng có Role null: Button type='link' 'Gán Role' chữ #1677FF -->
+<button class="text-[#1677FF] hover:text-[#0057c2] font-semibold text-body-md font-body-md hover:underline px-2 py-1 inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[#1677FF]" data-icon="assignment_ind" style="font-size: 16px;">assignment_ind</span>
+                    Gán Role
+                  </button>
+</td>
+</tr>
+<!-- Dòng 03: Submitter (Trần Văn Thi Công) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 text-center text-status-neutral font-label-md text-label-md">03</td>
+<td class="py-3.5 px-4">
+<span class="font-label-md text-label-md font-medium text-text-primary">tran.thicong</span>
+</td>
+<td class="py-3.5 px-4 font-medium">Trần Văn Thi Công</td>
+<td class="py-3.5 px-4 text-text-secondary">thi.cong@constructcorp.vn</td>
+<td class="py-3.5 px-4">
+<!-- Submitter: Tag blue (nền #E6F4FF, chữ #1677FF) -->
+<span class="ant-tag-submitter px-2.5 py-0.5 rounded text-label-sm font-label-sm font-semibold inline-block">
+                    Submitter
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-text-secondary font-label-sm text-label-sm">2024-01-10 09:20</td>
+<td class="py-3.5 px-4 text-right">
+<!-- Dòng đã có Role: Button type='link' 'Đổi Role' chữ #1677FF -->
+<button class="text-[#1677FF] hover:text-[#0057c2] font-medium text-body-md font-body-md hover:underline px-2 py-1">
+                    Đổi Role
+                  </button>
+</td>
+</tr>
+<!-- Dòng 04: Reviewer (Lê Giám Sát) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 text-center text-status-neutral font-label-md text-label-md">04</td>
+<td class="py-3.5 px-4">
+<span class="font-label-md text-label-md font-medium text-text-primary">le.giamsat</span>
+</td>
+<td class="py-3.5 px-4 font-medium">Lê Hoàng Giám Sát</td>
+<td class="py-3.5 px-4 text-text-secondary">giam.sat@constructcorp.vn</td>
+<td class="py-3.5 px-4">
+<!-- Reviewer: Tag cyan (nền #E6FFFB, chữ #13C2C2) -->
+<span class="ant-tag-reviewer px-2.5 py-0.5 rounded text-label-sm font-label-sm font-semibold inline-block">
+                    Reviewer
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-text-secondary font-label-sm text-label-sm">2024-02-01 11:05</td>
+<td class="py-3.5 px-4 text-right">
+<!-- Dòng đã có Role: Button type='link' 'Đổi Role' chữ #1677FF -->
+<button class="text-[#1677FF] hover:text-[#0057c2] font-medium text-body-md font-body-md hover:underline px-2 py-1">
+                    Đổi Role
+                  </button>
+</td>
+</tr>
+<!-- Dòng 05: Approver (Phạm Chỉ Huy Trưởng) -->
+<tr class="hover:bg-[#F0F7FF] transition-colors">
+<td class="py-3.5 px-4 text-center text-status-neutral font-label-md text-label-md">05</td>
+<td class="py-3.5 px-4">
+<span class="font-label-md text-label-md font-medium text-text-primary">pham.chihuy</span>
+</td>
+<td class="py-3.5 px-4 font-medium">Phạm Đình Chỉ Huy</td>
+<td class="py-3.5 px-4 text-text-secondary">chi.huy@constructcorp.vn</td>
+<td class="py-3.5 px-4">
+<!-- Approver: Tag orange (nền #FFF7E6, chữ #FA8C16) -->
+<span class="ant-tag-approver px-2.5 py-0.5 rounded text-label-sm font-label-sm font-semibold inline-block">
+                    Approver
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-text-secondary font-label-sm text-label-sm">2023-12-19 16:40</td>
+<td class="py-3.5 px-4 text-right">
+<!-- Dòng đã có Role: Button type='link' 'Đổi Role' chữ #1677FF -->
+<button class="text-[#1677FF] hover:text-[#0057c2] font-medium text-body-md font-body-md hover:underline px-2 py-1">
+                    Đổi Role
+                  </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- 4. Ant Design Pagination Component ở cuối bảng -->
+<div class="px-6 py-4 bg-surface-container-lowest border-t border-[#E4E7ED] flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="text-body-sm font-body-sm text-text-secondary">
+            Hiển thị <span class="font-medium text-text-primary">1 - 5</span> trên tổng số <span class="font-medium text-text-primary">24</span> người dùng
+          </div>
+<div class="flex items-center gap-1 select-none">
+<!-- Prev button -->
+<button class="w-8 h-8 rounded border border-border-strong text-status-neutral flex items-center justify-center cursor-not-allowed bg-canvas-background opacity-60" disabled="">
+<span class="material-symbols-outlined" data-icon="chevron_left" style="font-size: 16px;">chevron_left</span>
+</button>
+<!-- Page 1 (Active) - Chuẩn Ant Design: border #1677FF, chữ #1677FF, nền trắng -->
+<button class="w-8 h-8 rounded border border-[#1677FF] text-[#1677FF] font-semibold text-body-sm font-body-sm bg-white flex items-center justify-center shadow-xs">
+              1
+            </button>
+<!-- Page 2 -->
+<button class="w-8 h-8 rounded border border-transparent hover:border-border-strong text-text-primary font-medium text-body-sm font-body-sm flex items-center justify-center transition-colors">
+              2
+            </button>
+<!-- Page 3 -->
+<button class="w-8 h-8 rounded border border-transparent hover:border-border-strong text-text-primary font-medium text-body-sm font-body-sm flex items-center justify-center transition-colors">
+              3
+            </button>
+<!-- Page 4 -->
+<button class="w-8 h-8 rounded border border-transparent hover:border-border-strong text-text-primary font-medium text-body-sm font-body-sm flex items-center justify-center transition-colors">
+              4
+            </button>
+<span class="px-1 text-status-neutral">...</span>
+<!-- Next button -->
+<button class="w-8 h-8 rounded border border-border-strong text-text-primary hover:border-[#1677FF] hover:text-[#1677FF] flex items-center justify-center bg-white transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_right" style="font-size: 16px;">chevron_right</span>
+</button>
+<!-- Page size selector -->
+<div class="relative ml-2">
+<select class="h-8 pl-2 pr-6 text-caption font-caption bg-white border border-[#D9D9D9] rounded focus:border-[#1677FF] focus:outline-none text-text-secondary cursor-pointer">
+<option>5 dòng / trang</option>
+<option selected="">10 dòng / trang</option>
+<option>20 dòng / trang</option>
+<option>50 dòng / trang</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Role Legend & Permissions Guide Box -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-lowest p-3.5 rounded border border-border-subtle flex items-start gap-3">
+<div class="w-8 h-8 rounded bg-[#F9F0FF] text-[#722ED1] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" data-icon="shield_person">shield_person</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm font-semibold text-text-primary">Admin</div>
+<p class="text-caption font-caption text-text-secondary mt-0.5">Toàn quyền hệ thống, quản lý người dùng, gán role và thiết lập form mẫu.</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-3.5 rounded border border-border-subtle flex items-start gap-3">
+<div class="w-8 h-8 rounded bg-[#E6F4FF] text-[#1677FF] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm font-semibold text-text-primary">Submitter</div>
+<p class="text-caption font-caption text-text-secondary mt-0.5">Kỹ sư thi công công trường, khởi tạo yêu cầu nghiệm thu &amp; tải bản vẽ.</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-3.5 rounded border border-border-subtle flex items-start gap-3">
+<div class="w-8 h-8 rounded bg-[#E6FFFB] text-[#13C2C2] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" data-icon="rate_review">rate_review</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm font-semibold text-text-primary">Reviewer</div>
+<p class="text-caption font-caption text-text-secondary mt-0.5">Kỹ sư giám sát (QA/QC), kiểm tra hiện trường, gắn marker &amp; đánh giá biên bản.</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-3.5 rounded border border-border-subtle flex items-start gap-3">
+<div class="w-8 h-8 rounded bg-[#FFF7E6] text-[#FA8C16] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm font-semibold text-text-primary">Approver</div>
+<p class="text-caption font-caption text-text-secondary mt-0.5">Chỉ huy trưởng / Giám đốc dự án, phê duyệt cuối cùng hoặc từ chối nghiệm thu.</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- ================= ANT DESIGN MODAL: 'Gán Role cho Nguyễn Văn Kỹ Sư' ================= -->
+<!-- Hiển thị trực quan theo yêu cầu đặc tả (Ant Design Standard Modal Window) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-[1px] p-4 transition-all">
+<div class="bg-white rounded-lg w-full max-w-lg shadow-[0_12px_32px_rgba(15,23,42,0.16)] border border-[#D9D9D9] overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+<!-- Modal Header: 'Gán Role cho Nguyễn Văn Kỹ Sư' -->
+<div class="px-6 py-4 border-b border-[#E4E7ED] flex items-center justify-between bg-white">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-[#E6F4FF] text-[#1677FF] flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="badge" style="font-size: 16px;">badge</span>
+</div>
+<h2 class="text-headline-md font-headline-md font-semibold text-text-primary">
+            Gán Role cho Nguyễn Văn Kỹ Sư
+          </h2>
+</div>
+<button class="text-status-neutral hover:text-text-primary transition-colors p-1 rounded hover:bg-surface-container">
+<span class="material-symbols-outlined" data-icon="close" style="font-size: 20px;">close</span>
+</button>
+</div>
+<!-- Modal Body: Thông tin user & Select chọn Role -->
+<div class="p-6 flex flex-col gap-5 bg-white">
+<!-- User Info Summary Card -->
+<div class="bg-[#F5F7FA] border border-[#E4E7ED] rounded p-4 flex flex-col gap-2.5">
+<div class="text-caption font-caption uppercase tracking-wider text-text-secondary font-semibold">
+            Thông tin tài khoản xác thực
+          </div>
+<div class="grid grid-cols-2 gap-3 text-body-sm font-body-sm">
+<div>
+<span class="text-text-secondary">Username:</span>
+<div class="font-label-md text-label-md font-semibold text-text-primary mt-0.5">
+                nguyen.vanky
+              </div>
+</div>
+<div>
+<span class="text-text-secondary">Email công tác:</span>
+<div class="font-body-sm font-body-sm font-medium text-text-primary mt-0.5 truncate" title="ky.su@constructcorp.vn">
+                ky.su@constructcorp.vn
+              </div>
+</div>
+</div>
+<div class="pt-2 border-t border-dashed border-[#D9D9D9] flex items-center justify-between">
+<span class="text-caption font-caption text-text-secondary">Trạng thái hiện tại:</span>
+<span class="ant-tag-unassigned px-2 py-0.5 rounded text-label-sm font-label-sm font-medium">
+              Chưa gán vai trò
+            </span>
+</div>
+</div>
+<!-- Form Select Role Field -->
+<div class="flex flex-col gap-2">
+<label class="text-body-md font-body-md font-medium text-text-primary flex items-center justify-between">
+<span>Chọn vai trò nghiệp vụ <span class="text-status-error">*</span></span>
+<span class="text-caption font-caption text-text-secondary font-normal">Cấp quyền vận hành</span>
+</label>
+<!-- Select chọn Role chuẩn Ant Design -->
+<div class="relative">
+<select class="w-full h-10 pl-3 pr-10 text-body-md font-body-md bg-white border border-[#1677FF] rounded focus:outline-none ring-2 ring-[#1677FF]/20 text-text-primary appearance-none cursor-pointer">
+<option disabled="" value="">-- Vui lòng chọn một vai trò vận hành --</option>
+<option selected="" value="Submitter">Submitter - Kỹ sư thi công</option>
+<option value="Reviewer">Reviewer - Kỹ sư giám sát / QA</option>
+<option value="Approver">Approver - Chỉ huy trưởng</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 pointer-events-none text-[#1677FF]" data-icon="expand_more" style="font-size: 20px;">expand_more</span>
+</div>
+<!-- Helper description for selected role -->
+<div class="flex items-start gap-2 mt-1 p-2.5 bg-[#E6F4FF]/50 border border-[#91CAFF]/40 rounded text-caption font-caption text-[#0057c2]">
+<span class="material-symbols-outlined text-[#1677FF] shrink-0" data-icon="info" style="font-size: 16px;">info</span>
+<span>
+              Người dùng có quyền tạo yêu cầu nghiệm thu, đánh dấu các hạng mục hoàn thành và nộp hồ sơ biên bản FormIO lên hệ thống.
+            </span>
+</div>
+</div>
+<!-- Audit Note Checkbox -->
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input checked="" class="w-4 h-4 text-[#1677FF] border-[#D9D9D9] rounded focus:ring-[#1677FF]" type="checkbox"/>
+<span class="text-body-sm font-body-sm text-text-secondary">Gửi email thông báo tự động cho người dùng về vai trò vừa gán.</span>
+</label>
+</div>
+<!-- Modal Footer: Nút Hủy (Default viền #D9D9D9) và Nút Xác nhận (Primary nền #1677FF chữ trắng) -->
+<div class="px-6 py-3.5 bg-[#FAFAFA] border-t border-[#E4E7ED] flex items-center justify-end gap-3">
+<!-- Nút Hủy -->
+<button class="h-9 px-4 bg-white border border-[#D9D9D9] hover:border-[#1677FF] hover:text-[#1677FF] text-text-primary rounded text-body-md font-body-md font-medium transition-colors">
+          Hủy
+        </button>
+<!-- Nút Xác nhận -->
+<button class="h-9 px-5 bg-[#1677FF] hover:bg-[#0057c2] text-white rounded text-body-md font-body-md font-medium transition-all shadow-xs flex items-center gap-1.5 focus:ring-2 focus:ring-[#1677FF]/30">
+<span class="material-symbols-outlined text-white" data-icon="check" style="font-size: 16px;">check</span>
+<span>Xác nhận</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

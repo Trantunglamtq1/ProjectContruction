@@ -9,8 +9,8 @@
 
 | Giai đoạn | Nội dung chính | Trạng thái Backend | Trạng thái Frontend |
 | :--- | :--- | :---: | :---: |
-| **GIAI ĐOẠN 0** (Ngày 1 - 5) | Authentication, JWT, Admin gán Role |  **100% Hoàn thành** | ⏳ Chưa làm (Ngày 3, 4, 5) |
-| **GIAI ĐOẠN 1** (Ngày 6 - 9) | Bản vẽ PDF, Upload, Viewport, Object |  **100% Hoàn thành** | ⏳ Chưa làm (Ngày 8, 9) |
+| **GIAI ĐOẠN 0** (Ngày 1 - 5) | Authentication, JWT, Admin gán Role |  **100% Hoàn thành** |  **100% Hoàn thành** (Đầy đủ Màn 1, 2, 3, 4) |
+| **GIAI ĐOẠN 1** (Ngày 6 - 9) | Bản vẽ PDF, Upload, Viewport, Object |  **100% Hoàn thành** | ⏳ Đã dựng khung tách theo Role |
 | **GIAI ĐOẠN 2** (Ngày 10 - 13) | CQRS Inspection/Checklist, Elsa Workflow | ⏳ Chưa làm (Đã có Entity & DB) | — |
 | **GIAI ĐOẠN 3** (Ngày 14 - 18) | Giao diện Inspection, Checklist, Custom CSS | — | ⏳ Chưa làm |
 | **GIAI ĐOẠN 4** (Ngày 19 - 23) | Tích hợp E2E, Kiểm thử toàn diện, Demo | ⏳ Chưa làm | ⏳ Chưa làm |
@@ -43,21 +43,30 @@
 - [x] **DoD:** Admin gán Role thành công, user thường không gọi được API Admin (bị chặn 403).
 
 #### Ngày 3: Frontend: Đăng ký, Đăng nhập & gắn JWT
-- [ ] Khởi tạo ứng dụng React + Vite + TypeScript.
-- [ ] Xây dựng màn Đăng ký tài khoản (Form Ant Design) nối API `/api/auth/register`.
-- [ ] Xây dựng màn Đăng nhập nối API `/api/auth/login`, lưu token vào state/localStorage.
-- [ ] Cấu hình Axios Interceptor tự động đính kèm `Bearer token` vào mọi request.
-- [ ] Xây dựng Route Guard (chuyển hướng về Login nếu chưa đăng nhập).
-- [ ] Xử lý màn hình chờ "Tài khoản đang chờ Admin gán quyền" nếu `RoleId == null`.
+- [x] Khởi tạo ứng dụng React + Vite + TypeScript.
+- [x] Xây dựng màn Đăng ký tài khoản (Form Ant Design) nối API `/api/auth/register`.
+- [x] Xây dựng màn Đăng nhập nối API `/api/auth/login`, lưu token vào state/localStorage.
+- [x] Cấu hình Axios Interceptor tự động đính kèm `Bearer token` vào mọi request.
+- [x] Xây dựng Route Guard (chuyển hướng về Login nếu chưa đăng nhập).
+- [x] Xử lý màn hình chờ "Tài khoản đang chờ Admin gán quyền" nếu `RoleId == null`.
 
 #### Ngày 4: Frontend: Màn Quản lý người dùng (Admin)
-- [ ] Xây dựng màn danh sách User (Ant Design Table): hiển thị Username, Email, FullName, Role.
-- [ ] Chức năng modal/select gán và thay đổi Role cho từng User nối API `PUT /api/users/{id}/role`.
-- [ ] Ẩn menu và chặn truy cập màn Quản lý người dùng nếu tài khoản không phải Role `Admin`.
+- [x] Xây dựng màn danh sách User (Ant Design Table): hiển thị Username, Email, FullName, Role, Trạng thái (Hoạt động / Đã khóa), Ngày tạo.
+- [x] Chức năng modal/select gán và thay đổi Role cho từng User nối API `PUT /api/users/{id}/role`.
+- [x] Chức năng Vô hiệu hóa / Kích hoạt tài khoản người dùng (`PATCH /api/users/{id}/status`).
+- [x] Thống kê tổng quan KPI người dùng (Tổng, Hoạt động, Chờ duyệt, Admin).
+- [x] Ẩn menu và chặn truy cập màn Quản lý người dùng nếu tài khoản không phải Role `Admin`.
+- [x] Ràng buộc an toàn: Admin không tự đổi quyền hoặc tự khóa tài khoản của chính mình.
 
 #### Ngày 5: Buffer Authentication & Kiểm thử phân quyền Frontend
-- [ ] Kiểm thử toàn bộ luồng Auth trên giao diện: Đăng ký mới → Admin gán Role → Kỹ sư đăng nhập lại.
-- [ ] Rà soát xử lý lỗi token hết hạn (auto logout).
+- [x] Kiểm thử toàn bộ luồng Auth trên giao diện: Đăng ký mới → Màn chờ duyệt → Admin gán Role/đổi Role/khóa → Kỹ sư đăng nhập lại.
+- [x] Tách biệt giao diện và phân luồng điều hướng độc lập theo từng Role (`Admin`, `Submitter`, `Reviewer`, `Approver`).
+- [x] Rà soát xử lý lỗi token hết hạn (auto logout).
+- [x] **Ranh giới phân quyền nghiêm ngặt theo tài liệu đặc tả:**
+  - `Admin`: Tuyệt đối không can thiệp vào Bản vẽ, Nghiệm thu, Phê duyệt (chỉ quản trị User, gán/đổi Role, bật/tắt Active).
+  - `Submitter`: Người duy nhất được phép Upload bản vẽ, tạo Object trên Viewport, khởi tạo đơn Inspection (`Draft` → `Submitted`).
+  - `Reviewer`: Thẩm tra hồ sơ & **phê duyệt cấp 1** (`Submitted` → `UnderReview` → `Reviewed`), toàn quyền quản lý Checklist tiêu chí. Chỉ sau khi Reviewer phê duyệt thì hồ sơ mới chuyển tiếp tới Approver.
+  - `Approver`: Cấp **phê duyệt cuối cùng (Cấp 2 - Chủ đầu tư)** trên những hồ sơ đã được Reviewer duyệt (`Reviewed` → `Approved` / `Rejected`). Khi Approver duyệt chính thức sẽ kéo theo các ChecklistItem tự động chuyển sang `Done`.
 
 ---
 
@@ -79,14 +88,15 @@
 - [x] Kiểm thử tự động `tests/test_day2_api.py` (pass 100%).
 
 #### Ngày 8: Frontend: Màn Upload & Viewport xem bản vẽ
-- [ ] Màn hình danh sách bản vẽ kèm nút Upload file PDF (dùng `antd Upload`).
-- [ ] Tích hợp thư viện `pdf.js` hiển thị Viewport bản vẽ PDF trên web.
-- [ ] Điều khiển chuyển trang (Next / Previous), Zoom in / Zoom out bản vẽ.
+- [x] Màn hình danh sách bản vẽ kèm nút Upload file PDF (dùng `antd Upload`).
+- [x] Hiển thị Viewport bản vẽ PDF trên web (Modal embedded không mở tab mới).
+- [x] Tối ưu header RFC 5987 hỗ trợ file PDF tên tiếng Việt có dấu.
 
 #### Ngày 9: Frontend: Khoanh vùng tạo Object trên Viewport
-- [ ] Dựng lớp overlay Canvas trên Viewport cho phép người dùng kéo chuột khoanh vùng hình chữ nhật (Marker).
-- [ ] Modal nhập tên Object sau khi khoanh vùng (gọi API `POST /api/objects`).
-- [ ] Vẽ lại toàn bộ các Marker Object đã lưu trên trang bản vẽ để người dùng click xem/chọn.
+- [x] Dựng lớp overlay tương tác trên Viewport cho phép Submitter kéo chuột khoanh vùng hình chữ nhật (Marker).
+- [x] Modal nhập tên Object sau khi khoanh vùng và lưu vào database (gọi API `POST /api/objects`).
+- [x] Vẽ lại toàn bộ các Marker Object đã lưu trên trang bản vẽ với nhãn tên, hiệu ứng chọn và tooltip.
+- [x] Phân quyền chặt chẽ: Chỉ Submitter được vẽ khoanh vùng; Reviewer/Approver chỉ xem; Admin bị chặn.
 
 ---
 
