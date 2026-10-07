@@ -118,11 +118,13 @@ public class AssignRoleCommandHandler : IRequestHandler<AssignRoleCommand, UserD
                 throw new KeyNotFoundException($"Không tìm thấy Role với Id = {request.RoleId.Value}.");
             }
             user.RoleId = role.Id;
+            user.Role = role;
             newRoleName = role.Name;
         }
         else
         {
             user.RoleId = null;
+            user.Role = null;
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -207,11 +209,16 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, U
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
-    public GetCurrentUserQueryHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+    public GetCurrentUserQueryHandler(
+        IApplicationDbContext context, 
+        ICurrentUserService currentUserService,
+        IJwtTokenGenerator jwtTokenGenerator)
     {
         _context = context;
         _currentUserService = currentUserService;
+        _jwtTokenGenerator = jwtTokenGenerator;
     }
 
     public async Task<UserDto?> Handle(GetCurrentUserQuery request, CancellationToken cancellationToken)
@@ -228,6 +235,9 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, U
 
         if (user == null) return null;
 
+        var roleName = user.Role?.Name;
+        var (token, _) = _jwtTokenGenerator.GenerateToken(user, roleName);
+
         return new UserDto
         {
             Id = user.Id,
@@ -235,9 +245,10 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, U
             Email = user.Email,
             FullName = user.FullName,
             RoleId = user.RoleId,
-            RoleName = user.Role?.Name,
+            RoleName = roleName,
             IsActive = user.IsActive,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            Token = token
         };
     }
 }

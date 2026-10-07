@@ -3,6 +3,7 @@ import { Card, Form, Input, Button, Typography, Checkbox, Alert, Space } from 'a
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { getDefaultRouteForRole } from '../../components/guards/RouteGuards';
 import { authApi, type LoginDto } from '../../services/authApi';
 import axios from 'axios';
 
@@ -28,20 +29,10 @@ export const LoginPage: React.FC = () => {
       login(response.token, response);
 
       // Determine navigation target strictly separated based on user role
-      const role = response.user.roleName;
-      if (!role) {
-        navigate('/pending-approval', { replace: true });
-      } else if (role === 'Admin') {
-        navigate('/admin/users', { replace: true });
-      } else if (role === 'Submitter') {
-        navigate('/submitter/drawings', { replace: true });
-      } else if (role === 'Reviewer') {
-        navigate('/reviewer/inspections', { replace: true });
-      } else if (role === 'Approver') {
-        navigate('/approver/inspections', { replace: true });
-      } else {
-        navigate('/pending-approval', { replace: true });
-      }
+      const rawRole = response.user.roleName;
+      const role = Array.isArray(rawRole) ? rawRole[0] : rawRole;
+      const targetRoute = getDefaultRouteForRole(role);
+      navigate(targetRoute, { replace: true });
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.data) {
         const errorData = error.response.data;

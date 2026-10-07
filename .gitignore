@@ -24,6 +24,7 @@ bld/
 ## Uploaded demo files & temp
 src/ConstructionProject.API/uploads/
 uploads/
+minio-data/
 
 ## Frontend dependencies & build
 node_modules/

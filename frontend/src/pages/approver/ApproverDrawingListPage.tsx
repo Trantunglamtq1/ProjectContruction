@@ -5,6 +5,7 @@ import {
   SearchOutlined,
   ReloadOutlined,
   CompassOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { drawingApi, type DrawingFileDto } from '../../services/drawingApi';
@@ -80,17 +81,34 @@ export const ApproverDrawingListPage: React.FC = () => {
     {
       title: 'Tra cứu hồ sơ bản vẽ',
       key: 'actions',
-      width: 180,
+      width: 280,
       align: 'center' as const,
       render: (_: any, record: DrawingFileDto) => (
-        <Button
-          size="small"
-          type="primary"
-          icon={<CompassOutlined />}
-          onClick={() => handleOpenViewport(record)}
-        >
-          Mở Viewport
-        </Button>
+        <Space size={8}>
+          <Button
+            size="small"
+            type="primary"
+            icon={<CompassOutlined />}
+            onClick={() => handleOpenViewport(record)}
+          >
+            Mở Viewport
+          </Button>
+          <Button
+            size="small"
+            icon={<DownloadOutlined />}
+            onClick={() => {
+              const link = document.createElement('a');
+              link.href = record.fileUrl;
+              link.download = record.fileName;
+              link.target = '_blank';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+          >
+            Tải về
+          </Button>
+        </Space>
       ),
     },
   ];

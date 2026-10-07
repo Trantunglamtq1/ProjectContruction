@@ -10,8 +10,9 @@ export const LoadingScreen: React.FC = () => (
   </div>
 );
 
-export const getDefaultRouteForRole = (role: UserRole | null | undefined): string => {
-  switch (role) {
+export const getDefaultRouteForRole = (role: UserRole | string | string[] | null | undefined): string => {
+  const actualRole = Array.isArray(role) ? role[0] : role;
+  switch (actualRole) {
     case 'Admin':
       return '/admin/users';
     case 'Submitter':
@@ -38,8 +39,10 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children })
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
+  const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as UserRole) || null;
+
   // If user has no role, always force redirect to /pending-approval
-  if (user && user.role === null && location.pathname !== '/pending-approval') {
+  if (user && !currentRole && location.pathname !== '/pending-approval') {
     return <Navigate to="/pending-approval" replace />;
   }
 
@@ -61,8 +64,10 @@ export const RoleGuard: React.FC<{ allowedRoles: UserRole[]; children: React.Rea
     return <Navigate to="/auth/login" replace />;
   }
 
-  if (!user || !user.role || !allowedRoles.includes(user.role)) {
-    const targetRoute = getDefaultRouteForRole(user?.role);
+  const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as UserRole) || null;
+
+  if (!user || !currentRole || !allowedRoles.includes(currentRole)) {
+    const targetRoute = getDefaultRouteForRole(currentRole);
     return <Navigate to={targetRoute} replace />;
   }
 
@@ -78,7 +83,8 @@ export const PublicOnlyGuard: React.FC<{ children: React.ReactNode }> = ({ child
   }
 
   if (isAuthenticated && user) {
-    const targetRoute = getDefaultRouteForRole(user.role);
+    const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as UserRole) || null;
+    const targetRoute = getDefaultRouteForRole(currentRole);
     return <Navigate to={targetRoute} replace />;
   }
 

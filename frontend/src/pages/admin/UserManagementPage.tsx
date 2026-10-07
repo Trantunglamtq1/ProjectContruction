@@ -50,6 +50,7 @@ export const UserManagementPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [roleForm] = Form.useForm();
+  const selectedRoleId = Form.useWatch('roleId', roleForm);
 
   // Queries
   const {
@@ -126,7 +127,7 @@ export const UserManagementPage: React.FC = () => {
       if (!selectedUser) return;
       assignRoleMutation.mutate({
         userId: selectedUser.id,
-        roleId: values.roleId,
+        roleId: values.roleId !== undefined ? values.roleId : null,
       });
     } catch {
       // Validate error
@@ -499,54 +500,69 @@ export const UserManagementPage: React.FC = () => {
           <Form.Item name="roleId" label="Vai trò (Role)" rules={[{ required: false }]}>
             <Radio.Group style={{ width: '100%' }}>
               <Space direction="vertical" style={{ width: '100%' }}>
-                {roles.map((r) => (
-                  <Card
-                    key={r.id}
-                    size="small"
-                    style={{
-                      cursor: 'pointer',
-                      borderRadius: 6,
-                      backgroundColor: '#FAFAFA',
-                    }}
-                  >
-                    <Radio value={r.id}>
-                      <Space>
-                        <Text strong>{r.name}</Text>
-                        {r.name === 'Admin' && <Tag color="magenta">Toàn quyền hệ thống</Tag>}
-                        {r.name === 'Submitter' && <Tag color="blue">Kỹ sư hiện trường</Tag>}
-                        {r.name === 'Reviewer' && <Tag color="orange">Tư vấn giám sát</Tag>}
-                        {r.name === 'Approver' && <Tag color="green">Chủ đầu tư</Tag>}
-                      </Space>
-                      {r.description && (
-                        <div style={{ marginTop: 4, color: '#8C8C8C', fontSize: 13, paddingLeft: 24 }}>
-                          {r.description}
-                        </div>
-                      )}
-                    </Radio>
-                  </Card>
-                ))}
+                {roles.map((r) => {
+                  const isSelected = selectedRoleId === r.id;
+                  return (
+                    <Card
+                      key={r.id}
+                      size="small"
+                      onClick={() => roleForm.setFieldValue('roleId', r.id)}
+                      style={{
+                        cursor: 'pointer',
+                        borderRadius: 6,
+                        backgroundColor: isSelected ? '#E6F4FF' : '#FAFAFA',
+                        borderColor: isSelected ? '#1677FF' : '#E4E7ED',
+                        borderWidth: isSelected ? 2 : 1,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <Radio value={r.id}>
+                        <Space>
+                          <Text strong style={{ color: isSelected ? '#1677FF' : '#1F2937' }}>{r.name}</Text>
+                          {r.name === 'Admin' && <Tag color="magenta">Toàn quyền hệ thống</Tag>}
+                          {r.name === 'Submitter' && <Tag color="blue">Kỹ sư hiện trường</Tag>}
+                          {r.name === 'Reviewer' && <Tag color="orange">Tư vấn giám sát</Tag>}
+                          {r.name === 'Approver' && <Tag color="green">Chủ đầu tư</Tag>}
+                        </Space>
+                        {r.description && (
+                          <div style={{ marginTop: 4, color: '#8C8C8C', fontSize: 13, paddingLeft: 24 }}>
+                            {r.description}
+                          </div>
+                        )}
+                      </Radio>
+                    </Card>
+                  );
+                })}
 
                 {/* Tùy chọn Hủy gán Role (Về trạng thái chờ) */}
-                <Card
-                  size="small"
-                  style={{
-                    cursor: 'pointer',
-                    borderRadius: 6,
-                    backgroundColor: '#FFF1F0',
-                    borderColor: '#FFA39E',
-                  }}
-                >
-                  <Radio value={null}>
-                    <Space>
-                      <Text strong type="danger">
-                        Hủy gán quyền (Thu hồi toàn bộ vai trò)
-                      </Text>
-                    </Space>
-                    <div style={{ marginTop: 4, color: '#CF1322', fontSize: 13, paddingLeft: 24 }}>
-                      Người dùng sẽ quay về màn hình chờ gán quyền (Pending Role) và không truy cập được dữ liệu nghiệp vụ.
-                    </div>
-                  </Radio>
-                </Card>
+                {(() => {
+                  const isRevokeSelected = selectedRoleId === null;
+                  return (
+                    <Card
+                      size="small"
+                      onClick={() => roleForm.setFieldValue('roleId', null)}
+                      style={{
+                        cursor: 'pointer',
+                        borderRadius: 6,
+                        backgroundColor: isRevokeSelected ? '#FFF1F0' : '#FAFAFA',
+                        borderColor: isRevokeSelected ? '#FFA39E' : '#E4E7ED',
+                        borderWidth: isRevokeSelected ? 2 : 1,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <Radio value={null}>
+                        <Space>
+                          <Text strong type="danger">
+                            Hủy gán quyền (Thu hồi toàn bộ vai trò)
+                          </Text>
+                        </Space>
+                        <div style={{ marginTop: 4, color: '#CF1322', fontSize: 13, paddingLeft: 24 }}>
+                          Người dùng sẽ quay về màn hình chờ gán quyền (Pending Role) và không truy cập được dữ liệu nghiệp vụ.
+                        </div>
+                      </Radio>
+                    </Card>
+                  );
+                })()}
               </Space>
             </Radio.Group>
           </Form.Item>

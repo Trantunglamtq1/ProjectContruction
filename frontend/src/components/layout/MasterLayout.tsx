@@ -27,8 +27,9 @@ export const MasterLayout: React.FC = () => {
   };
 
   // Tag color mapping by role per design spec
-  const getRoleTagColor = (role: UserRole) => {
-    switch (role) {
+  const getRoleTagColor = (role: UserRole | string | string[] | null) => {
+    const actualRole = Array.isArray(role) ? role[0] : role;
+    switch (actualRole) {
       case 'Admin':
         return 'purple';
       case 'Submitter':
@@ -42,11 +43,13 @@ export const MasterLayout: React.FC = () => {
     }
   };
 
+  const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as UserRole) || null;
+
   // Build menu items strictly separated based on user role
   const getMenuItems = (): MenuProps['items'] => {
-    if (!user || !user.role) return [];
+    if (!user || !currentRole) return [];
 
-    switch (user.role) {
+    switch (currentRole) {
       case 'Admin':
         return [
           {
@@ -151,8 +154,8 @@ export const MasterLayout: React.FC = () => {
                 @{user?.username}
               </Text>
             </div>
-            <Tag color={getRoleTagColor(user?.role || null)} style={{ marginLeft: 6, fontWeight: 500 }}>
-              {user?.role || 'Chưa gán quyền'}
+            <Tag color={getRoleTagColor(currentRole)} style={{ marginLeft: 6, fontWeight: 500 }}>
+              {currentRole || 'Chưa gán quyền'}
             </Tag>
           </Space>
 
@@ -169,7 +172,7 @@ export const MasterLayout: React.FC = () => {
       </Header>
 
       <Layout>
-        {user?.role && (
+        {currentRole && (
           <Sider
             width={220}
             style={{
