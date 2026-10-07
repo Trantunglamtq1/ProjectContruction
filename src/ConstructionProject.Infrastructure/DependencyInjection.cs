@@ -22,7 +22,16 @@ public static class DependencyInjection
             }));
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-        services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        
+        var storageProvider = configuration["Storage:Provider"] ?? "MinIO";
+        if (storageProvider.Equals("MinIO", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddScoped<IFileStorageService, MinioFileStorageService>();
+        }
+        else
+        {
+            services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        }
         
         services.AddHttpContextAccessor();
         services.AddScoped<IPasswordHasher, PasswordHasher>();

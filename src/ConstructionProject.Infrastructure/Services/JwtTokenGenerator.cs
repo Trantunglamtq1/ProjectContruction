@@ -43,7 +43,6 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         if (!string.IsNullOrWhiteSpace(roleName))
         {
             claims.Add(new Claim(ClaimTypes.Role, roleName));
-            claims.Add(new Claim("role", roleName));
         }
 
         var tokenDescriptor = new SecurityTokenDescriptor

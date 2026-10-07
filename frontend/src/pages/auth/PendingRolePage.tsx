@@ -16,9 +16,11 @@ export const PendingRolePage: React.FC = () => {
     const timer = setInterval(async () => {
       try {
         const updatedUser = await refreshUser();
-        if (updatedUser?.roleName) {
-          message.success(`Tài khoản đã được phê duyệt vai trò: ${updatedUser.roleName}`);
-          const target = getDefaultRouteForRole(updatedUser.roleName as UserRole);
+        const rawRole = updatedUser?.roleName;
+        const role = Array.isArray(rawRole) ? rawRole[0] : rawRole;
+        if (role) {
+          message.success(`Tài khoản đã được phê duyệt vai trò: ${role}`);
+          const target = getDefaultRouteForRole(role as UserRole);
           window.location.href = target;
         }
       } catch {
@@ -33,9 +35,11 @@ export const PendingRolePage: React.FC = () => {
     setChecking(true);
     try {
       const updatedUser = await refreshUser();
-      if (updatedUser?.roleName) {
-        message.success(`Tài khoản đã được gán vai trò: ${updatedUser.roleName}`);
-        const target = getDefaultRouteForRole(updatedUser.roleName as UserRole);
+      const rawRole = updatedUser?.roleName;
+      const role = Array.isArray(rawRole) ? rawRole[0] : rawRole;
+      if (role) {
+        message.success(`Tài khoản đã được gán vai trò: ${role}`);
+        const target = getDefaultRouteForRole(role as UserRole);
         window.location.href = target;
       } else {
         message.info('Tài khoản của bạn vẫn đang chờ Admin phê duyệt vai trò.');

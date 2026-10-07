@@ -43,6 +43,7 @@ export interface CurrentUserDto {
   roleName: string | null;
   isActive: boolean;
   createdAt: string;
+  token?: string | null;
 }
 
 export interface DecodedToken {

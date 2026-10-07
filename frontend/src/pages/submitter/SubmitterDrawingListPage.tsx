@@ -19,6 +19,7 @@ import {
   ReloadOutlined,
   CompassOutlined,
   DeleteOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { drawingApi, type DrawingFileDto } from '../../services/drawingApi';
@@ -154,7 +155,7 @@ export const SubmitterDrawingListPage: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 220,
+      width: 300,
       align: 'center' as const,
       render: (_: any, record: DrawingFileDto) => (
         <Space size={8}>
@@ -165,6 +166,21 @@ export const SubmitterDrawingListPage: React.FC = () => {
             onClick={() => handleOpenViewport(record)}
           >
             Mở Viewport
+          </Button>
+          <Button
+            size="small"
+            icon={<DownloadOutlined />}
+            onClick={() => {
+              const link = document.createElement('a');
+              link.href = record.fileUrl;
+              link.download = record.fileName;
+              link.target = '_blank';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+          >
+            Tải về
           </Button>
           <Popconfirm
             title="Xác nhận xóa bản vẽ"

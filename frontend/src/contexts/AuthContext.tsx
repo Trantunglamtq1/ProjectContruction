@@ -27,9 +27,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Helper function to extract user role from decoded token
   const extractRoleFromToken = (decoded: Record<string, unknown>): UserRole => {
-    const roleClaim =
+    const rawRole =
       decoded['role'] ||
       decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+    const roleClaim = Array.isArray(rawRole) ? rawRole[0] : rawRole;
     return (roleClaim as UserRole) || null;
   };
 
@@ -44,18 +45,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const currentUserData = await authApi.getCurrentUser();
+      const rawRole = currentUserData.roleName;
+      const normalizedRole = ((Array.isArray(rawRole) ? rawRole[0] : rawRole) as UserRole) || null;
+
+      if (currentUserData.token) {
+        localStorage.setItem('token', currentUserData.token);
+        setToken(currentUserData.token);
+      }
+
       const updatedUser: User = {
         id: currentUserData.id,
         username: currentUserData.username,
         email: currentUserData.email,
         fullName: currentUserData.fullName,
-        role: (currentUserData.roleName as UserRole) || null,
+        role: normalizedRole,
         roleId: currentUserData.roleId,
         isActive: currentUserData.isActive ?? true,
       };
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      return currentUserData;
+      return { ...currentUserData, roleName: normalizedRole };
     } catch {
       logout();
       return null;
@@ -90,8 +99,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
+        if (currentData.token && currentData.token !== token) {
+          localStorage.setItem('token', currentData.token);
+          setToken(currentData.token);
+        }
+
         // 2. Check if role has changed
-        const newRole = (currentData.roleName as UserRole) || null;
+        const rawRole = currentData.roleName;
+        const newRole = ((Array.isArray(rawRole) ? rawRole[0] : rawRole) as UserRole) || null;
         if (user && user.role !== newRole) {
           const updatedUser: User = {
             ...user,
@@ -122,7 +137,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const decoded: Record<string, unknown> = jwtDecode(jwtToken);
       const roleFromToken = extractRoleFromToken(decoded);
-      const role = roleFromToken || (resData.user.roleName as UserRole) || null;
+      const rawUserRole = resData.user.roleName;
+      const normalizedUserRole = ((Array.isArray(rawUserRole) ? rawUserRole[0] : rawUserRole) as UserRole) || null;
+      const role = roleFromToken || normalizedUserRole;
       const sub = (decoded['sub'] as string) || (decoded['nameid'] as string) || resData.user.id;
 
       const loggedUser: User = {
@@ -138,12 +155,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(loggedUser);
       localStorage.setItem('user', JSON.stringify(loggedUser));
     } catch {
+      const rawUserRole = resData.user.roleName;
+      const normalizedUserRole = ((Array.isArray(rawUserRole) ? rawUserRole[0] : rawUserRole) as UserRole) || null;
       const fallbackUser: User = {
         id: resData.user.id,
         username: resData.user.username,
         email: resData.user.email,
         fullName: resData.user.fullName,
-        role: (resData.user.roleName as UserRole) || null,
+        role: normalizedUserRole,
         roleId: resData.user.roleId,
         isActive: resData.user.isActive ?? true,
       };

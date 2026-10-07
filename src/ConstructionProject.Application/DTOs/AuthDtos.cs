@@ -10,6 +10,7 @@ public class UserDto
     public string? RoleName { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
+    public string? Token { get; set; }
 }
 
 public class RoleDto
