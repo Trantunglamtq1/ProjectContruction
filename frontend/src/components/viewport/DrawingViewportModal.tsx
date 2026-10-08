@@ -33,14 +33,24 @@ import {
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as pdfjsLib from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { useAuth } from '../../contexts/AuthContext';
 import { objectApi, type CreateObjectPayload } from '../../services/objectApi';
 import type { DrawingFileDto } from '../../services/drawingApi';
 import apiClient from '../../services/apiClient';
 
-// Configure pdfjs worker URL
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+// Khởi tạo Worker ES Module tương thích 100% với Vite và trình duyệt hiện đại
+if (typeof window !== 'undefined' && 'Worker' in window) {
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerPort = new Worker(
+      new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url),
+      { type: 'module' }
+    );
+  } catch {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  }
+} else {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+}
 
 const { Text } = Typography;
 
