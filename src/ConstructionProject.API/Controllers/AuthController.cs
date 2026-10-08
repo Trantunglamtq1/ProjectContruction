@@ -19,6 +19,15 @@ public record LoginRequest(
     string Password
 );
 
+public record ConfirmEmailRequest(
+    string Username,
+    string OtpCode
+);
+
+public record ResendOtpRequest(
+    string Username
+);
+
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -66,6 +75,34 @@ public class AuthController : ControllerBase
 
         var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Xác thực email người dùng bằng mã OTP 6 số
+    /// </summary>
+    [HttpPost("confirm-email")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request, CancellationToken cancellationToken)
+    {
+        var command = new ConfirmEmailCommand(request.Username, request.OtpCode);
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Gửi lại mã xác thực OTP qua email
+    /// </summary>
+    [HttpPost("resend-otp")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest request, CancellationToken cancellationToken)
+    {
+        var command = new ResendOtpCommand(request.Username);
+        await _mediator.Send(command, cancellationToken);
+        return Ok(new { message = "Mã xác thực mới đã được gửi tới email của bạn." });
     }
 
     /// <summary>

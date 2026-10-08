@@ -23,8 +23,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(150);
 
-        builder.HasIndex(u => u.Email)
-            .IsUnique();
+        // Không cấu hình IsUnique để một email có thể đăng ký nhiều tài khoản
+        builder.HasIndex(u => u.Email);
 
         builder.Property(u => u.FullName)
             .IsRequired()
@@ -37,6 +37,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.IsActive)
             .IsRequired()
             .HasDefaultValue(true);
+
+        builder.Property(u => u.EmailConfirmed)
+            .IsRequired()
+            .HasDefaultValue(true);
+
+        builder.Property(u => u.EmailConfirmationToken)
+            .HasMaxLength(256);
 
         // RoleId có thể null (tài khoản mới đăng ký chưa có Role)
         builder.HasOne(u => u.Role)
@@ -56,6 +63,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                 PasswordHash = "$2a$11$Xj2h81DT5aEkE3uD6miA8ufY8KvoeIKsDogkWOtsL5ibJtTJRGvyC",
                 RoleId = RoleConstants.AdminRoleId,
                 IsActive = true,
+                EmailConfirmed = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );

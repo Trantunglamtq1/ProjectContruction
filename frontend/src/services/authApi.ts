@@ -32,4 +32,14 @@ export const authApi = {
     const response = await apiClient.get<CurrentUserDto>('/auth/me');
     return response.data;
   },
+
+  confirmEmail: async (data: { username: string; otpCode: string }): Promise<AuthResponseDto> => {
+    const response = await apiClient.post<AuthResponseDto>('/auth/confirm-email', data);
+    return response.data;
+  },
+
+  resendOtp: async (username: string): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>('/auth/resend-otp', { username });
+    return response.data;
+  },
 };

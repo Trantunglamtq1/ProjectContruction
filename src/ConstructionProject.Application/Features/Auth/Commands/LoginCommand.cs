@@ -43,9 +43,26 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
     {
         var input = request.UsernameOrEmail.Trim().ToLowerInvariant();
 
+        // 1. Ưu tiên tìm chính xác theo Username (duy nhất)
         var user = await _context.Users
             .Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Username.ToLower() == input || u.Email.ToLower() == input, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Username.ToLower() == input, cancellationToken);
+
+        // 2. Nếu không tìm thấy theo Username, thử tìm theo Email
+        if (user == null)
+        {
+            var matchedUsers = await _context.Users
+                .Include(u => u.Role)
+                .Where(u => u.Email.ToLower() == input)
+                .ToListAsync(cancellationToken);
+
+            if (matchedUsers.Count > 1)
+            {
+                throw new UnauthorizedAccessException("Email này liên kết với nhiều tài khoản. Vui lòng đăng nhập bằng Tên đăng nhập (Username).");
+            }
+
+            user = matchedUsers.FirstOrDefault();
+        }
 
         if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
         {
@@ -55,6 +72,11 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
         if (!user.IsActive)
         {
             throw new UnauthorizedAccessException("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ Quản trị viên.");
+        }
+
+        if (!user.EmailConfirmed)
+        {
+            throw new UnauthorizedAccessException("Tài khoản chưa được xác thực email. Vui lòng nhập mã OTP để kích hoạt tài khoản.");
         }
 
         var roleName = user.Role?.Name;
