@@ -65,6 +65,15 @@ public class ExceptionHandlingMiddleware
                 };
                 break;
 
+            case UnauthorizedAccessException unauthorized:
+                statusCode = HttpStatusCode.Unauthorized;
+                response = new
+                {
+                    status = (int)statusCode,
+                    message = unauthorized.Message
+                };
+                break;
+
             default:
                 statusCode = HttpStatusCode.InternalServerError;
                 response = new
