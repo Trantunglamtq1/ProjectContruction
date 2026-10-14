@@ -38,11 +38,16 @@ public class InspectionsController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IFileStorageService _fileStorage;
 
-    public InspectionsController(IMediator mediator, ICurrentUserService currentUserService)
+    public InspectionsController(
+        IMediator mediator, 
+        ICurrentUserService currentUserService,
+        IFileStorageService fileStorage)
     {
         _mediator = mediator;
         _currentUserService = currentUserService;
+        _fileStorage = fileStorage;
     }
 
     /// <summary>
@@ -336,5 +341,96 @@ public class InspectionsController : ControllerBase
     {
         var jsonContent = await _mediator.Send(new GetInspectionSchemaQuery(schemaId ?? "default-inspection-schema"), cancellationToken);
         return Content(jsonContent, "application/json");
+    }
+
+    /// <summary>
+    /// Upload ảnh hiện trường hoặc tài liệu đính kèm cho Form Inspection (Tối đa 15MB/tệp, hỗ trợ JPG, PNG, WEBP, HEIC, PDF)
+    /// </summary>
+    [HttpPost("upload-attachment")]
+    [Authorize]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(InspectionAttachmentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UploadAttachment(
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new { message = "Vui lòng chọn tệp ảnh hiện trường để tải lên." });
+        }
+
+        const long maxFileSize = 15 * 1024 * 1024; // 15MB
+        if (file.Length > maxFileSize)
+        {
+            return BadRequest(new { message = "Dung lượng tệp vượt quá giới hạn cho phép (Tối đa 15MB)." });
+        }
+
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".heic", ".pdf" };
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowedExtensions.Contains(ext))
+        {
+            return BadRequest(new { message = $"Định dạng tệp '{ext}' không được hỗ trợ. Vui lòng chọn tệp ảnh (.jpg, .jpeg, .png, .webp, .heic) hoặc .pdf." });
+        }
+
+        await using var stream = file.OpenReadStream();
+        var (fileUrl, storedFileName, size) = await _fileStorage.SaveFileAsync(
+            stream, 
+            file.FileName, 
+            file.ContentType, 
+            cancellationToken);
+
+        var viewUrl = $"/api/inspections/attachments/files/{storedFileName}";
+
+        var attachment = new InspectionAttachmentDto
+        {
+            OriginalName = file.FileName,
+            StoredFileName = storedFileName,
+            FileUrl = viewUrl,
+            Size = size,
+            ContentType = file.ContentType,
+            UploadedAt = DateTime.UtcNow
+        };
+
+        return Ok(attachment);
+    }
+
+    /// <summary>
+    /// Tải / Xem trực tiếp tệp ảnh hiện trường đính kèm
+    /// </summary>
+    [HttpGet("attachments/files/{fileName}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAttachmentFileStream(
+        string fileName, 
+        CancellationToken cancellationToken)
+    {
+        var fileData = await _fileStorage.GetFileAsync(fileName, cancellationToken);
+        if (fileData == null)
+        {
+            return NotFound(new { message = $"Không tìm thấy tệp đính kèm '{fileName}' trên hệ thống lưu trữ." });
+        }
+
+        var ext = Path.GetExtension(fileData.Value.fileName).ToLowerInvariant();
+        var baseName = Path.GetFileNameWithoutExtension(fileData.Value.fileName);
+        var asciiSafeName = System.Text.RegularExpressions.Regex.Replace(baseName, @"[^\u0020-\u007E]", "_") + ext;
+        var utf8EncodedName = Uri.EscapeDataString(fileData.Value.fileName);
+
+        var contentType = fileData.Value.contentType;
+        if (string.IsNullOrWhiteSpace(contentType) || contentType == "application/octet-stream")
+        {
+            contentType = ext switch
+            {
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".webp" => "image/webp",
+                ".heic" => "image/heic",
+                ".pdf" => "application/pdf",
+                _ => "application/octet-stream"
+            };
+        }
+
+        Response.Headers.Append("Content-Disposition", $"inline; filename=\"{asciiSafeName}\"; filename*=UTF-8''{utf8EncodedName}");
+        return File(fileData.Value.stream, contentType, enableRangeProcessing: true);
     }
 }

@@ -100,9 +100,16 @@ public class LocalFileStorageService : IFileStorageService
         }
 
         var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-        var contentType = safeFileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) 
-            ? "application/pdf" 
-            : "application/octet-stream";
+        var ext = Path.GetExtension(safeFileName).ToLowerInvariant();
+        var contentType = ext switch
+        {
+            ".pdf" => "application/pdf",
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".webp" => "image/webp",
+            ".heic" => "image/heic",
+            _ => "application/octet-stream"
+        };
 
         return Task.FromResult<(Stream stream, string contentType, string fileName)?>((stream, contentType, safeFileName));
     }
