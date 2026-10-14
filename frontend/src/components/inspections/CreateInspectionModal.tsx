@@ -23,11 +23,13 @@ import {
 } from '@ant-design/icons';
 import { inspectionApi } from '../../services/inspectionApi';
 import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
+import { InspectionImageGallery } from './InspectionImageGallery';
 import type {
   InspectionDto,
   ConstructionObjectDto,
   FormSchemaItemDto,
   FormIoSchema,
+  InspectionAttachmentDto,
 } from '../../types/inspection';
 
 const { Text, Title } = Typography;
@@ -56,6 +58,7 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
   const [activeSchemaObj, setActiveSchemaObj] = useState<FormIoSchema | null>(null);
   const [isCustomized, setIsCustomized] = useState(false);
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [attachments, setAttachments] = useState<InspectionAttachmentDto[]>([]);
 
   useEffect(() => {
     if (visible) {
@@ -155,6 +158,7 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
 
       const formDataPayload: Record<string, any> = {
         inspectionTitle: values.title,
+        attachments: attachments,
       };
 
       if (isCustomized && activeSchemaObj) {
@@ -169,6 +173,7 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
 
       message.success('Khởi tạo hồ sơ nghiệm thu thành công! Trạng thái: Bản nháp (Draft).');
       form.resetFields();
+      setAttachments([]);
       setIsCustomized(false);
       onSuccess(newInspection);
     } catch (error: any) {
@@ -350,6 +355,15 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
                 prefix={<AppstoreOutlined style={{ color: '#BFBFBF' }} />}
               />
             </Form.Item>
+
+            {/* 5. Tải lên ảnh hiện trường */}
+            <div style={{ marginTop: 8, marginBottom: 8 }}>
+              <InspectionImageGallery
+                attachments={attachments}
+                onChange={setAttachments}
+                readonly={false}
+              />
+            </div>
           </Form>
         </Spin>
       </Modal>

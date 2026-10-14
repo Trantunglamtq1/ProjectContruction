@@ -34,6 +34,16 @@ export interface InspectionDto {
   createdAt: string;
   updatedAt?: string | null;
   linkedChecklistItemsCount: number;
+  attachments?: InspectionAttachmentDto[];
+}
+
+export interface InspectionAttachmentDto {
+  originalName: string;
+  storedFileName: string;
+  fileUrl: string;
+  size: number;
+  contentType: string;
+  uploadedAt: string;
 }
 
 export interface PaginatedResult<T> {

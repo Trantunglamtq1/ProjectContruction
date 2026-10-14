@@ -6,6 +6,7 @@ import type {
   FormSchemaItemDto,
   ConstructionObjectDto,
   FormIoSchema,
+  InspectionAttachmentDto,
 } from '../types/inspection';
 
 export interface GetInspectionsParams {
@@ -94,6 +95,18 @@ export const inspectionApi = {
   getObjects: async (drawingFileId?: string): Promise<ConstructionObjectDto[]> => {
     const response = await apiClient.get<ConstructionObjectDto[]>('/objects', {
       params: drawingFileId ? { drawingFileId } : undefined,
+    });
+    return response.data;
+  },
+
+  // Upload ảnh hiện trường hoặc tệp đính kèm (hỗ trợ JPG/PNG/WEBP/HEIC/PDF, tối đa 15MB)
+  uploadAttachment: async (file: File): Promise<InspectionAttachmentDto> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<InspectionAttachmentDto>('/inspections/upload-attachment', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data;
   },

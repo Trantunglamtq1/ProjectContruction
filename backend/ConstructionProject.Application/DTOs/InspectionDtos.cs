@@ -50,6 +50,39 @@ public class InspectionDto
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public int LinkedChecklistItemsCount { get; set; }
+
+    public List<InspectionAttachmentDto> Attachments
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(FormDataJson)) return new List<InspectionAttachmentDto>();
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(FormDataJson);
+                if (doc.RootElement.TryGetProperty("attachments", out var attElement) && attElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<List<InspectionAttachmentDto>>(
+                        attElement.GetRawText(), 
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<InspectionAttachmentDto>();
+                }
+            }
+            catch
+            {
+                // Fallback nếu JSON lỗi cú pháp
+            }
+            return new List<InspectionAttachmentDto>();
+        }
+    }
+}
+
+public class InspectionAttachmentDto
+{
+    public string OriginalName { get; set; } = string.Empty;
+    public string StoredFileName { get; set; } = string.Empty;
+    public string FileUrl { get; set; } = string.Empty;
+    public long Size { get; set; }
+    public string ContentType { get; set; } = string.Empty;
+    public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class InspectionAuditHistoryDto

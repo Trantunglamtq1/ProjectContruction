@@ -25,15 +25,18 @@ import {
   EditOutlined,
   ToolOutlined,
   BranchesOutlined,
+  PictureOutlined,
 } from '@ant-design/icons';
 import { inspectionApi } from '../../services/inspectionApi';
 import { DynamicFormIoRenderer } from '../formio/DynamicFormIoRenderer';
 import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
+import { InspectionImageGallery } from './InspectionImageGallery';
 import type {
   InspectionDto,
   FormIoSchema,
   InspectionAuditHistoryDto,
   InspectionStatus,
+  InspectionAttachmentDto,
 } from '../../types/inspection';
 
 const { Text } = Typography;
@@ -61,6 +64,7 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
   const [inspection, setInspection] = useState<InspectionDto | null>(null);
   const [schema, setSchema] = useState<FormIoSchema | null>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [attachments, setAttachments] = useState<InspectionAttachmentDto[]>([]);
   const [history, setHistory] = useState<InspectionAuditHistoryDto[]>([]);
   const [activeTab, setActiveTab] = useState<string>('form');
 
@@ -71,9 +75,18 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
       setInspection(null);
       setSchema(null);
       setFormData({});
+      setAttachments([]);
       setHistory([]);
     }
   }, [visible, inspectionId]);
+
+  const handleAttachmentsChange = (updated: InspectionAttachmentDto[]) => {
+    setAttachments(updated);
+    setFormData((prev) => ({
+      ...prev,
+      attachments: updated,
+    }));
+  };
 
   const loadInspectionDetails = async (id: string) => {
     setLoading(true);
@@ -91,6 +104,11 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
         }
       }
       setFormData(parsedData);
+
+      const atts: InspectionAttachmentDto[] = Array.isArray(parsedData.attachments)
+        ? parsedData.attachments
+        : (data.attachments || []);
+      setAttachments(atts);
 
       // 1. Kiểm tra nếu có schema tùy biến được lưu trong formDataJson
       if (parsedData._customSchema && parsedData._customSchema.components?.length > 0) {
@@ -412,6 +430,33 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
                         initialData={formData}
                         readonly={!isEditable}
                         onChange={(newVals) => setFormData(newVals)}
+                      />
+
+                      {/* Khối Ảnh hiện trường tích hợp */}
+                      <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px dashed #E8E8E8' }}>
+                        <InspectionImageGallery
+                          attachments={attachments}
+                          onChange={handleAttachmentsChange}
+                          readonly={!isEditable}
+                        />
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'gallery',
+                  label: (
+                    <Space>
+                      <PictureOutlined />
+                      <span>Ảnh hiện trường ({attachments.length})</span>
+                    </Space>
+                  ),
+                  children: (
+                    <div style={{ padding: '8px 0' }}>
+                      <InspectionImageGallery
+                        attachments={attachments}
+                        onChange={handleAttachmentsChange}
+                        readonly={!isEditable}
                       />
                     </div>
                   ),
