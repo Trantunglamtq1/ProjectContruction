@@ -22,6 +22,9 @@ public class FormInspection
     // Trạng thái hiện tại (Draft/Submitted/UnderReview/Approved/Rejected), đồng bộ với Elsa Workflow
     public InspectionStatus Status { get; set; } = InspectionStatus.Draft;
     
+    // Id của Elsa Workflow Instance quản lý tiến trình duyệt hồ sơ
+    public string? WorkflowInstanceId { get; set; }
+    
     // UserId submit (từ JWT) và thời điểm submit
     public Guid? SubmittedById { get; set; }
     public string? SubmittedBy { get; set; }
@@ -49,4 +52,5 @@ public class FormInspection
     public User? Reviewer { get; set; }
     public User? Approver { get; set; }
     public ICollection<ChecklistItem> LinkedChecklistItems { get; set; } = new List<ChecklistItem>();
+    public ICollection<InspectionAuditHistory> AuditHistories { get; set; } = new List<InspectionAuditHistory>();
 }

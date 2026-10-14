@@ -1,6 +1,7 @@
 using ConstructionProject.Application.Common.Interfaces;
 using ConstructionProject.Infrastructure.Persistence;
 using ConstructionProject.Infrastructure.Services;
+using Elsa.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +39,10 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IEmailService, EmailService>();
+
+        // Cấu hình Elsa Workflow 3.x Engine
+        services.AddElsa();
+        services.AddScoped<IInspectionWorkflowService, InspectionWorkflowService>();
 
         return services;
     }

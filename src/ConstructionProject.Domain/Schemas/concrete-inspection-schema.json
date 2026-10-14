@@ -1,0 +1,59 @@
+{
+  "display": "form",
+  "components": [
+    {
+      "label": "Tên cấu kiện đổ bê tông",
+      "key": "inspectionTitle",
+      "type": "textfield",
+      "input": true,
+      "validate": { "required": true }
+    },
+    {
+      "label": "Mác bê tông thiết kế (vd: M250, M300, M350)",
+      "key": "concreteGrade",
+      "type": "textfield",
+      "input": true,
+      "validate": { "required": true }
+    },
+    {
+      "label": "Độ sụt đo thực tế tại hiện trường (cm)",
+      "key": "slumpValue",
+      "type": "number",
+      "input": true,
+      "validate": { "required": true }
+    },
+    {
+      "label": "Nhiệt độ hỗn hợp bê tông (°C)",
+      "key": "temperature",
+      "type": "number",
+      "input": true
+    },
+    {
+      "label": "Số lượng tổ mẫu nén thí nghiệm đã đúc (tổ 3 viên)",
+      "key": "testSampleCount",
+      "type": "number",
+      "input": true
+    },
+    {
+      "label": "Kết quả đánh giá cho phép đổ bê tông",
+      "key": "result",
+      "type": "select",
+      "data": {
+        "values": [
+          { "label": "Đạt yêu cầu - Cho phép đổ (Pass)", "value": "pass" },
+          { "label": "Không đạt yêu cầu - Trả xe bồn (Fail)", "value": "fail" },
+          { "label": "Chờ khắc phục (Pending Fix)", "value": "pending_fix" }
+        ]
+      },
+      "input": true,
+      "validate": { "required": true }
+    },
+    {
+      "label": "Ghi chú & Số hiệu phiếu giao nhận bê tông",
+      "key": "notes",
+      "type": "textarea",
+      "rows": 3,
+      "input": true
+    }
+  ]
+}

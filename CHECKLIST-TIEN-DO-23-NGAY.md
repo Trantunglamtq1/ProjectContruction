@@ -1,7 +1,7 @@
 # 📋 CHECKLIST TIẾN ĐỘ THỰC HIỆN DỰ ÁN (KẾ HOẠCH 23 NGÀY)
 > **Tài liệu tham chiếu:** [du-an-inspection-checklist.md](file:///e:/Contruction_Project/du-an-inspection-checklist.md)  
-> **Cập nhật lúc:** 29/09/2026  
-> **Trạng thái tổng thể:** Hoàn thành toàn bộ **Backend Giai đoạn 0** (Auth & Admin) và **Backend Giai đoạn 1** (Bản vẽ & Object). Sẵn sàng bắt đầu Frontend hoặc tiếp nối Backend Giai đoạn 2.
+> **Cập nhật lúc:** 08/10/2026  
+> **Trạng thái tổng thể:** Hoàn thành **Backend Giai đoạn 0** (Auth & Admin), **Backend Giai đoạn 1** (Bản vẽ & Object) và **Backend Giai đoạn 2 - Ngày 10** (CQRS Form Inspection). Sẵn sàng cho Ngày 11 (Workflow).
 
 ---
 
@@ -10,8 +10,8 @@
 | Giai đoạn | Nội dung chính | Trạng thái Backend | Trạng thái Frontend |
 | :--- | :--- | :---: | :---: |
 | **GIAI ĐOẠN 0** (Ngày 1 - 5) | Authentication, JWT, Admin gán Role |  **100% Hoàn thành** |  **100% Hoàn thành** (Đầy đủ Màn 1, 2, 3, 4) |
-| **GIAI ĐOẠN 1** (Ngày 6 - 9) | Bản vẽ PDF, Upload, Viewport, Object |  **100% Hoàn thành** | ⏳ Đã dựng khung tách theo Role |
-| **GIAI ĐOẠN 2** (Ngày 10 - 13) | CQRS Inspection/Checklist, Elsa Workflow | ⏳ Chưa làm (Đã có Entity & DB) | — |
+| **GIAI ĐOẠN 1** (Ngày 6 - 9) | Bản vẽ PDF, Upload, Viewport, Object |  **100% Hoàn thành** |  **100% Hoàn thành** (Viewport CAD & Marker) |
+| **GIAI ĐOẠN 2** (Ngày 10 - 13) | CQRS Inspection/Checklist, Elsa Workflow | 🚀 **Đã xong Ngày 10 & 11** (CQRS Inspection & Approval Workflow) | — |
 | **GIAI ĐOẠN 3** (Ngày 14 - 18) | Giao diện Inspection, Checklist, Custom CSS | — | ⏳ Chưa làm |
 | **GIAI ĐOẠN 4** (Ngày 19 - 23) | Tích hợp E2E, Kiểm thử toàn diện, Demo | ⏳ Chưa làm | ⏳ Chưa làm |
 
@@ -104,16 +104,23 @@
 
 #### Ngày 10: CQRS Form Inspection: Create / Submit / Query
 - [x] Đã tạo sẵn Entity `FormInspection.cs` và cấu hình DbContext.
-- [ ] `CreateInspectionCommand`: Khởi tạo bản ghi Draft, bắt buộc chọn `ObjectId` có sẵn, chỉ Role `Submitter`.
-- [ ] `SubmitInspectionCommand`: Validate `FormDataJson` theo schema FormIO, chuyển trạng thái sang `Submitted`.
-- [ ] `GetInspectionsQuery`: Lọc theo Object/Status, phân trang.
-- [ ] Viết Stored Procedure `sp_GetInspectionList` theo yêu cầu tối ưu query danh sách.
+- [x] `CreateInspectionCommand`: Khởi tạo bản ghi Draft, bắt buộc chọn `ObjectId` có sẵn, chỉ Role `Submitter`.
+- [x] `SubmitInspectionCommand`: Validate `FormDataJson` theo schema FormIO, chuyển trạng thái sang `Submitted`.
+- [x] `GetInspectionsQuery`: Lọc theo Object/Status, phân trang.
+- [x] Viết Stored Procedure `sp_GetInspectionList` theo yêu cầu tối ưu query danh sách.
+- [x] `InspectionsController.cs`: Cung cấp trọn bộ RESTful API CRUD + Submit + FormIO Schema.
+- [x] Kiểm thử tự động `tests/test_day10_inspection_cqrs.py` (pass 100%).
 
-#### Ngày 11: Tích hợp Elsa Workflow cho Inspection
-- [ ] Cài đặt gói NuGet Elsa Workflow Server + Dashboard.
-- [ ] Thiết kế Workflow Definition `InspectionApprovalWorkflow`: `Start` $\rightarrow$ `WaitForSubmit` $\rightarrow$ `NotifyReviewer` $\rightarrow$ `Decision` $\rightarrow$ `SetStatus` $\rightarrow$ `End`.
-- [ ] Trigger workflow instance khi `SubmitInspectionCommand` thành công.
-- [ ] Đồng bộ hai chiều trạng thái từ Elsa Workflow vào trường `Status` của entity `FormInspection`.
+#### Ngày 11: Workflow & Luồng Phê duyệt Nghiệm thu (Inspection Approval Workflow)
+- [x] Thiết kế State Machine & Workflow: `Draft` $\rightarrow$ `Submitted` $\rightarrow$ `UnderReview` $\rightarrow$ `Reviewed` $\rightarrow$ `Approved` / `Rejected`.
+- [x] `ReceiveInspectionCommand`: Reviewer tiếp nhận hồ sơ kiểm tra (`Submitted` $\rightarrow$ `UnderReview`).
+- [x] `ReviewPassInspectionCommand`: Reviewer thẩm tra đạt tiêu chuẩn kỹ thuật Cấp 1 (`UnderReview` $\rightarrow$ `Reviewed`).
+- [x] `ApproveInspectionCommand`: Approver (Chủ đầu tư/Quản lý) phê duyệt nghiệm thu chính thức Cấp 2 (`Reviewed` $\rightarrow$ `Approved`).
+- [x] Tự động đồng bộ hai chiều: Khi Inspection chuyển sang `Approved`, toàn bộ các `ChecklistItem` liên kết tự động chuyển sang `Done`.
+- [x] `RejectInspectionCommand`: Reviewer / Approver từ chối kèm lý do bắt buộc (`RejectReason`), hỗ trợ Submitter nộp lại (Resubmit).
+- [x] Lưu vết lịch sử luồng duyệt `InspectionAuditHistories` (Audit Trail) và API `GET /api/inspections/{id}/history`.
+- [x] Tích hợp FormIO Schemas Catalog: Cung cấp các mẫu schema động (Cốt thép, Bê tông, Tiêu chuẩn) qua `GET /api/inspections/schemas`.
+- [x] Kiểm thử tự động `tests/test_day11_workflow_approval.py` (pass 100%).
 
 #### Ngày 12: CQRS Checklist & Business Rule
 - [x] Đã tạo sẵn Entity `Checklist.cs` và `ChecklistItem.cs` trong Database.

@@ -94,4 +94,20 @@ public class ObjectsController : ControllerBase
         }
         return Ok(result);
     }
+
+    /// <summary>
+    /// Xóa một Object cấu kiện (Dành cho Submitter hoặc Admin khi vẽ sai)
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = $"{RoleConstants.Submitter},{RoleConstants.Admin}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteObject(Guid id, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new DeleteObjectCommand(id), cancellationToken);
+        return NoContent();
+    }
 }

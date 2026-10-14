@@ -85,3 +85,24 @@ Authorization: Bearer {{submitterToken}}
 ### 11. Kỹ sư gọi xem danh sách bản vẽ với Bearer Token
 GET {{baseUrl}}/api/drawings
 Authorization: Bearer {{submitterToken}}
+
+### 12. Lấy FormIO schema để render form kiểm tra
+GET {{baseUrl}}/api/inspections/schema
+Authorization: Bearer {{submitterToken}}
+
+### 13. Tạo mới một Form Inspection (Draft)
+# @name createInspection
+POST {{baseUrl}}/api/inspections
+Authorization: Bearer {{submitterToken}}
+Content-Type: application/json
+
+{
+  "objectId": "2bfe44d5-1083-4ad9-9066-478dd7efe295",
+  "formSchemaId": "default-inspection-schema",
+  "formDataJson": "{}"
+}
+
+### 14. Lấy danh sách Inspection có phân trang và lọc theo trạng thái
+GET {{baseUrl}}/api/inspections?page=1&pageSize=10
+Authorization: Bearer {{submitterToken}}
+

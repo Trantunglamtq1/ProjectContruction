@@ -26,4 +26,8 @@ export const objectApi = {
     const response = await apiClient.get<ObjectDto>(`/objects/${id}`);
     return response.data;
   },
+
+  deleteObject: async (id: string): Promise<void> => {
+    await apiClient.delete(`/objects/${id}`);
+  },
 };

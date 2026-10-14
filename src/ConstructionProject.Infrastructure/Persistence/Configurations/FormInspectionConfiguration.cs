@@ -26,8 +26,12 @@ public class FormInspectionConfiguration : IEntityTypeConfiguration<FormInspecti
         builder.Property(f => f.RejectReason)
             .HasMaxLength(1000);
 
+        builder.Property(f => f.WorkflowInstanceId)
+            .HasMaxLength(100);
+
         builder.HasIndex(f => f.ObjectId);
         builder.HasIndex(f => f.Status);
+        builder.HasIndex(f => f.WorkflowInstanceId);
         builder.HasIndex(f => f.SubmittedById);
         builder.HasIndex(f => f.ReviewedById);
         builder.HasIndex(f => f.ApprovedById);
