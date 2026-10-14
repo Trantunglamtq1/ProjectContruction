@@ -37,7 +37,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: src/ConstructionProject.API/Dockerfile
+      dockerfile: backend/ConstructionProject.API/Dockerfile
     container_name: construction_backend
     restart: unless-stopped
     ports:
