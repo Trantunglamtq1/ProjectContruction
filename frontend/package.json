@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:all": "concurrently -k -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"dotnet run --project ../src/ConstructionProject.API --urls http://localhost:5092\" \"vite\"",
+    "dev:all": "concurrently -k -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"dotnet run --project ../backend/ConstructionProject.API --urls http://localhost:5092\" \"vite\"",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"

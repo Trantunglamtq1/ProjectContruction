@@ -29,7 +29,7 @@ Hệ thống quản lý hoạt động kiểm tra và nghiệm thu cấu kiện/
 
 ```
 e:/Contruction_Project/
-├── src/
+├── backend/
 │   ├── ConstructionProject.Domain/         # Entities, Enums, Constants, Schemas (SOLID)
 │   ├── ConstructionProject.Application/    # CQRS Commands, Queries, DTOs, Behaviors, Interfaces
 │   ├── ConstructionProject.Infrastructure/ # EF Core DbContext, Configurations, Storage, JWT, BCrypt
@@ -54,7 +54,7 @@ e:/Contruction_Project/
 ### 2. Cập nhật Database
 Chạy lệnh Migration để tự động tạo toàn bộ bảng và seed sẵn dữ liệu:
 ```bash
-dotnet ef database update --project src/ConstructionProject.Infrastructure --startup-project src/ConstructionProject.API
+dotnet ef database update --project backend/ConstructionProject.Infrastructure --startup-project backend/ConstructionProject.API
 ```
 
 > **Tài khoản Admin mặc định:**  
@@ -64,7 +64,7 @@ dotnet ef database update --project src/ConstructionProject.Infrastructure --sta
 
 ### 3. Chạy API Server
 ```bash
-dotnet run --project src/ConstructionProject.API --urls "http://localhost:5092"
+dotnet run --project backend/ConstructionProject.API --urls "http://localhost:5092"
 ```
 
 Truy cập Swagger UI trực tiếp trên trình duyệt:  
