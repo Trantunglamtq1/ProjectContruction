@@ -33,7 +33,7 @@ public class CreateObjectFromMarkerCommandValidator : AbstractValidator<CreateOb
 
         RuleFor(x => x.MarkerCoordinates)
             .NotEmpty().WithMessage("Toạ độ marker không được để trống.")
-            .Must(IsValidMarkerCoordinates).WithMessage("Toạ độ marker không hợp lệ. Phải là JSON chứa x, y, width, height.");
+            .Must(IsValidMarkerCoordinates).WithMessage("Toạ độ marker không hợp lệ. Phải là JSON chứa x, y, width, height hoặc danh sách đỉnh đa giác (points).");
     }
 
     private static bool IsValidMarkerCoordinates(string coordsJson)
@@ -42,8 +42,16 @@ public class CreateObjectFromMarkerCommandValidator : AbstractValidator<CreateOb
         {
             using var doc = JsonDocument.Parse(coordsJson);
             var root = doc.RootElement;
-            return root.ValueKind == JsonValueKind.Object &&
-                   (root.TryGetProperty("x", out _) || root.TryGetProperty("X", out _)) &&
+            if (root.ValueKind != JsonValueKind.Object) return false;
+
+            // Hỗ trợ toạ độ dạng đa giác (polygon points)
+            if (root.TryGetProperty("points", out var points) && points.ValueKind == JsonValueKind.Array)
+            {
+                return points.GetArrayLength() >= 3;
+            }
+
+            // Hỗ trợ toạ độ hình chữ nhật (x, y, width, height)
+            return (root.TryGetProperty("x", out _) || root.TryGetProperty("X", out _)) &&
                    (root.TryGetProperty("y", out _) || root.TryGetProperty("Y", out _)) &&
                    (root.TryGetProperty("width", out _) || root.TryGetProperty("Width", out _)) &&
                    (root.TryGetProperty("height", out _) || root.TryGetProperty("Height", out _));

@@ -34,12 +34,25 @@ export const LoginPage: React.FC = () => {
       const targetRoute = getDefaultRouteForRole(role);
       navigate(targetRoute, { replace: true });
     } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response?.data) {
-        const errorData = error.response.data;
-        const msg = errorData.detail || errorData.message || errorData.title || 'Sai tài khoản hoặc mật khẩu';
-        setErrorMessage(typeof msg === 'string' ? msg : 'Sai tài khoản hoặc mật khẩu');
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          const status = error.response.status;
+          if (status === 502 || status === 504) {
+            setErrorMessage('Lỗi kết nối máy chủ (502 Bad Gateway). Dịch vụ Backend đang khởi động lại hoặc chưa sẵn sàng.');
+          } else if (status >= 500) {
+            setErrorMessage(`Lỗi máy chủ nội bộ (${status}). Vui lòng kiểm tra lại Backend.`);
+          } else if (error.response.data && typeof error.response.data === 'object') {
+            const errorData = error.response.data as Record<string, unknown>;
+            const msg = errorData.detail || errorData.message || errorData.title || 'Tên đăng nhập hoặc mật khẩu không chính xác.';
+            setErrorMessage(typeof msg === 'string' ? msg : 'Tên đăng nhập hoặc mật khẩu không chính xác.');
+          } else {
+            setErrorMessage('Tên đăng nhập hoặc mật khẩu không chính xác.');
+          }
+        } else {
+          setErrorMessage('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ Backend.');
+        }
       } else {
-        setErrorMessage('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ Backend.');
+        setErrorMessage('Đã xảy ra lỗi không xác định.');
       }
     } finally {
       setLoading(false);

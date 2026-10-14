@@ -247,6 +247,10 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("WorkflowInstanceId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApprovedById");
@@ -259,7 +263,60 @@ namespace ConstructionProject.Infrastructure.Migrations
 
                     b.HasIndex("SubmittedById");
 
+                    b.HasIndex("WorkflowInstanceId");
+
                     b.ToTable("FormInspections", (string)null);
+                });
+
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.InspectionAuditHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ActorName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("ActorRole")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FromStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("InspectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("InspectionId");
+
+                    b.ToTable("InspectionAuditHistories", (string)null);
                 });
 
             modelBuilder.Entity("ConstructionProject.Domain.Entities.Role", b =>
@@ -482,6 +539,17 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Navigation("Submitter");
                 });
 
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.InspectionAuditHistory", b =>
+                {
+                    b.HasOne("ConstructionProject.Domain.Entities.FormInspection", "Inspection")
+                        .WithMany("AuditHistories")
+                        .HasForeignKey("InspectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Inspection");
+                });
+
             modelBuilder.Entity("ConstructionProject.Domain.Entities.User", b =>
                 {
                     b.HasOne("ConstructionProject.Domain.Entities.Role", "Role")
@@ -511,6 +579,8 @@ namespace ConstructionProject.Infrastructure.Migrations
 
             modelBuilder.Entity("ConstructionProject.Domain.Entities.FormInspection", b =>
                 {
+                    b.Navigation("AuditHistories");
+
                     b.Navigation("LinkedChecklistItems");
                 });
 

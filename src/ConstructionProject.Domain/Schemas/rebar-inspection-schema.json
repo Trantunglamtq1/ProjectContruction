@@ -1,0 +1,83 @@
+{
+  "display": "form",
+  "components": [
+    {
+      "label": "Tên hạng mục cốt thép kiểm tra",
+      "key": "inspectionTitle",
+      "type": "textfield",
+      "input": true,
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Chủng loại & Mác thép (CB300 / CB400 / CB500)",
+      "key": "steelGrade",
+      "type": "select",
+      "data": {
+        "values": [
+          {
+            "label": "CB300-V",
+            "value": "cb300"
+          },
+          {
+            "label": "CB400-V",
+            "value": "cb400"
+          },
+          {
+            "label": "CB500-V",
+            "value": "cb500"
+          }
+        ]
+      },
+      "input": true,
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Khoảng cách đai thép thực tế (mm)",
+      "key": "stirrupSpacing",
+      "type": "number",
+      "input": true
+    },
+    {
+      "label": "Chiều dày lớp bê tông bảo vệ (mm)",
+      "key": "coverThickness",
+      "type": "number",
+      "input": true
+    },
+    {
+      "label": "Kết quả đánh giá",
+      "key": "result",
+      "type": "select",
+      "data": {
+        "values": [
+          {
+            "label": "Đạt yêu cầu (Pass)",
+            "value": "pass"
+          },
+          {
+            "label": "Không đạt yêu cầu (Fail)",
+            "value": "fail"
+          },
+          {
+            "label": "Chờ khắc phục (Pending Fix)",
+            "value": "pending_fix"
+          }
+        ]
+      },
+      "input": true,
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Ghi chú & Khuyến nghị của giám sát",
+      "key": "notes",
+      "type": "textarea",
+      "rows": 3,
+      "input": true
+    }
+  ]
+}

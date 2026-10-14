@@ -38,10 +38,21 @@ public class ObjectDto
     public int ChecklistCount { get; set; }
 }
 
+public class PointDto
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+}
+
 public class MarkerCoordinatesDto
 {
+    public string? Type { get; set; } = "rect"; // "rect" or "polygon"
+    public List<PointDto>? Points { get; set; }
     public double X { get; set; }
     public double Y { get; set; }
     public double Width { get; set; }
     public double Height { get; set; }
+    public double? CornerRadius { get; set; }
+    public double? ContainerWidth { get; set; }
+    public double? ContainerHeight { get; set; }
 }

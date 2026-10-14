@@ -8,6 +8,7 @@ public interface IApplicationDbContext
     DbSet<DrawingFile> DrawingFiles { get; }
     DbSet<ConstructionObject> Objects { get; }
     DbSet<FormInspection> FormInspections { get; }
+    DbSet<InspectionAuditHistory> InspectionAuditHistories { get; }
     DbSet<Checklist> Checklists { get; }
     DbSet<ChecklistItem> ChecklistItems { get; }
     DbSet<User> Users { get; }
