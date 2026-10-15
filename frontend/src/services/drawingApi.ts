@@ -22,6 +22,7 @@ export interface ObjectDto {
   createdAt: string;
   inspectionCount: number;
   checklistCount: number;
+  status: 'PENDING' | 'PASS' | 'FAIL' | 'IN_PROGRESS';
 }
 
 export interface DrawingFileDetailDto extends DrawingFileDto {

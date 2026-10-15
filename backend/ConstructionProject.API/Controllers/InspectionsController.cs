@@ -131,7 +131,7 @@ public class InspectionsController : ControllerBase
     /// Xóa một bản nháp Draft (Chỉ Submitter hoặc Admin)
     /// </summary>
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = $"{RoleConstants.Submitter},{RoleConstants.Admin}")]
+    [Authorize(Roles = RoleConstants.Submitter)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

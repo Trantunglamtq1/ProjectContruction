@@ -109,7 +109,8 @@ public class CreateObjectFromMarkerCommandHandler : IRequestHandler<CreateObject
             CreatedBy = entity.CreatedBy,
             CreatedAt = entity.CreatedAt,
             InspectionCount = 0,
-            ChecklistCount = 0
+            ChecklistCount = 0,
+            Status = "PENDING"
         };
     }
 }
