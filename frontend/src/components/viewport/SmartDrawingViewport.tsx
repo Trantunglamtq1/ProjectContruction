@@ -103,7 +103,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
   });
 
   // Re-rasterization Debounce: Canvas sắc nét ở mọi độ zoom
-  const [renderedScale, setRenderedScale] = useState<number>(1.0);
+  const renderedScaleRef = useRef<number>(1.0);
   const debounceTimerRef = useRef<any>(null);
 
   // 3. Computer Vision & Cost Map State (1:1 chuẩn xác theo Sheet)
@@ -196,11 +196,14 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
       const sheetW = sheetSize.width || 1200;
       const sheetH = sheetSize.height || 800;
 
-      // THUẬT TOÁN TỐI ƯU 1: GIỚI HẠN KÍCH THƯỚC BACKING CANVAS (MAX 3600PX)
-      // Chống tràn bộ nhớ GPU (VRAM), triệt tiêu hiện tượng sập context hoặc treo render hàng chục giây
-      const maxDim = 3600;
-      const maxScaleFromDim = maxDim / Math.max(sheetW, sheetH);
-      const effectiveScale = Math.min(targetScale * dpr, maxScaleFromDim, 3.5);
+      // THUẬT TOÁN TỐI ƯU 1: GIỚI HẠN AN TOÀN PHẦN CỨNG ĐỒ HỌA (MAX 8192PX)
+      // Cho phép vector siêu nét ở zoom lớn (300% - 1000%) mà không làm tràn GPU
+      const maxCanvasDim = 8192;
+      const maxSheetDim = Math.max(sheetW, sheetH);
+      const maxHardwareScale = maxSheetDim > 0 ? maxCanvasDim / maxSheetDim : 12;
+
+      // Độ phân giải thực tế: scale = targetScale * dpr để chữ số CAD và đường nét nhỏ nhất hiển thị sắc nét 100%
+      const effectiveScale = Math.max(1.0, Math.min(targetScale * dpr, maxHardwareScale, 12.0));
 
       // A. Ảnh kỹ thuật
       if (imageElementRef.current) {
@@ -208,29 +211,19 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         const nativeW = img.naturalWidth || sheetW;
         const nativeH = img.naturalHeight || sheetH;
 
-        const rw = Math.round(nativeW * effectiveScale);
-        const rh = Math.round(nativeH * effectiveScale);
-
-        // THUẬT TOÁN TỐI ƯU 2: DOUBLE BUFFERING QUA OFFSCREEN CANVAS
-        // Vẽ trước trên bộ nhớ đệm ngầm, KHÔNG BAO GIỜ xóa trắng canvas đang hiển thị
-        const offscreen = document.createElement('canvas');
-        offscreen.width = rw;
-        offscreen.height = rh;
-        const offCtx = offscreen.getContext('2d');
-        if (offCtx) {
-          offCtx.imageSmoothingEnabled = true;
-          offCtx.imageSmoothingQuality = 'high';
-          offCtx.drawImage(img, 0, 0, rw, rh);
-
-          // Atomic Swap: Cập nhật canvas chỉ trong < 1ms
-          canvas.width = rw;
-          canvas.height = rh;
-          canvas.style.width = `${nativeW}px`;
-          canvas.style.height = `${nativeH}px`;
-          ctx.drawImage(offscreen, 0, 0);
+        // Đối với ảnh tĩnh, luôn render ở độ phân giải gốc của ảnh (100% pixel fidelity)
+        canvas.width = nativeW;
+        canvas.height = nativeH;
+        canvas.style.width = `${sheetW}px`;
+        canvas.style.height = `${sheetH}px`;
+        const imgCtx = canvas.getContext('2d');
+        if (imgCtx) {
+          imgCtx.imageSmoothingEnabled = true;
+          imgCtx.imageSmoothingQuality = 'high';
+          imgCtx.drawImage(img, 0, 0, nativeW, nativeH);
         }
 
-        setRenderedScale(targetScale);
+        renderedScaleRef.current = targetScale;
         setIsLoadingPdf(false);
         setIsSharpening(false);
 
@@ -303,9 +296,14 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         canvas.height = rh;
         canvas.style.width = `${originalViewport.width}px`;
         canvas.style.height = `${originalViewport.height}px`;
-        ctx.drawImage(offscreen, 0, 0);
+        const visibleCtx = canvas.getContext('2d');
+        if (visibleCtx) {
+          visibleCtx.imageSmoothingEnabled = true;
+          visibleCtx.imageSmoothingQuality = 'high';
+          visibleCtx.drawImage(offscreen, 0, 0);
+        }
 
-        setRenderedScale(targetScale);
+        renderedScaleRef.current = targetScale;
         setIsLoadingPdf(false);
         setIsSharpening(false);
 
@@ -365,6 +363,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     setPdfError(null);
     setCostMap(null);
     costMapRef.current = null;
+    renderedScaleRef.current = 1.0;
     setCommittedVertices([]);
     setCommittedPathSegments([]);
     setLivewirePath('');
@@ -497,27 +496,29 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     }
   }, [pdfDoc, currentPage, renderCanvasAtScale]);
 
-  // Debounced Re-rasterization khi thay đổi Zoom
+  // Debounced Re-rasterization khi dừng lăn chuột để bản vẽ luôn SIÊU NÉT
   useEffect(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      // Chỉ re-rasterize ngầm nếu tỷ lệ phóng to thực tế so với canvas hiện tại lệch quá 28%
-      const ratio = zoom / (renderedScale || 1.0);
-      if (ratio > 1.28 || ratio < 0.75) {
+      // Khi dừng lăn chuột (160ms), nếu tỷ lệ zoom hiện tại lệch trên 3%
+      // so với tỷ lệ đã rasterize, tiến hành re-render ngầm ở độ phân giải thực siêu nét.
+      const currentScale = renderedScaleRef.current || 1.0;
+      const diff = Math.abs(zoom - currentScale) / currentScale;
+      if (diff > 0.03) {
         setIsSharpening(true);
         renderCanvasAtScale(zoom);
       }
-    }, 220);
+    }, 160);
 
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [zoom, renderedScale, renderCanvasAtScale]);
+  }, [zoom, renderCanvasAtScale]);
 
   // ==========================================
   // III. HỆ THỐNG PAN & ZOOM TẠI VỊ TRÍ CON TRỎ (FOCAL ZOOM)
@@ -1207,8 +1208,11 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
               position: 'absolute',
               left: 0,
               top: 0,
+              width: sheetSize.width,
+              height: sheetSize.height,
               display: 'block',
               backgroundColor: '#ffffff',
+              imageRendering: 'auto',
             }}
           />
 
