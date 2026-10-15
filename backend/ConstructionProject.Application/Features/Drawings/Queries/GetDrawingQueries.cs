@@ -1,3 +1,4 @@
+using ConstructionProject.Application.Common.Helpers;
 using ConstructionProject.Application.Common.Interfaces;
 using ConstructionProject.Application.DTOs;
 using MediatR;
@@ -89,7 +90,8 @@ public class GetDrawingFileByIdQueryHandler : IRequestHandler<GetDrawingFileById
                     CreatedBy = o.CreatedBy,
                     CreatedAt = o.CreatedAt,
                     InspectionCount = o.FormInspections.Count,
-                    ChecklistCount = o.Checklists.Count
+                    ChecklistCount = o.Checklists.Count,
+                    Status = ObjectStatusCalculator.ComputeStatus(o)
                 })
                 .ToList()
         };
@@ -148,7 +150,8 @@ public class GetDrawingFileByNameQueryHandler : IRequestHandler<GetDrawingFileBy
                     CreatedBy = o.CreatedBy,
                     CreatedAt = o.CreatedAt,
                     InspectionCount = o.FormInspections.Count,
-                    ChecklistCount = o.Checklists.Count
+                    ChecklistCount = o.Checklists.Count,
+                    Status = ObjectStatusCalculator.ComputeStatus(o)
                 })
                 .ToList()
         };

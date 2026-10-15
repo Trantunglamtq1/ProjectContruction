@@ -1,3 +1,4 @@
+using ConstructionProject.Application.Common.Helpers;
 using ConstructionProject.Application.Common.Interfaces;
 using ConstructionProject.Application.DTOs;
 using MediatR;
@@ -30,23 +31,25 @@ public class GetObjectsQueryHandler : IRequestHandler<GetObjectsQuery, List<Obje
             query = query.Where(o => o.DrawingFileId == request.DrawingFileId.Value);
         }
 
-        return await query
+        var entities = await query
             .OrderBy(o => o.PageNumber)
             .ThenByDescending(o => o.CreatedAt)
-            .Select(o => new ObjectDto
-            {
-                Id = o.Id,
-                DrawingFileId = o.DrawingFileId,
-                DrawingFileName = o.DrawingFile != null ? o.DrawingFile.FileName : string.Empty,
-                PageNumber = o.PageNumber,
-                MarkerCoordinates = o.MarkerCoordinates,
-                Name = o.Name,
-                CreatedBy = o.CreatedBy,
-                CreatedAt = o.CreatedAt,
-                InspectionCount = o.FormInspections.Count,
-                ChecklistCount = o.Checklists.Count
-            })
             .ToListAsync(cancellationToken);
+
+        return entities.Select(o => new ObjectDto
+        {
+            Id = o.Id,
+            DrawingFileId = o.DrawingFileId,
+            DrawingFileName = o.DrawingFile != null ? o.DrawingFile.FileName : string.Empty,
+            PageNumber = o.PageNumber,
+            MarkerCoordinates = o.MarkerCoordinates,
+            Name = o.Name,
+            CreatedBy = o.CreatedBy,
+            CreatedAt = o.CreatedAt,
+            InspectionCount = o.FormInspections.Count,
+            ChecklistCount = o.Checklists.Count,
+            Status = ObjectStatusCalculator.ComputeStatus(o)
+        }).ToList();
     }
 }
 
@@ -83,7 +86,8 @@ public class GetObjectByIdQueryHandler : IRequestHandler<GetObjectByIdQuery, Obj
             CreatedBy = o.CreatedBy,
             CreatedAt = o.CreatedAt,
             InspectionCount = o.FormInspections.Count,
-            ChecklistCount = o.Checklists.Count
+            ChecklistCount = o.Checklists.Count,
+            Status = ObjectStatusCalculator.ComputeStatus(o)
         };
     }
 }

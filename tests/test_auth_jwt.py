@@ -73,6 +73,13 @@ print("Các Role trong hệ thống:")
 for r in roles:
     print(f" - [{r['name']}]: {r['id']} ({r['description']})")
 
+users_res = requests.get(f"{base_url}/api/users", headers={"Authorization": f"Bearer {admin_token}"})
+assert users_res.status_code == 200
+all_users = users_res.json()
+print(f"\nDanh sách tất cả người dùng trong hệ thống ({len(all_users)} tài khoản):")
+for u in all_users:
+    print(f" • Username: {u.get('username'):<16} | Tên: {u.get('fullName'):<25} | Role: {u.get('roleName')}")
+
 submitter_role = next(r for r in roles if r["name"] == "Submitter")
 
 # 7. Admin gán Role Submitter cho User

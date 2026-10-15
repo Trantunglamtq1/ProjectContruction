@@ -36,6 +36,7 @@ public class ObjectDto
     public DateTime CreatedAt { get; set; }
     public int InspectionCount { get; set; }
     public int ChecklistCount { get; set; }
+    public string Status { get; set; } = "PENDING";
 }
 
 public class PointDto

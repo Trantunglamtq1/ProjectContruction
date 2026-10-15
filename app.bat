@@ -2,6 +2,15 @@
 title ConstructInspect Enterprise Controller
 cd /d %~dp0
 
+if not "%1"=="" (
+    set "opt=%1"
+    if "%opt%"=="1" goto START_DOCKER
+    if "%opt%"=="2" goto STOP_DOCKER
+    if "%opt%"=="3" goto LOGS_DOCKER
+    if "%opt%"=="4" goto START_LOCAL
+    if "%opt%"=="5" goto STOP_LOCAL
+)
+
 :MENU
 cls
 echo ======================================================================
