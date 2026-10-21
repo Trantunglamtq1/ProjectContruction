@@ -1,109 +1,274 @@
-import React from 'react';
-import { Card, Table, Tag, Space, Typography, Alert, Button, Input } from 'antd';
+import React, { useState } from 'react';
+import {
+  Card,
+  Table,
+  Tag,
+  Space,
+  Typography,
+  Alert,
+  Button,
+  Input,
+  Row,
+  Col,
+  Statistic,
+  Progress,
+  Tabs,
+} from 'antd';
 import {
   CheckSquareOutlined,
   SearchOutlined,
   ReloadOutlined,
+  CheckCircleOutlined,
+  SafetyCertificateOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import { checklistApi } from '../../services/checklistApi';
+import type { ChecklistDto, ChecklistStatus } from '../../types/checklist';
+import { ChecklistDetailModal } from '../../components/checklists/ChecklistDetailModal';
 
 const { Text } = Typography;
 
 export const ApproverChecklistPage: React.FC = () => {
-  const sampleChecklists = [
-    {
-      id: 'chk-001',
-      name: 'Kiểm tra công tác cốt thép cột',
-      objectName: 'Cột C12 - Tầng 3',
-      totalItems: 8,
-      passedItems: 8,
-      status: 'Completed',
-      reviewer: 'Tư Vấn Giám Sát',
-    },
-    {
-      id: 'chk-003',
-      name: 'Kiểm tra công tác đổ bê tông dầm sàn',
-      objectName: 'Dầm D05 - Tầng 2',
-      totalItems: 6,
-      passedItems: 6,
-      status: 'Completed',
-      reviewer: 'Tư Vấn Giám Sát',
-    },
-  ];
+  const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('ALL');
+  const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  // Query danh sách Checklist từ backend
+  const {
+    data: checklists = [],
+    isLoading,
+    refetch,
+  } = useQuery<ChecklistDto[]>({
+    queryKey: ['checklists'],
+    queryFn: () => checklistApi.getChecklists(),
+  });
+
+  const totalCount = checklists.length;
+  const approvedCount = checklists.filter((c) => c.status === 'Approved' || c.status === 'InProgress').length;
+  const completedCount = checklists.filter((c) => c.status === 'Completed').length;
+
+  const filteredChecklists = checklists.filter((item) => {
+    if (activeTab === 'APPROVED' && item.status !== 'Approved' && item.status !== 'InProgress') return false;
+    if (activeTab === 'COMPLETED' && item.status !== 'Completed') return false;
+
+    if (searchKeyword.trim()) {
+      const kw = searchKeyword.toLowerCase();
+      const matchName = item.name.toLowerCase().includes(kw);
+      const matchObject = (item.objectName || '').toLowerCase().includes(kw);
+      const matchCode = (item.objectCode || '').toLowerCase().includes(kw);
+      return matchName || matchObject || matchCode;
+    }
+    return true;
+  });
+
+  const getStatusTag = (status: ChecklistStatus) => {
+    switch (status) {
+      case 'Draft':
+        return <Tag color="default">Bản nháp</Tag>;
+      case 'PendingSupervisor':
+        return <Tag color="processing">Chờ Giám Sát duyệt</Tag>;
+      case 'Approved':
+        return <Tag color="cyan">Đã duyệt cấu trúc</Tag>;
+      case 'Rejected':
+        return <Tag color="error">Cần sửa lại</Tag>;
+      case 'InProgress':
+        return <Tag color="warning">Đang nghiệm thu</Tag>;
+      case 'Completed':
+        return <Tag color="success">Hoàn thành 100%</Tag>;
+      default:
+        return <Tag>{status}</Tag>;
+    }
+  };
 
   const columns = [
     {
-      title: 'Tên danh mục kiểm tra',
-      dataIndex: 'name',
+      title: 'Tên danh mục kiểm tra & Cấu kiện',
       key: 'name',
-      render: (text: string) => (
-        <Space>
-          <CheckSquareOutlined style={{ color: '#52C41A' }} />
-          <Text strong>{text}</Text>
+      render: (_: any, record: ChecklistDto) => (
+        <Space direction="vertical" size={2}>
+          <Space>
+            <CheckSquareOutlined style={{ color: '#52c41a' }} />
+            <Text strong style={{ fontSize: 14 }}>
+              {record.name}
+            </Text>
+          </Space>
+          <Space size={6}>
+            <Tag color="cyan" style={{ fontSize: 11, margin: 0 }}>
+              {record.objectCode}
+            </Tag>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {record.objectName}
+            </Text>
+          </Space>
         </Space>
       ),
     },
     {
-      title: 'Cấu kiện công trình (Object)',
-      dataIndex: 'objectName',
-      key: 'objectName',
-    },
-    {
-      title: 'Đơn vị giám sát kiểm tra',
-      dataIndex: 'reviewer',
-      key: 'reviewer',
-      render: (text: string) => <Tag color="orange">{text}</Tag>,
-    },
-    {
-      title: 'Kết quả tiêu chí',
-      key: 'progress',
-      render: (_: any, record: any) => `${record.passedItems} / ${record.totalItems} tiêu chí đạt 100%`,
-    },
-    {
-      title: 'Trạng thái nghiệm thu',
+      title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: () => <Tag color="success">Đã hoàn thành kiểm tra</Tag>,
+      width: 170,
+      render: (status: ChecklistStatus) => getStatusTag(status),
     },
     {
-      title: 'Tra cứu',
+      title: 'Tiến độ hoàn thành',
+      key: 'progress',
+      width: 220,
+      render: (_: any, record: ChecklistDto) => (
+        <div style={{ minWidth: 150 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 2 }}>
+            <span>{record.itemsCompletedCount}/{record.itemsCount} tiêu chí đạt</span>
+            <span>{record.progressPercentage}%</span>
+          </div>
+          <Progress
+            percent={record.progressPercentage}
+            size="small"
+            status={record.status === 'Completed' ? 'success' : 'normal'}
+            strokeColor={record.status === 'Completed' ? '#52c41a' : '#13c2c2'}
+          />
+        </div>
+      ),
+    },
+    {
+      title: 'Nhân sự tham gia',
+      key: 'actors',
+      width: 220,
+      render: (_: any, record: ChecklistDto) => (
+        <Space direction="vertical" size={2} style={{ fontSize: 12 }}>
+          <div>
+            <Text type="secondary">Kỹ sư lập: </Text>
+            <Text strong>{record.createdBy}</Text>
+          </div>
+          {record.reviewedBy && (
+            <div>
+              <Text type="secondary">Giám sát duyệt: </Text>
+              <Text style={{ color: '#52c41a', fontWeight: 600 }}>{record.reviewedBy}</Text>
+            </div>
+          )}
+        </Space>
+      ),
+    },
+    {
+      title: 'Thao tác',
       key: 'actions',
-      render: () => <Button size="small" type="link">Xem biên bản</Button>,
+      width: 120,
+      align: 'center' as const,
+      render: (_: any, record: ChecklistDto) => (
+        <Button
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={() => {
+            setSelectedChecklistId(record.id);
+            setDetailModalOpen(true);
+          }}
+        >
+          Chi tiết
+        </Button>
+      ),
     },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Banner giới thiệu phân hệ Approver */}
       <Alert
         message={
           <Space>
-            <Tag color="green" style={{ fontWeight: 600 }}>APPROVER WORKSPACE</Tag>
-            <Text strong>Tra cứu Danh mục Checklist Công trình</Text>
+            <Tag color="green" style={{ fontWeight: 600 }}>
+              CHỦ ĐẦU TƯ / QUẢN LÝ DỰ ÁN (APPROVER WORKSPACE)
+            </Tag>
+            <Text strong>Giám Sát Tiến Độ Nghiệm Thu Theo Checklist Công Trình</Text>
           </Space>
         }
-        description="Theo dõi việc hoàn thành các tiêu chí kiểm tra kỹ thuật do Tư vấn giám sát thực hiện làm cơ sở phê duyệt nghiệm thu công trình."
+        description="Theo dõi toàn bộ các danh mục kiểm tra kỹ thuật của dự án, tiến độ hoàn thành các tiêu chuẩn thi công và kết quả nghiệm thu giữa Tư vấn giám sát và Kỹ sư nhà thầu."
         type="success"
         showIcon
       />
 
+      {/* Thẻ thống kê KPI */}
+      <Row gutter={16}>
+        <Col span={8}>
+          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <Statistic
+              title="Tổng số Danh mục Checklist"
+              value={totalCount}
+              prefix={<CheckSquareOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <Statistic
+              title="Đang thi công & Nghiệm thu"
+              value={approvedCount}
+              valueStyle={{ color: '#13c2c2' }}
+              prefix={<SafetyCertificateOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <Statistic
+              title="Hạng mục Đạt 100% Hoàn Thành"
+              value={completedCount}
+              valueStyle={{ color: '#52c41a' }}
+              prefix={<CheckCircleOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Bảng danh sách Checklist với bộ lọc Tab & Tìm kiếm */}
       <Card style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-          <Input
-            placeholder="Tra cứu danh mục checklist..."
-            prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
-            style={{ width: 280 }}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <Tabs
+            activeKey={activeTab}
+            onChange={(key) => setActiveTab(key)}
+            style={{ marginBottom: 0 }}
+            items={[
+              { key: 'ALL', label: `Tất cả danh mục (${totalCount})` },
+              { key: 'APPROVED', label: `Đang thi công (${approvedCount})` },
+              { key: 'COMPLETED', label: `Đã hoàn thành (${completedCount})` },
+            ]}
           />
-          <Button icon={<ReloadOutlined />}>Làm mới</Button>
+          <Space>
+            <Input
+              placeholder="Tìm kiếm theo tên hoặc cấu kiện..."
+              prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              style={{ width: 280 }}
+            />
+            <Button icon={<ReloadOutlined />} onClick={() => refetch()} loading={isLoading}>
+              Làm mới
+            </Button>
+          </Space>
         </div>
 
         <Table
-          dataSource={sampleChecklists}
+          dataSource={filteredChecklists}
           columns={columns}
           rowKey="id"
-          pagination={{ pageSize: 10 }}
-          bordered
-          size="middle"
+          loading={isLoading}
+          pagination={{ pageSize: 8, showSizeChanger: false }}
         />
       </Card>
+
+      {/* Modal Chi tiết Checklist */}
+      {selectedChecklistId && (
+        <ChecklistDetailModal
+          open={detailModalOpen}
+          checklistId={selectedChecklistId}
+          onClose={() => {
+            setDetailModalOpen(false);
+            setSelectedChecklistId(null);
+            refetch();
+          }}
+          onRefresh={() => refetch()}
+        />
+      )}
     </div>
   );
 };

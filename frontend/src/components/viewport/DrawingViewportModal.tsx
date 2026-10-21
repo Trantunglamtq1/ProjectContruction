@@ -21,12 +21,14 @@ import {
   AimOutlined,
   DeleteOutlined,
   InfoCircleOutlined,
+  CheckSquareOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { objectApi, type CreateObjectPayload } from '../../services/objectApi';
 import type { DrawingFileDto } from '../../services/drawingApi';
 import { SmartDrawingViewport } from './SmartDrawingViewport';
+import { ObjectChecklistsModal } from '../checklists/ObjectChecklistsModal';
 import type { Point, SavedObjectData } from './cv/types';
 import { pointsToSmoothSvgPath } from './cv/curveFitting';
 
@@ -112,6 +114,10 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+
+  // State Modal quản lý Checklist của Cấu kiện
+  const [checklistModalOpen, setChecklistModalOpen] = useState(false);
+  const [activeChecklistObject, setActiveChecklistObject] = useState<{ id: string; name: string; code: string } | null>(null);
 
   // Query danh sách objects của bản vẽ từ SQL Server
   const { data: objects = [] } = useQuery({
@@ -482,6 +488,22 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
                           {originalObj?.checklistCount ?? 0} Checklist
                         </span>
                         <Space size={4}>
+                          <Tooltip title="Checklist & Biểu mẫu Form.io">
+                            <Button
+                              size="small"
+                              type="text"
+                              icon={<CheckSquareOutlined style={{ color: '#10b981' }} />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveChecklistObject({
+                                  id: obj.id,
+                                  name: obj.name,
+                                  code: obj.code || '',
+                                });
+                                setChecklistModalOpen(true);
+                              }}
+                            />
+                          </Tooltip>
                           <Tooltip title="Định vị & Phóng to trên bản vẽ">
                             <Button
                               size="small"
@@ -524,6 +546,21 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
           </div>
         )}
       </div>
+
+      {/* Modal quản lý Checklist & Form.io của Cấu kiện */}
+      {activeChecklistObject && (
+        <ObjectChecklistsModal
+          open={checklistModalOpen}
+          objectId={activeChecklistObject.id}
+          objectName={activeChecklistObject.name}
+          objectCode={activeChecklistObject.code}
+          onClose={() => {
+            setChecklistModalOpen(false);
+            setActiveChecklistObject(null);
+            queryClient.invalidateQueries({ queryKey: ['drawing-objects', drawing?.id] });
+          }}
+        />
+      )}
     </Modal>
   );
 };
