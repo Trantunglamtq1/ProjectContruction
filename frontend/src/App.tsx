@@ -12,6 +12,7 @@ import { PendingRolePage } from './pages/auth/PendingRolePage';
 import { UserManagementPage } from './pages/admin/UserManagementPage';
 import { SubmitterDrawingListPage } from './pages/submitter/SubmitterDrawingListPage';
 import { SubmitterInspectionListPage } from './pages/submitter/SubmitterInspectionListPage';
+import { SubmitterChecklistPage } from './pages/submitter/SubmitterChecklistPage';
 import { ReviewerDrawingListPage } from './pages/reviewer/ReviewerDrawingListPage';
 import { ReviewerInspectionListPage } from './pages/reviewer/ReviewerInspectionListPage';
 import { ReviewerChecklistPage } from './pages/reviewer/ReviewerChecklistPage';
@@ -84,6 +85,14 @@ export const App: React.FC = () => {
                     element={
                       <RoleGuard allowedRoles={['Submitter']}>
                         <SubmitterDrawingListPage />
+                      </RoleGuard>
+                    }
+                  />
+                  <Route
+                    path="/submitter/checklists"
+                    element={
+                      <RoleGuard allowedRoles={['Submitter']}>
+                        <SubmitterChecklistPage />
                       </RoleGuard>
                     }
                   />

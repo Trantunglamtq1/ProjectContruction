@@ -67,6 +67,11 @@ export const MasterLayout: React.FC = () => {
             label: 'Bản vẽ & Viewport',
           },
           {
+            key: '/submitter/checklists',
+            icon: <CheckSquareOutlined />,
+            label: 'Checklist & Form.io',
+          },
+          {
             key: '/submitter/inspections',
             icon: <FileDoneOutlined />,
             label: 'Hồ sơ Inspection',

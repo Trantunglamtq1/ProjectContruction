@@ -301,6 +301,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
       open={visible}
       onCancel={onCancel}
       width={1040}
+      zIndex={1350}
       onOk={handleSaveAll}
       okText="Áp dụng Biểu mẫu này"
       cancelText="Hủy"
