@@ -91,7 +91,7 @@ public class ApproveInspectionCommandHandler : IRequestHandler<ApproveInspection
             {
                 checklist.Status = ChecklistStatus.Completed;
             }
-            else if (checklist.Status == ChecklistStatus.Open)
+            else if (checklist.Status == ChecklistStatus.Approved || checklist.Status == ChecklistStatus.Draft)
             {
                 checklist.Status = ChecklistStatus.InProgress;
             }

@@ -43,6 +43,9 @@ namespace ConstructionProject.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -51,10 +54,33 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Property<Guid>("ObjectId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("ReviewedById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("WorkflowInstanceId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -62,7 +88,63 @@ namespace ConstructionProject.Infrastructure.Migrations
 
                     b.HasIndex("ObjectId");
 
+                    b.HasIndex("ReviewedById");
+
                     b.ToTable("Checklists", (string)null);
+                });
+
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.ChecklistAuditHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ActorName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ActorRole")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("ChecklistId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DetailsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FromStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChecklistId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.ToTable("ChecklistAuditHistories", (string)null);
                 });
 
             modelBuilder.Entity("ConstructionProject.Domain.Entities.ChecklistItem", b =>
@@ -74,6 +156,13 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Property<Guid>("ChecklistId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("FormSchemaJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsRequired")
                         .HasColumnType("bit");
 
@@ -84,6 +173,16 @@ namespace ConstructionProject.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("OrderIndex")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -456,9 +555,27 @@ namespace ConstructionProject.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ConstructionProject.Domain.Entities.User", "Reviewer")
+                        .WithMany("ReviewedChecklists")
+                        .HasForeignKey("ReviewedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Creator");
 
                     b.Navigation("Object");
+
+                    b.Navigation("Reviewer");
+                });
+
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.ChecklistAuditHistory", b =>
+                {
+                    b.HasOne("ConstructionProject.Domain.Entities.Checklist", "Checklist")
+                        .WithMany("AuditHistories")
+                        .HasForeignKey("ChecklistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Checklist");
                 });
 
             modelBuilder.Entity("ConstructionProject.Domain.Entities.ChecklistItem", b =>
@@ -562,6 +679,8 @@ namespace ConstructionProject.Infrastructure.Migrations
 
             modelBuilder.Entity("ConstructionProject.Domain.Entities.Checklist", b =>
                 {
+                    b.Navigation("AuditHistories");
+
                     b.Navigation("Items");
                 });
 
@@ -596,6 +715,8 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Navigation("CreatedChecklists");
 
                     b.Navigation("CreatedObjects");
+
+                    b.Navigation("ReviewedChecklists");
 
                     b.Navigation("ReviewedInspections");
 

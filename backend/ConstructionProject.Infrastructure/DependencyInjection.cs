@@ -43,6 +43,7 @@ public static class DependencyInjection
         // Cấu hình Elsa Workflow 3.x Engine
         services.AddElsa();
         services.AddScoped<IInspectionWorkflowService, InspectionWorkflowService>();
+        services.AddScoped<IChecklistWorkflowService, ChecklistWorkflowService>();
 
         return services;
     }
