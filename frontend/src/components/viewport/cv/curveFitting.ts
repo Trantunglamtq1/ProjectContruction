@@ -1,4 +1,6 @@
 import type { Point } from './types';
+import { buildAutoArcSvgPath, solveCircumcircle, shouldBeArc, snapToRightAngle } from './autoArc';
+export { buildAutoArcSvgPath, solveCircumcircle, shouldBeArc, snapToRightAngle };
 
 /**
  * Khoảng cách vuông góc từ điểm P đến đoạn thẳng AB
@@ -81,42 +83,10 @@ export function simplifyClosedLoop(points: Point[], epsilon = 1.8): Point[] {
 export function pointsToSmoothSvgPath(
   points: Point[],
   isClosed = false,
-  tension = 1.0
+  _tension = 1.0
 ): string {
   if (points.length === 0) return '';
-  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
-  if (points.length === 2) {
-    return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
-  }
-
-  const n = points.length;
-  let d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)} `;
-
-  for (let i = 0; i < (isClosed ? n : n - 1); i++) {
-    const p0 = points[(i - 1 + n) % n];
-    const p1 = points[i];
-    const p2 = points[(i + 1) % n];
-    const p3 = points[(i + 2) % n];
-
-    // Tính 2 điểm điều khiển Control Points C1 và C2 theo công thức Catmull-Rom to Cubic Bezier:
-    // C1 = P1 + (P2 - P0) / (6 * tension)
-    // C2 = P2 - (P3 - P1) / (6 * tension)
-    const factor = 6.0 * tension;
-
-    const cp1x = p1.x + (p2.x - (isClosed || i > 0 ? p0.x : p1.x)) / factor;
-    const cp1y = p1.y + (p2.y - (isClosed || i > 0 ? p0.y : p1.y)) / factor;
-
-    const cp2x = p2.x - ((isClosed || i < n - 2 ? p3.x : p2.x) - p1.x) / factor;
-    const cp2y = p2.y - ((isClosed || i < n - 2 ? p3.y : p2.y) - p1.y) / factor;
-
-    d += `C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)} `;
-  }
-
-  if (isClosed) {
-    d += 'Z';
-  }
-
-  return d;
+  return buildAutoArcSvgPath(points, isClosed);
 }
 
 /**

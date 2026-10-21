@@ -20,27 +20,56 @@ import {
   UndoOutlined,
   CloseOutlined,
   CheckOutlined,
-  ThunderboltOutlined,
-  AimOutlined,
   LeftOutlined,
   RightOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
 import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import apiClient from '../../services/apiClient';
 
-// Cấu hình Worker cho PDF.js v6
+// Cấu hình Polyfill cho các môi trường duyệt web hiện đại (TC39 Uint8Array proposal & Promise.withResolvers)
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    pdfWorkerUrl || `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  if (typeof Uint8Array !== 'undefined') {
+    if (!(Uint8Array.prototype as any).toHex) {
+      (Uint8Array.prototype as any).toHex = function () {
+        let hex = '';
+        for (let i = 0; i < this.length; i++) {
+          hex += this[i].toString(16).padStart(2, '0');
+        }
+        return hex;
+      };
+    }
+    if (!(Uint8Array as any).fromBase64) {
+      (Uint8Array as any).fromBase64 = function (b64: string) {
+        const bin = typeof atob !== 'undefined' ? atob(b64) : '';
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) {
+          arr[i] = bin.charCodeAt(i);
+        }
+        return arr;
+      };
+    }
+  }
+  if (typeof Promise !== 'undefined' && !(Promise as any).withResolvers) {
+    (Promise as any).withResolvers = function () {
+      let resolve: any, reject: any;
+      const promise = new Promise((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    };
+  }
+
+  // Cấu hình Worker cho PDF.js nội bộ không phụ thuộc CDN bên ngoài
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
 }
 
-import type { CostMapData, Point, SavedObjectData } from './cv/types';
-import { buildCostMapFromImageData, findNearestEdgeSnap } from './cv/imageCostMap';
-import { findMagneticPath } from './cv/livewirePathfinder';
-import { extractClosedContourFromClick } from './cv/floodFillContour';
-import { simplifyRDP, simplifyClosedLoop, pointsToSmoothSvgPath } from './cv/curveFitting';
+import type { Point, PointRole, SavedObjectData } from './cv/types';
+import {
+  buildAutoArcSvgPath,
+  snapToRightAngle,
+} from './cv/autoArc';
 
 const { Text } = Typography;
 
@@ -88,11 +117,12 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     height: 800,
   });
 
-  // 2. Pan & Zoom States (CAD Transformation: 20% đến 1000%)
+  // 2. Pan & Zoom States (20% đến 1000%)
   const [zoom, setZoom] = useState<number>(1.0);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [isSpacePressed, setIsSpacePressed] = useState<boolean>(false);
+  const [isShiftPressed, setIsShiftPressed] = useState<boolean>(false);
   const isPanDragRef = useRef<boolean>(false);
   const isPanGestureRef = useRef<boolean>(false);
   const panStartRef = useRef<{ x: number; y: number; initialPanX: number; initialPanY: number }>({
@@ -102,33 +132,21 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     initialPanY: 0,
   });
 
-  // Re-rasterization Debounce: Canvas sắc nét ở mọi độ zoom
-  const renderedScaleRef = useRef<number>(1.0);
+  // Debounced Viewport Clipping Render (100ms)
   const debounceTimerRef = useRef<any>(null);
 
-  // 3. Computer Vision & Cost Map State (1:1 chuẩn xác theo Sheet)
-  const [costMap, setCostMap] = useState<CostMapData | null>(null);
-  const costMapRef = useRef<CostMapData | null>(null);
-  const [isComputingCV, setIsComputingCV] = useState<boolean>(false);
-
-  // 4. Zero-Manual-Bending Drawing Engine State
+  // 3. Progressive 3-Point Auto-Arc Drawing State
   const isDrawingMode = !readOnly;
   const [committedVertices, setCommittedVertices] = useState<Point[]>([]);
-  const [committedPathSegments, setCommittedPathSegments] = useState<string[]>([]);
-  const [livewirePath, setLivewirePath] = useState<string>('');
-  const [livewirePoints, setLivewirePoints] = useState<Point[]>([]);
-  const [isLivewireSnapped, setIsLivewireSnapped] = useState<boolean>(false);
-
-  // Điểm chuột thực tế trên hệ tọa độ bản vẽ
   const [cursorSheetPos, setCursorSheetPos] = useState<Point | null>(null);
   const [isNearStartPoint, setIsNearStartPoint] = useState<boolean>(false);
 
-  // 5. Tinh chỉnh đỉnh sau khi khép kín hình
+  // 4. Tinh chỉnh đỉnh sau khi khép kín hình
   const [completedPoints, setCompletedPoints] = useState<Point[] | null>(null);
   const [completedSvgPath, setCompletedSvgPath] = useState<string | null>(null);
   const [draggingVertexIndex, setDraggingVertexIndex] = useState<number | null>(null);
 
-  // 6. Modal đặt tên và lưu Object
+  // 5. Modal đặt tên và lưu Object
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [form] = Form.useForm();
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
@@ -139,7 +157,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const sheetContainerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
+  const currentRenderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
 
   // ==========================================
   // I. TÍNH TOÁN CĂN CHỈNH VỪA KHUNG HÌNH (FIT VIEW)
@@ -154,7 +172,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     const availH = Math.max(100, rect.height - pad);
 
     const scale = Math.min(availW / sheetW, availH / sheetH);
-    const clampedScale = Math.max(0.2, Math.min(scale, 1.2));
+    const clampedScale = Math.max(0.1, Math.min(scale, 1.2));
 
     const panX = Math.round((rect.width - sheetW * clampedScale) / 2);
     const panY = Math.round((rect.height - sheetH * clampedScale) / 2);
@@ -162,6 +180,25 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     setZoom(clampedScale);
     setPan({ x: Math.max(0, panX), y: Math.max(0, panY) });
   }, []);
+
+  // Tự động căn chỉnh vừa khung hình khi kích thước container thay đổi (modal mở hoàn tất hoặc đổi kích thước)
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let initialFit = false;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0 && sheetSize.width > 0 && sheetSize.height > 0) {
+          if (!initialFit) {
+            initialFit = true;
+            fitViewToContainer(sheetSize.width, sheetSize.height);
+          }
+        }
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [sheetSize.width, sheetSize.height, fitViewToContainer]);
 
   // Định vị và căn giữa đối tượng khi được chọn
   useEffect(() => {
@@ -171,7 +208,10 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         const rect = containerRef.current.getBoundingClientRect();
         const objCenterX = obj.boundingBox.x + obj.boundingBox.width / 2;
         const objCenterY = obj.boundingBox.y + obj.boundingBox.height / 2;
-        const targetZoom = Math.max(1.0, Math.min(2.5, 450 / Math.max(obj.boundingBox.width, obj.boundingBox.height, 100)));
+        const targetZoom = Math.max(
+          1.0,
+          Math.min(2.5, 450 / Math.max(obj.boundingBox.width, obj.boundingBox.height, 100))
+        );
         setZoom(targetZoom);
         setPan({
           x: Math.round(rect.width / 2 - objCenterX * targetZoom),
@@ -182,173 +222,131 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
   }, [activeSelectedId, existingObjects]);
 
   // ==========================================
-  // II. RENDER BẢN VẼ PDF / ẢNH (DEBOUNCED RE-RASTERIZATION)
+  // II. RENDER BẢN VẼ ĐỘ PHÂN GIẢI CAO (GPU-ACCELERATED)
   // ==========================================
-  const renderCanvasAtScale = useCallback(
-    async (targetScale: number) => {
-      if (!canvasRef.current) return;
+
+  // Render canvas với công nghệ Double-Buffering (Offscreen) chống chớp trắng và giật lag
+  const renderCanvas = useCallback(async (customScale?: number) => {
+    if (!canvasRef.current) return;
+
+    // A. Ảnh kỹ thuật
+    if (imageElementRef.current) {
+      const img = imageElementRef.current;
+      const sW = sheetSize.width;
+      const sH = sheetSize.height;
+      const dpr = window.devicePixelRatio || 1;
+      const scale = customScale || Math.min(2.5, Math.max(1.0, dpr));
+      const targetW = Math.round(sW * scale);
+      const targetH = Math.round(sH * scale);
+
+      const offscreen = document.createElement('canvas');
+      offscreen.width = targetW;
+      offscreen.height = targetH;
+      const offCtx = offscreen.getContext('2d');
+      if (offCtx) {
+        offCtx.imageSmoothingEnabled = true;
+        offCtx.imageSmoothingQuality = 'high';
+        offCtx.drawImage(img, 0, 0, targetW, targetH);
+      }
 
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      if (!ctx) return;
+      if (canvas) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+        canvas.style.width = `${sW}px`;
+        canvas.style.height = `${sH}px`;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(offscreen, 0, 0);
+      }
+      setIsLoadingPdf(false);
+      setIsSharpening(false);
+      return;
+    }
 
-      const dpr = window.devicePixelRatio || 1;
-      const sheetW = sheetSize.width || 1200;
-      const sheetH = sheetSize.height || 800;
-
-      // THUẬT TOÁN TỐI ƯU 1: GIỚI HẠN AN TOÀN PHẦN CỨNG ĐỒ HỌA (MAX 8192PX)
-      // Cho phép vector siêu nét ở zoom lớn (300% - 1000%) mà không làm tràn GPU
-      const maxCanvasDim = 8192;
-      const maxSheetDim = Math.max(sheetW, sheetH);
-      const maxHardwareScale = maxSheetDim > 0 ? maxCanvasDim / maxSheetDim : 12;
-
-      // Độ phân giải thực tế: scale = targetScale * dpr để chữ số CAD và đường nét nhỏ nhất hiển thị sắc nét 100%
-      const effectiveScale = Math.max(1.0, Math.min(targetScale * dpr, maxHardwareScale, 12.0));
-
-      // A. Ảnh kỹ thuật
-      if (imageElementRef.current) {
-        const img = imageElementRef.current;
-        const nativeW = img.naturalWidth || sheetW;
-        const nativeH = img.naturalHeight || sheetH;
-
-        // Đối với ảnh tĩnh, luôn render ở độ phân giải gốc của ảnh (100% pixel fidelity)
-        canvas.width = nativeW;
-        canvas.height = nativeH;
-        canvas.style.width = `${sheetW}px`;
-        canvas.style.height = `${sheetH}px`;
-        const imgCtx = canvas.getContext('2d');
-        if (imgCtx) {
-          imgCtx.imageSmoothingEnabled = true;
-          imgCtx.imageSmoothingQuality = 'high';
-          imgCtx.drawImage(img, 0, 0, nativeW, nativeH);
+    // B. Bản vẽ PDF Vector (pdfjs-dist)
+    if (!pdfDoc) {
+      setIsLoadingPdf(false);
+      return;
+    }
+    try {
+      if (currentRenderTaskRef.current) {
+        try {
+          currentRenderTaskRef.current.cancel();
+        } catch {
+          // ignore
         }
+        currentRenderTaskRef.current = null;
+      }
 
-        renderedScaleRef.current = targetScale;
+      const page = await pdfDoc.getPage(currentPage);
+      const sW = sheetSize.width;
+      const sH = sheetSize.height;
+      const maxDim = Math.max(sW, sH);
+
+      // Tỷ lệ render tối ưu:
+      // - Với CAD khổ lớn (A0/A1, maxDim >= 2500): 1.0 đã là 3370x2384 (~8 triệu pixel, siêu nét)
+      // - Với tài liệu nhỏ hơn (A4, maxDim < 1500): 1.5 - 2.0 để nét mịn
+      // - Giới hạn kích thước canvas không vượt quá 4096px để tránh tràn VRAM GPU
+      let optimalScale = customScale;
+      if (!optimalScale) {
+        optimalScale = maxDim >= 2500 ? 1.0 : maxDim >= 1500 ? 1.5 : 2.0;
+      }
+      if (maxDim * optimalScale > 4096) {
+        optimalScale = 4096 / maxDim;
+      }
+
+      const viewport = page.getViewport({ scale: optimalScale });
+      const targetW = Math.max(1, Math.round(viewport.width));
+      const targetH = Math.max(1, Math.round(viewport.height));
+
+      // Kỹ thuật Double-Buffering: Vẽ trước vào Offscreen Canvas
+      // Đảm bảo Canvas hiển thị không bao giờ bị trắng hoặc mất nét trong khi render
+      const offscreen = document.createElement('canvas');
+      offscreen.width = targetW;
+      offscreen.height = targetH;
+      const offCtx = offscreen.getContext('2d', { alpha: false });
+      if (!offCtx) {
         setIsLoadingPdf(false);
-        setIsSharpening(false);
-
-        // Trích xuất Cost Map (Chỉ 1 lần duy nhất ở tỷ lệ gốc 1.0)
-        if (!costMapRef.current) {
-          setIsComputingCV(true);
-          setTimeout(() => {
-            try {
-              const cvCanvas = document.createElement('canvas');
-              cvCanvas.width = nativeW;
-              cvCanvas.height = nativeH;
-              const cvCtx = cvCanvas.getContext('2d');
-              if (cvCtx) {
-                cvCtx.drawImage(img, 0, 0, nativeW, nativeH);
-                const imgData = cvCtx.getImageData(0, 0, nativeW, nativeH);
-                const cMap = buildCostMapFromImageData(imgData);
-                costMapRef.current = cMap;
-                setCostMap(cMap);
-              }
-            } catch (err) {
-              console.warn('Lỗi trích xuất Cost Map ảnh:', err);
-            } finally {
-              setIsComputingCV(false);
-            }
-          }, 60);
-        }
         return;
       }
 
-      // B. Bản vẽ PDF Vector (pdfjs-dist)
-      if (!pdfDoc) return;
+      offCtx.fillStyle = '#ffffff';
+      offCtx.fillRect(0, 0, targetW, targetH);
 
-      try {
-        if (renderTaskRef.current) {
-          try {
-            renderTaskRef.current.cancel();
-          } catch {
-            // bỏ qua
-          }
-        }
+      const task = page.render({
+        canvas: offscreen,
+        canvasContext: offCtx,
+        viewport: viewport,
+      });
+      currentRenderTaskRef.current = task;
+      await task.promise;
+      currentRenderTaskRef.current = null;
 
-        const page = await pdfDoc.getPage(currentPage);
-        const originalViewport = page.getViewport({ scale: 1.0 });
-        const renderViewport = page.getViewport({ scale: effectiveScale });
+      // Render hoàn tất: Chép tức thời sang canvas chính trên màn hình trong 1 frame
+      if (canvasRef.current) {
+        const visibleCanvas = canvasRef.current;
+        visibleCanvas.width = targetW;
+        visibleCanvas.height = targetH;
+        visibleCanvas.style.width = `${sW}px`;
+        visibleCanvas.style.height = `${sH}px`;
+        const visibleCtx = visibleCanvas.getContext('2d');
+        visibleCtx?.drawImage(offscreen, 0, 0);
+      }
 
-        const rw = Math.round(renderViewport.width);
-        const rh = Math.round(renderViewport.height);
-
-        // THUẬT TOÁN TỐI ƯU 2: DOUBLE BUFFERING CHO PDF.JS
-        // PDF.js render trực tiếp vào offscreen canvas, giữ nguyên màn hình hiện tại với CSS zoom 60fps
-        const offscreen = document.createElement('canvas');
-        offscreen.width = rw;
-        offscreen.height = rh;
-        const offCtx = offscreen.getContext('2d');
-        if (!offCtx) return;
-
-        const renderContext = {
-          canvasContext: offCtx,
-          viewport: renderViewport,
-          canvas: offscreen,
-        };
-
-        const task = page.render(renderContext);
-        renderTaskRef.current = task;
-        await task.promise;
-        renderTaskRef.current = null;
-
-        // Atomic Swap: Chép kết quả đã render xong vào canvas chính (0ms chớp trắng)
-        canvas.width = rw;
-        canvas.height = rh;
-        canvas.style.width = `${originalViewport.width}px`;
-        canvas.style.height = `${originalViewport.height}px`;
-        const visibleCtx = canvas.getContext('2d');
-        if (visibleCtx) {
-          visibleCtx.imageSmoothingEnabled = true;
-          visibleCtx.imageSmoothingQuality = 'high';
-          visibleCtx.drawImage(offscreen, 0, 0);
-        }
-
-        renderedScaleRef.current = targetScale;
+      setIsLoadingPdf(false);
+      setIsSharpening(false);
+    } catch (err: any) {
+      currentRenderTaskRef.current = null;
+      if (err?.name !== 'RenderingCancelledException') {
+        console.warn('Lỗi render Canvas:', err);
+        setPdfError(err?.message || 'Lỗi khi dựng bản vẽ lên canvas.');
         setIsLoadingPdf(false);
         setIsSharpening(false);
-
-        // THUẬT TOÁN TỐI ƯU 3: TÁCH RIÊNG TRÍCH XUẤT COST MAP CHUẨN HÓA 1X
-        // Không tính lại khi zoom để tránh nghẽn luồng chính và sai lệch tọa độ
-        if (!costMapRef.current) {
-          setIsComputingCV(true);
-          setTimeout(async () => {
-            try {
-              const cvVp = page.getViewport({ scale: 1.0 });
-              const cvCanvas = document.createElement('canvas');
-              cvCanvas.width = Math.round(cvVp.width);
-              cvCanvas.height = Math.round(cvVp.height);
-              const cvCtx = cvCanvas.getContext('2d', { willReadFrequently: true });
-              if (cvCtx) {
-                const cvTask = page.render({
-                  canvasContext: cvCtx,
-                  viewport: cvVp,
-                  canvas: cvCanvas,
-                });
-                await cvTask.promise;
-                const imgData = cvCtx.getImageData(0, 0, cvCanvas.width, cvCanvas.height);
-                const cMap = buildCostMapFromImageData(imgData);
-                costMapRef.current = cMap;
-                setCostMap(cMap);
-              }
-            } catch (cvErr) {
-              console.warn('Lỗi trích xuất Cost Map PDF:', cvErr);
-            } finally {
-              setIsComputingCV(false);
-            }
-          }, 60);
-        }
-      } catch (err: any) {
-        if (err?.name !== 'RenderingCancelledException') {
-          console.warn('Lỗi render PDF Canvas:', err);
-          setIsLoadingPdf(false);
-          setIsSharpening(false);
-        }
       }
-    },
-    [pdfDoc, currentPage, sheetSize]
-  );
+    }
+  }, [pdfDoc, currentPage, sheetSize]);
 
-  // Tải Document với Token xác thực (Chỉ phụ thuộc fileUrl & fileName, không có vòng lặp phụ thuộc)
+  // Tải Document với Token xác thực
   useEffect(() => {
     let isCancelled = false;
     let createdBlobUrl: string | null = null;
@@ -361,13 +359,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
 
     setIsLoadingPdf(true);
     setPdfError(null);
-    setCostMap(null);
-    costMapRef.current = null;
-    renderedScaleRef.current = 1.0;
     setCommittedVertices([]);
-    setCommittedPathSegments([]);
-    setLivewirePath('');
-    setLivewirePoints([]);
     setCompletedPoints(null);
     setCompletedSvgPath(null);
 
@@ -386,13 +378,22 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
             const res = await apiClient.get(endpoint, {
               responseType: 'arraybuffer',
             });
-            arrayBuffer = res.data;
+            if (res.data instanceof ArrayBuffer) {
+              arrayBuffer = res.data;
+            } else if (res.data?.buffer instanceof ArrayBuffer) {
+              arrayBuffer = res.data.buffer;
+            } else {
+              throw new Error('Dữ liệu tải về không hợp lệ');
+            }
             contentType = String(res.headers['content-type'] || '').toLowerCase();
-          } catch (apiErr) {
+          } catch {
             const token = localStorage.getItem('token');
             const headers: Record<string, string> = {};
             if (token) headers['Authorization'] = `Bearer ${token}`;
-            const res = await fetch(fileUrl, { headers });
+            const targetUrl = fileUrl.startsWith('http')
+              ? fileUrl
+              : `${window.location.origin}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
+            const res = await fetch(targetUrl, { headers });
             if (!res.ok) {
               throw new Error(`Không thể tải tệp bản vẽ từ máy chủ (HTTP ${res.status})`);
             }
@@ -403,48 +404,65 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
 
         if (isCancelled) return;
 
+        // Kiểm tra xem phản hồi có phải là HTML báo lỗi từ SPA fallback không
+        if (arrayBuffer.byteLength >= 15) {
+          const headerPrefix = new TextDecoder('ascii').decode(new Uint8Array(arrayBuffer, 0, Math.min(64, arrayBuffer.byteLength))).toLowerCase();
+          if (headerPrefix.includes('<!doctype') || headerPrefix.includes('<html')) {
+            throw new Error('Không tìm thấy tệp bản vẽ trên hệ thống lưu trữ (máy chủ trả về trang HTML).');
+          }
+        }
+
         // Nhận diện tệp PDF qua Magic Bytes '%PDF' hoặc Content-Type/Extension
         const isPdf =
-          contentType.includes('application/pdf') ||
-          fileName.toLowerCase().endsWith('.pdf') ||
-          fileUrl.toLowerCase().split('?')[0].endsWith('.pdf') ||
           (arrayBuffer.byteLength >= 4 &&
             new Uint8Array(arrayBuffer, 0, 4)[0] === 0x25 &&
             new Uint8Array(arrayBuffer, 0, 4)[1] === 0x50 &&
             new Uint8Array(arrayBuffer, 0, 4)[2] === 0x44 &&
-            new Uint8Array(arrayBuffer, 0, 4)[3] === 0x46);
+            new Uint8Array(arrayBuffer, 0, 4)[3] === 0x46) ||
+          contentType.includes('application/pdf') ||
+          fileName.toLowerCase().endsWith('.pdf') ||
+          fileUrl.toLowerCase().split('?')[0].endsWith('.pdf');
 
         if (isPdf) {
           setIsImageFormat(false);
           imageElementRef.current = null;
 
+          if (arrayBuffer.byteLength < 50) {
+            throw new Error(`Tệp PDF bị rỗng hoặc lỗi cấu trúc (${arrayBuffer.byteLength} bytes). Vui lòng tải lên lại bản vẽ.`);
+          }
+
           const loadingTask = pdfjsLib.getDocument({
             data: new Uint8Array(arrayBuffer),
-            cMapUrl: 'https://unpkg.com/pdfjs-dist@legacy/cmaps/',
+            cMapUrl: '/pdfjs/cmaps/',
             cMapPacked: true,
+            standardFontDataUrl: '/pdfjs/standard_fonts/',
+            useSystemFonts: true,
+            disableFontFace: false,
           });
 
           const doc = await loadingTask.promise;
           if (isCancelled) return;
 
-          setPdfDoc(doc);
-          setTotalPages(doc.numPages);
-          setCurrentPage(1);
-
+          let sW = 1200;
+          let sH = 800;
           try {
             const page = await doc.getPage(1);
             const vp = page.getViewport({ scale: 1.0 });
-            const sW = Math.round(vp.width);
-            const sH = Math.round(vp.height);
-            setSheetSize({ width: sW, height: sH });
-            setTimeout(() => {
-              fitViewToContainer(sW, sH);
-            }, 60);
-          } catch {
-            // bỏ qua
+            sW = Math.round(vp.width);
+            sH = Math.round(vp.height);
+          } catch (e) {
+            console.warn('Không thể đọc kích thước page 1:', e);
           }
+
+          if (isCancelled) return;
+
+          setSheetSize({ width: sW, height: sH });
+          setTotalPages(doc.numPages);
+          setCurrentPage(1);
+          fitViewToContainer(sW, sH);
+          setPdfDoc(doc);
         } else {
-          // Tệp ảnh kỹ thuật (PNG, JPG, WebP...)
+          // Tệp ảnh kỹ thuật
           setIsImageFormat(true);
           setPdfDoc(null);
           const blob = new Blob([arrayBuffer], { type: contentType || 'image/png' });
@@ -458,9 +476,8 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
             setSheetSize({ width: sW, height: sH });
             setTotalPages(1);
             setCurrentPage(1);
-            setTimeout(() => {
-              fitViewToContainer(sW, sH);
-            }, 60);
+            fitViewToContainer(sW, sH);
+            setIsLoadingPdf(false);
           };
           img.onerror = () => {
             if (!isCancelled) {
@@ -489,36 +506,35 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     };
   }, [fileUrl, fileName, fitViewToContainer]);
 
-  // Kích hoạt render lại canvas khi tài liệu sẵn sàng hoặc đổi trang
+  // Render Canvas khi tài liệu sẵn sàng hoặc chuyển trang
   useEffect(() => {
     if (pdfDoc || imageElementRef.current) {
-      renderCanvasAtScale(zoom);
+      renderCanvas();
     }
-  }, [pdfDoc, currentPage, renderCanvasAtScale]);
+  }, [pdfDoc, currentPage, renderCanvas]);
 
-  // Debounced Re-rasterization khi dừng lăn chuột để bản vẽ luôn SIÊU NÉT
+  // Re-render sắc nét khi dừng lăn chuột Zoom sâu
+  const lastRenderedZoomRef = useRef<number>(zoom);
   useEffect(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      // Khi dừng lăn chuột (160ms), nếu tỷ lệ zoom hiện tại lệch trên 3%
-      // so với tỷ lệ đã rasterize, tiến hành re-render ngầm ở độ phân giải thực siêu nét.
-      const currentScale = renderedScaleRef.current || 1.0;
-      const diff = Math.abs(zoom - currentScale) / currentScale;
-      if (diff > 0.03) {
+      // Chỉ re-render làm nét khi zoom sâu (> 2.0x) và có thay đổi đáng kể
+      if (zoom > 2.0 && Math.abs(zoom - lastRenderedZoomRef.current) / (lastRenderedZoomRef.current || 1) > 0.4) {
+        lastRenderedZoomRef.current = zoom;
         setIsSharpening(true);
-        renderCanvasAtScale(zoom);
+        renderCanvas();
       }
-    }, 160);
+    }, 400);
 
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [zoom, renderCanvasAtScale]);
+  }, [zoom, renderCanvas]);
 
   // ==========================================
   // III. HỆ THỐNG PAN & ZOOM TẠI VỊ TRÍ CON TRỎ (FOCAL ZOOM)
@@ -526,16 +542,18 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
 
   const screenToSheet = useCallback(
     (clientX: number, clientY: number): Point | null => {
-      if (!sheetContainerRef.current) return null;
-      const rect = sheetContainerRef.current.getBoundingClientRect();
-      const x = (clientX - rect.left) / zoom;
-      const y = (clientY - rect.top) / zoom;
+      if (!containerRef.current) return null;
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = clientX - rect.left;
+      const mouseY = clientY - rect.top;
+      const sheetX = (mouseX - pan.x) / zoom;
+      const sheetY = (mouseY - pan.y) / zoom;
       return {
-        x: Math.max(0, Math.min(sheetSize.width, Math.round(x))),
-        y: Math.max(0, Math.min(sheetSize.height, Math.round(y))),
+        x: Math.max(0, Math.min(sheetSize.width, Number(sheetX.toFixed(2)))),
+        y: Math.max(0, Math.min(sheetSize.height, Number(sheetY.toFixed(2)))),
       };
     },
-    [zoom, sheetSize]
+    [pan, zoom, sheetSize]
   );
 
   const handleWheel = useCallback(
@@ -598,41 +616,62 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         return;
       }
 
-      // 2. Tọa độ chuột cho chế độ bám nét (chỉ khi không giữ phím Space)
       if (isSpacePressed || isPanGestureRef.current) return;
 
-      const sheetPt = screenToSheet(e.clientX, e.clientY);
-      if (!sheetPt) return;
-      setCursorSheetPos(sheetPt);
+      const rawSheetPt = screenToSheet(e.clientX, e.clientY);
+      if (!rawSheetPt) return;
 
-      // Kéo chỉnh đỉnh sau khi khép kín hình
+      // Kéo chỉnh đỉnh sau khi đã khép kín hình
       if (draggingVertexIndex !== null && completedPoints) {
         const updated = [...completedPoints];
-        updated[draggingVertexIndex] = sheetPt;
+        updated[draggingVertexIndex] = {
+          ...updated[draggingVertexIndex],
+          x: rawSheetPt.x,
+          y: rawSheetPt.y,
+        };
         setCompletedPoints(updated);
-        setCompletedSvgPath(pointsToSmoothSvgPath(updated, true));
+        setCompletedSvgPath(buildAutoArcSvgPath(updated, true, e.shiftKey || isShiftPressed));
         return;
       }
 
-      // 3. Tính toán Magnetic Livewire bám nét
-      if (isDrawingMode && committedVertices.length > 0 && costMap) {
-        const lastVertex = committedVertices[committedVertices.length - 1];
-        const firstVertex = committedVertices[0];
+      if (!isDrawingMode || completedPoints) return;
 
-        const snapDistanceSheet = Math.max(22, Math.round(35 / zoom));
-        const distToStart = Math.hypot(sheetPt.x - firstVertex.x, sheetPt.y - firstVertex.y);
-        const nearStart = distToStart <= snapDistanceSheet && committedVertices.length >= 3;
-        setIsNearStartPoint(nearStart);
+      // 2. Chấm điểm liên hoàn: Bắt dính khép kín hoặc bắt chuẩn góc vuông
+      if (committedVertices.length === 0) {
+        setCursorSheetPos(rawSheetPt);
+        setIsNearStartPoint(false);
+        return;
+      }
 
-        const target = nearStart ? firstVertex : sheetPt;
+      const firstVertex = committedVertices[0];
+      const lastVertex = committedVertices[committedVertices.length - 1];
+      const prevVertex =
+        committedVertices.length >= 2 ? committedVertices[committedVertices.length - 2] : null;
 
-        const result = findMagneticPath(costMap, lastVertex, target);
-        const smoothedPoints = simplifyRDP(result.points, 1.2);
-        const smoothPath = pointsToSmoothSvgPath(smoothedPoints, false);
+      // Bán kính bắt dính vào điểm đầu P1: 6 / zoom (dung sai click 8 / zoom)
+      const distToStart = Math.hypot(rawSheetPt.x - firstVertex.x, rawSheetPt.y - firstVertex.y);
+      const snapRadius = 8 / zoom;
+      const canClose = committedVertices.length >= 3;
 
-        setLivewirePath(smoothPath);
-        setLivewirePoints(result.points);
-        setIsLivewireSnapped(result.isSnappedToEdge || nearStart);
+      if (canClose && distToStart <= snapRadius) {
+        setCursorSheetPos(firstVertex);
+        setIsNearStartPoint(true);
+      } else {
+        setIsNearStartPoint(false);
+        const isShift = e.shiftKey || isShiftPressed;
+        if (isShift) {
+          // Khi giữ Shift: di chuyển con trỏ tự do để căn đỉnh uốn cong arc_mid chuẩn xác
+          setCursorSheetPos(rawSheetPt);
+        } else {
+          // Bắt chuẩn góc vuông 90° nếu gần trục
+          const { point: snappedPt } = snapToRightAngle(
+            prevVertex,
+            lastVertex,
+            rawSheetPt,
+            false
+          );
+          setCursorSheetPos(snappedPt);
+        }
       }
     },
     [
@@ -640,11 +679,11 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
       isSpacePressed,
       isDrawingMode,
       committedVertices,
-      costMap,
       screenToSheet,
       draggingVertexIndex,
       completedPoints,
       zoom,
+      isShiftPressed,
     ]
   );
 
@@ -654,12 +693,15 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     setTimeout(() => {
       isPanGestureRef.current = false;
       isPanDragRef.current = false;
-    }, 250);
+    }, 200);
   }, []);
 
-  // Lắng nghe phím Space để Pan
+  // Lắng nghe phím Space và Shift
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setIsShiftPressed(true);
+      }
       if (e.code === 'Space') {
         const activeTag = (document.activeElement?.tagName || '').toLowerCase();
         if (activeTag !== 'input' && activeTag !== 'textarea') {
@@ -672,12 +714,15 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setIsShiftPressed(false);
+      }
       if (e.code === 'Space') {
         setIsSpacePressed(false);
         setTimeout(() => {
           isPanGestureRef.current = false;
           isPanDragRef.current = false;
-        }, 250);
+        }, 200);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -692,168 +737,91 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
   // IV. KHÉP KÍN ĐỐI TƯỢNG VÀ MỞ MODAL ĐẶT TÊN
   // ==========================================
 
-  const handleFinishClosing = useCallback(() => {
-    if (committedVertices.length < 3) {
-      message.warning('Cần ít nhất 3 điểm chốt để khép kín đối tượng.');
-      return;
-    }
-
-    const allPoints: Point[] = [];
-    committedVertices.forEach((v) => allPoints.push(v));
-
-    if (livewirePoints.length > 0) {
-      livewirePoints.forEach((p) => allPoints.push(p));
-    }
-
-    const firstVertex = committedVertices[0];
-    const lastPt = allPoints[allPoints.length - 1];
-    if (Math.hypot(lastPt.x - firstVertex.x, lastPt.y - firstVertex.y) > 2) {
-      allPoints.push(firstVertex);
-    }
-
-    const simplified = simplifyClosedLoop(allPoints, 1.6);
-    const finalSvgPath = pointsToSmoothSvgPath(simplified, true);
-
-    setCompletedPoints(simplified);
-    setCompletedSvgPath(finalSvgPath);
-    setCommittedVertices([]);
-    setCommittedPathSegments([]);
-    setLivewirePath('');
-    setLivewirePoints([]);
-    setIsNearStartPoint(false);
-
-    setInternalSelectedId(null);
-    onSelectObject?.(null);
-    form.resetFields();
-    form.setFieldsValue({
-      code: `OBJ-${Date.now().toString().slice(-4)}`,
-      name: '',
-      status: 'PENDING',
-    });
-    setIsModalOpen(true);
-  }, [committedVertices, livewirePoints, form, onSelectObject]);
-
-  // Hành vi 2: Double-click HOẶC Alt + Click
-  const handleSheetDoubleClick = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
-      if (readOnly || isSpacePressed || isPanDragRef.current) return;
-      e.stopPropagation();
-
-      // Nếu đang vẽ dở chuỗi điểm >= 3 -> Double Click KHÉP KÍN NGAY!
-      if (committedVertices.length >= 3) {
-        handleFinishClosing();
+  const handleFinishClosing = useCallback(
+    (isShiftOnClose = false) => {
+      if (committedVertices.length < 3) {
+        message.warning('Hình vẽ BẮT BUỘC phải có ít nhất 3 điểm và khép kín về điểm đầu tiên.');
         return;
       }
 
-      // Nếu chưa có điểm nào -> Double-click vào trong lòng đối tượng để One-Click Flood-Fill
-      if (committedVertices.length === 0 && costMap) {
-        const seedPt = screenToSheet(e.clientX, e.clientY);
-        if (!seedPt) return;
+      // Nối đoạn cuối cùng về points[0] theo đúng 3 trường hợp
+      const finalSvgPath = buildAutoArcSvgPath(committedVertices, true, isShiftOnClose);
 
-        message.loading({
-          content: 'Đang quét tự động ranh giới hình khép kín...',
-          key: 'contour-scan',
-          duration: 1,
-        });
+      setCompletedPoints(committedVertices);
+      setCompletedSvgPath(finalSvgPath);
+      setCommittedVertices([]);
+      setIsNearStartPoint(false);
 
-        const contour = extractClosedContourFromClick(costMap, seedPt);
-
-        if (!contour || contour.points.length < 5) {
-          message.warning({
-            content: 'Không phát hiện được biên dạng khép kín tại điểm click. Hãy click từng điểm theo nét vẽ.',
-            key: 'contour-scan',
-          });
-          return;
-        }
-
-        const simplified = simplifyClosedLoop(contour.points, 1.8);
-        const finalSvgPath = pointsToSmoothSvgPath(simplified, true);
-
-        setCompletedPoints(simplified);
-        setCompletedSvgPath(finalSvgPath);
-        setCommittedVertices([]);
-        setCommittedPathSegments([]);
-        setLivewirePath('');
-        setLivewirePoints([]);
-
-        message.success({
-          content: `Đã tự động ôm trọn hình khép kín (${contour.points.length} điểm nét).`,
-          key: 'contour-scan',
-        });
-
-        setInternalSelectedId(null);
-        onSelectObject?.(null);
-        form.resetFields();
-        form.setFieldsValue({
-          code: `OBJ-${Date.now().toString().slice(-4)}`,
-          name: 'Cấu kiện khoanh vùng tự động',
-          status: 'PENDING',
-        });
-        setIsModalOpen(true);
-      }
+      setInternalSelectedId(null);
+      onSelectObject?.(null);
+      form.resetFields();
+      form.setFieldsValue({
+        code: `OBJ-${Date.now().toString().slice(-4)}`,
+        name: '',
+        status: 'PENDING',
+      });
+      setIsModalOpen(true);
     },
-    [readOnly, isSpacePressed, committedVertices, costMap, screenToSheet, form, handleFinishClosing, onSelectObject]
+    [committedVertices, form, onSelectObject]
   );
 
-  // Click 1 chạm trên Canvas: Chốt đỉnh Livewire hoặc Khép kín hình
+  // Click Chuột Trái: Chốt điểm mới hoặc khép kín hình
   const handleSheetClick = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
-      // TUYỆT ĐỐI KHÔNG ĐẶT ĐIỂM KHI ĐANG GIỮ SPACE HOẶC VỪA KÉO PAN BẢN VẼ
-      if (readOnly || isPanning || isSpacePressed || isPanGestureRef.current || isPanDragRef.current || e.button !== 0) {
+      if (
+        readOnly ||
+        isPanning ||
+        isSpacePressed ||
+        isPanGestureRef.current ||
+        isPanDragRef.current ||
+        e.button !== 0
+      ) {
         return;
       }
 
-      if (e.altKey) {
-        handleSheetDoubleClick(e);
-        return;
-      }
-
-      const sheetPt = screenToSheet(e.clientX, e.clientY);
-      if (!sheetPt) return;
-
-      // 1. Đang có hình vừa hoàn tất -> Không thêm điểm mới
       if (completedPoints) return;
 
-      // 2. Điểm xuất phát đầu tiên P0
+      const rawSheetPt = screenToSheet(e.clientX, e.clientY);
+      if (!rawSheetPt) return;
+
+      // 1. Điểm đầu tiên P0 (Luôn là 'anchor')
       if (committedVertices.length === 0) {
-        const snapStart = costMap
-          ? findNearestEdgeSnap(costMap, sheetPt, 14).point
-          : sheetPt;
-        setCommittedVertices([snapStart]);
-        setCommittedPathSegments([`M ${snapStart.x} ${snapStart.y}`]);
+        setCommittedVertices([{ x: rawSheetPt.x, y: rawSheetPt.y, role: 'anchor' }]);
         return;
       }
 
-      // 3. Nếu click gần hoặc vào điểm xuất phát P0 -> KHÉP KÍN ĐỐI TƯỢNG
       const firstVertex = committedVertices[0];
-      const snapDistanceSheet = Math.max(22, Math.round(35 / zoom));
-      const distToStart = Math.hypot(sheetPt.x - firstVertex.x, sheetPt.y - firstVertex.y);
+      const lastVertex = committedVertices[committedVertices.length - 1];
+      const prevVertex =
+        committedVertices.length >= 2 ? committedVertices[committedVertices.length - 2] : null;
 
-      if ((isNearStartPoint || distToStart <= snapDistanceSheet) && committedVertices.length >= 3) {
-        handleFinishClosing();
+      const distToStart = Math.hypot(rawSheetPt.x - firstVertex.x, rawSheetPt.y - firstVertex.y);
+      const snapRadius = 8 / zoom;
+
+      // 2. Click lại điểm đầu tiên P0 -> Tự động khép kín hình và mở Modal tạo Object
+      if (committedVertices.length >= 3 && (isNearStartPoint || distToStart <= snapRadius)) {
+        handleFinishClosing(e.shiftKey || isShiftPressed);
         return;
       }
 
-      // 4. Chốt điểm P_next
-      const snapTarget =
-        costMap && isLivewireSnapped
-          ? livewirePoints[livewirePoints.length - 1] || sheetPt
-          : sheetPt;
+      // 3. Chốt điểm tiếp theo với cơ chế:
+      // - Click bình thường = đỉnh thẳng 'anchor'
+      // - Shift + Click = điểm giữa cung tròn 'arc_mid'
+      const isShift = e.shiftKey || isShiftPressed;
+      const role: PointRole = isShift ? 'arc_mid' : 'anchor';
 
-      const newVertices = [...committedVertices, snapTarget];
-      setCommittedVertices(newVertices);
-
-      if (livewirePath) {
-        setCommittedPathSegments((prev) => [...prev, livewirePath]);
-      } else {
-        setCommittedPathSegments((prev) => [
-          ...prev,
-          `L ${snapTarget.x} ${snapTarget.y}`,
-        ]);
+      let targetPt = rawSheetPt;
+      if (!isShift) {
+        const snapRes = snapToRightAngle(prevVertex, lastVertex, rawSheetPt, false);
+        targetPt = snapRes.point;
       }
 
-      setLivewirePath('');
-      setLivewirePoints([]);
+      // Tránh duplicate nếu click đúp quá nhanh tại 1 vị trí
+      if (Math.hypot(targetPt.x - lastVertex.x, targetPt.y - lastVertex.y) < 1.0) {
+        return;
+      }
+
+      setCommittedVertices((prev) => [...prev, { x: targetPt.x, y: targetPt.y, role }]);
     },
     [
       readOnly,
@@ -862,15 +830,24 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
       completedPoints,
       committedVertices,
       isNearStartPoint,
-      costMap,
-      isLivewireSnapped,
-      livewirePoints,
-      livewirePath,
       screenToSheet,
       zoom,
-      handleSheetDoubleClick,
+      isShiftPressed,
       handleFinishClosing,
     ]
+  );
+
+  // Double-Click: Khép kín ngay nếu >= 3 điểm
+  const handleSheetDoubleClick = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (readOnly || isSpacePressed || isPanDragRef.current) return;
+      e.stopPropagation();
+
+      if (committedVertices.length >= 3) {
+        handleFinishClosing(e.shiftKey || isShiftPressed);
+      }
+    },
+    [readOnly, isSpacePressed, committedVertices.length, isShiftPressed, handleFinishClosing]
   );
 
   // Undo đỉnh cuối cùng (Backspace / Ctrl+Z)
@@ -883,24 +860,18 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
 
     if (committedVertices.length > 0) {
       setCommittedVertices((prev) => prev.slice(0, -1));
-      setCommittedPathSegments((prev) => prev.slice(0, -1));
-      setLivewirePath('');
-      setLivewirePoints([]);
     }
   }, [completedPoints, committedVertices]);
 
-  // Hủy phiên khoanh vùng hiện tại
+  // Hủy phiên vẽ
   const handleResetDrawing = useCallback(() => {
     setCommittedVertices([]);
-    setCommittedPathSegments([]);
-    setLivewirePath('');
-    setLivewirePoints([]);
     setCompletedPoints(null);
     setCompletedSvgPath(null);
     setIsNearStartPoint(false);
   }, []);
 
-  // Lắng nghe phím tắt: Enter (Khép kín), Esc (Hủy), Backspace (Undo)
+  // Lắng nghe phím tắt: Enter (Khép kín), Esc (Hủy), Backspace / Ctrl+Z (Undo)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -908,18 +879,22 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
       } else if (e.key === 'Enter') {
         if (committedVertices.length >= 3) {
           e.preventDefault();
-          handleFinishClosing();
+          handleFinishClosing(isShiftPressed);
         }
       } else if (
         e.key === 'Backspace' ||
         (e.key === 'z' && (e.ctrlKey || e.metaKey))
       ) {
-        handleUndo();
+        const activeTag = (document.activeElement?.tagName || '').toLowerCase();
+        if (activeTag !== 'input' && activeTag !== 'textarea') {
+          e.preventDefault();
+          handleUndo();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleResetDrawing, handleUndo, handleFinishClosing, committedVertices.length]);
+  }, [handleResetDrawing, handleUndo, handleFinishClosing, committedVertices.length, isShiftPressed]);
 
   // ==========================================
   // V. LƯU DỮ LIỆU ĐỐI TƯỢNG (SQL SERVER FORMAT)
@@ -940,10 +915,8 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
       const minY = Math.min(...ys);
       const maxY = Math.max(...ys);
 
-      // Cấu kiện mới gán LUÔN LUÔN là PENDING (Chờ nghiệm thu).
-      // Các trạng thái sau đó sẽ tự động cập nhật dựa trên luồng duyệt checklist & inspection.
       const currentStatus = activeSelectedId
-        ? (existingObjects.find((o) => o.id === activeSelectedId)?.status || 'PENDING')
+        ? existingObjects.find((o) => o.id === activeSelectedId)?.status || 'PENDING'
         : 'PENDING';
 
       const colorMap: Record<string, string> = {
@@ -985,9 +958,30 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     }
   };
 
-  const fullCommittedPath = useMemo(() => {
-    return committedPathSegments.join(' ');
-  }, [committedPathSegments]);
+  // Đường vẽ cố định qua các đỉnh đã chốt
+  const committedSvgPath = useMemo(() => {
+    if (committedVertices.length < 2) return '';
+    return buildAutoArcSvgPath(committedVertices, false, false);
+  }, [committedVertices]);
+
+  // Đường vẽ xem trước trực tiếp (Live Preview) bẻ cong qua các điểm + con trỏ
+  const livePreviewSvgPath = useMemo(() => {
+    if (committedVertices.length === 0 || !cursorSheetPos || completedPoints) return '';
+
+    // Khi con trỏ chuột trong bán kính snapRadius = 8 / zoom của points[0]:
+    // Xem trước hình khép kín hoàn chỉnh đúng 3 trường hợp
+    if (isNearStartPoint && committedVertices.length >= 3) {
+      return buildAutoArcSvgPath(committedVertices, true, isShiftPressed);
+    }
+
+    // Đang di chuột vẽ dở dang:
+    // Con trỏ chuột đóng vai trò đỉnh ứng viên tiếp theo (anchor)
+    const pts: Point[] = [
+      ...committedVertices,
+      { x: cursorSheetPos.x, y: cursorSheetPos.y, role: 'anchor' },
+    ];
+    return buildAutoArcSvgPath(pts, false, false);
+  }, [committedVertices, cursorSheetPos, completedPoints, isNearStartPoint, isShiftPressed]);
 
   return (
     <div
@@ -1002,68 +996,108 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         userSelect: 'none',
       }}
     >
-      {/* 1. THANH ĐIỀU KHIỂN CAD TOOLBAR TỐI GIẢN */}
+      {/* 1. THANH ĐIỀU KHIỂN CAD TOOLBAR (Cố định chiều cao, không co gãy chữ) */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '8px 16px',
-          background: 'rgba(30, 41, 59, 0.85)',
+          height: 46,
+          minHeight: 46,
+          maxHeight: 46,
+          flexShrink: 0,
+          padding: '0 16px',
+          background: 'rgba(30, 41, 59, 0.9)',
           backdropFilter: 'blur(8px)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           zIndex: 10,
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
         }}
       >
-        <Space size="middle">
-          <Badge status="processing" color="#10b981" />
-          <Text strong style={{ color: '#f8fafc', fontSize: 14 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            minWidth: 0,
+            flex: 1,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Badge status="processing" color="#10b981" style={{ flexShrink: 0 }} />
+          <Text
+            strong
+            title={fileName}
+            style={{
+              color: '#f8fafc',
+              fontSize: 13,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: 220,
+              flexShrink: 0,
+              display: 'inline-block',
+            }}
+          >
             {fileName}
           </Text>
 
           {!isImageFormat && totalPages > 1 ? (
-            <Space size="small">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
               <Button
                 size="small"
                 icon={<LeftOutlined />}
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               />
-              <Tag color="cyan">Trang {currentPage} / {totalPages}</Tag>
+              <Tag color="cyan" style={{ margin: 0 }}>
+                {currentPage} / {totalPages}
+              </Tag>
               <Button
                 size="small"
                 icon={<RightOutlined />}
                 disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               />
-            </Space>
+            </div>
           ) : (
-            <Tag color={isImageFormat ? 'gold' : 'cyan'}>
-              {isImageFormat ? 'Tệp Ảnh' : `Trang ${currentPage}`}
+            <Tag color={isImageFormat ? 'gold' : 'cyan'} style={{ margin: 0, flexShrink: 0 }}>
+              {isImageFormat ? 'Ảnh' : `Trang ${currentPage}`}
             </Tag>
           )}
 
           {isSharpening && (
-            <Tag color="blue" icon={<Spin size="small" />}>
-              Đang làm nét...
-            </Tag>
-          )}
-
-          {isComputingCV && (
-            <Tag color="processing" icon={<Spin size="small" />}>
-              Đang tính Cost Map...
+            <Tag color="blue" icon={<Spin size="small" />} style={{ margin: 0, flexShrink: 0 }}>
+              Làm nét...
             </Tag>
           )}
 
           {!readOnly && (
-            <Tag color="#10b981" style={{ border: 'none', fontWeight: 600 }}>
-              ⚡ Bám nét tự động
-            </Tag>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 1, overflow: 'hidden' }}>
+              <Tag color="#10b981" style={{ fontWeight: 600, margin: 0, flexShrink: 0 }}>
+                Click: Đỉnh thẳng
+              </Tag>
+              <Tag color="#38bdf8" style={{ fontWeight: 600, margin: 0, flexShrink: 0 }}>
+                Shift+Click: Đỉnh cung
+              </Tag>
+              {committedVertices.length >= 3 && (
+                <Tag color="gold" style={{ fontWeight: 700, margin: 0, flexShrink: 0 }}>
+                  🎯 Click P₀ khép hình
+                </Tag>
+              )}
+              {isShiftPressed && (
+                <Tag color="#f59e0b" style={{ fontWeight: 600, margin: 0, flexShrink: 0 }}>
+                  🔒 Shift
+                </Tag>
+              )}
+            </div>
           )}
-        </Space>
+        </div>
 
-        {/* Nút điều hướng Zoom & Thao tác tối giản */}
-        <Space size="small">
+        {/* Nút điều hướng Zoom & Thao tác */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, whiteSpace: 'nowrap' }}>
           {(committedVertices.length > 0 || completedPoints) && (
             <>
               <Tooltip title="Lùi lại điểm trước (Backspace / Ctrl+Z)">
@@ -1108,7 +1142,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
             />
           </Tooltip>
 
-          <Tag color="blue" style={{ minWidth: 55, textAlign: 'center' }}>
+          <Tag color="blue" style={{ minWidth: 48, textAlign: 'center', margin: 0 }}>
             {Math.round(zoom * 100)}%
           </Tag>
 
@@ -1129,7 +1163,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
               Fit
             </Button>
           </Tooltip>
-        </Space>
+        </div>
       </div>
 
       {pdfError && (
@@ -1155,6 +1189,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           height: '100%',
           overflow: 'hidden',
           position: 'relative',
+          // Con trỏ crosshair luôn mảnh và giữ nguyên kích thước màn hình
           cursor: isPanning
             ? 'grabbing'
             : isSpacePressed
@@ -1166,7 +1201,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         }}
       >
         {/* Loading Spinner */}
-        {isLoadingPdf && (
+        {isLoadingPdf && !pdfError && (
           <div
             style={{
               position: 'absolute',
@@ -1181,12 +1216,12 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           >
             <Spin size="large" />
             <Text style={{ color: '#94a3b8', marginTop: 12 }}>
-              Đang tải và dựng bản vẽ siêu nét...
+              Đang dựng bản vẽ siêu nét...
             </Text>
           </div>
         )}
 
-        {/* Lớp hiển thị Bản vẽ Canvas + SVG Vector Overlay */}
+        {/* LỚP 1: Canvas bản vẽ (Render độ phân giải cao, Pan/Zoom 60fps trên GPU) */}
         <div
           ref={sheetContainerRef}
           style={{
@@ -1201,7 +1236,6 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
             transition: isPanning ? 'none' : 'transform 0.05s ease-out',
           }}
         >
-          {/* Lớp 1: Canvas render PDF.js / Ảnh */}
           <canvas
             ref={canvasRef}
             style={{
@@ -1212,17 +1246,27 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
               height: sheetSize.height,
               display: 'block',
               backgroundColor: '#ffffff',
-              imageRendering: 'auto',
             }}
           />
+        </div>
 
-          {/* Lớp 2: Lớp Vector SVG */}
+        {/* LỚP 3: SVG Vector Overlay (Tọa độ 1:1 theo Sheet, Inverse Zoom Scaling) */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: sheetSize.width,
+            height: sheetSize.height,
+            transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
+            transformOrigin: '0 0',
+            pointerEvents: 'none',
+            zIndex: 4,
+          }}
+        >
           <svg
             viewBox={`0 0 ${sheetSize.width} ${sheetSize.height}`}
             style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
               width: sheetSize.width,
               height: sheetSize.height,
               overflow: 'visible',
@@ -1231,7 +1275,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
             onClick={handleSheetClick}
             onDoubleClick={handleSheetDoubleClick}
           >
-            {/* 2.1. Render các Object đã lưu từ trước */}
+            {/* 3.1. Render các Object đã lưu từ trước */}
             {existingObjects.map((obj) => {
               const isSelected = obj.id === activeSelectedId;
               return (
@@ -1265,8 +1309,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
                     fill={obj.color}
                     fillOpacity={isSelected ? 0.45 : 0.25}
                     stroke={isSelected ? '#facc15' : obj.color}
-                    strokeWidth={isSelected ? 3.5 : 2}
-                    vectorEffect="non-scaling-stroke"
+                    strokeWidth={(isSelected ? 2.5 : 1.5) / zoom}
                     strokeLinejoin="round"
                     strokeLinecap="round"
                   />
@@ -1275,14 +1318,13 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
                       d={obj.svgPath}
                       fill="none"
                       stroke="#ffffff"
-                      strokeWidth={1.5}
-                      strokeDasharray="4 4"
-                      vectorEffect="non-scaling-stroke"
+                      strokeWidth={1.5 / zoom}
+                      strokeDasharray={`${4 / zoom} ${4 / zoom}`}
                     />
                   )}
                   <text
-                    x={obj.boundingBox.x + 8}
-                    y={obj.boundingBox.y + 18}
+                    x={obj.boundingBox.x + 8 / zoom}
+                    y={obj.boundingBox.y + 18 / zoom}
                     fill={isSelected ? '#facc15' : '#ffffff'}
                     fontSize={12 / zoom}
                     fontWeight="bold"
@@ -1297,104 +1339,166 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
               );
             })}
 
-            {/* 2.2. Render các đoạn Livewire đã chốt cố định */}
-            {fullCommittedPath && (
+            {/* 3.2. Render các đoạn Auto-Arc đã chốt cố định */}
+            {committedSvgPath && (
               <path
-                d={fullCommittedPath}
+                d={committedSvgPath}
                 fill="none"
                 stroke="#10b981"
-                strokeWidth={2.5}
-                vectorEffect="non-scaling-stroke"
+                strokeWidth={1.5 / zoom}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             )}
 
-            {/* 2.3. Render đoạn Livewire động đang hút bám nét */}
-            {livewirePath && (
+            {/* 3.3. Render đoạn Live Preview bẻ cong tự động theo con trỏ chuột */}
+            {livePreviewSvgPath && (
               <path
-                d={livewirePath}
-                fill="none"
-                stroke={isNearStartPoint ? '#3b82f6' : '#22c55e'}
-                strokeWidth={2}
-                strokeDasharray={isLivewireSnapped ? undefined : '4 3'}
-                vectorEffect="non-scaling-stroke"
+                d={livePreviewSvgPath}
+                fill={isNearStartPoint ? 'rgba(56, 189, 248, 0.25)' : 'none'}
+                stroke={isNearStartPoint ? (isShiftPressed ? '#facc15' : '#38bdf8') : '#22c55e'}
+                strokeWidth={1.5 / zoom}
+                strokeDasharray={isNearStartPoint ? undefined : `${4 / zoom} ${4 / zoom}`}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             )}
 
-            {/* 2.4. Render hình đã khép kín hoàn tất */}
+            {/* 3.4. Render hình đã khép kín hoàn tất */}
             {completedSvgPath && (
               <path
                 d={completedSvgPath}
-                fill="#3b82f6"
-                fillOpacity={0.28}
-                stroke="#2563eb"
-                strokeWidth={2.5}
-                vectorEffect="non-scaling-stroke"
+                fill="#38bdf8"
+                fillOpacity={0.25}
+                stroke="#38bdf8"
+                strokeWidth={1.5 / zoom}
                 strokeLinejoin="round"
+                strokeLinecap="round"
               />
             )}
 
-            {/* 2.5. Render các đỉnh chốt cố định & Vùng nhấp khép kín điểm đầu */}
+            {/* 3.5. Render các đỉnh chốt cố định (Inverse Zoom Scaling: r = 3.5 / zoom) */}
             {committedVertices.map((v, i) => {
               const isStart = i === 0;
               const canClose = isStart && committedVertices.length >= 3;
+              const isArcMid = v.role === 'arc_mid';
+
               return (
-                <g key={`vertex-g-${i}`}>
-                  <circle
-                    cx={v.x}
-                    cy={v.y}
-                    r={canClose ? Math.max(18, 28 / zoom) : 8}
-                    fill="transparent"
-                    style={{ cursor: canClose ? 'pointer' : 'crosshair' }}
-                    onClick={(e) => {
-                      if (canClose) {
-                        e.stopPropagation();
-                        handleFinishClosing();
-                      }
-                    }}
-                  />
-                  <circle
-                    cx={v.x}
-                    cy={v.y}
-                    r={isStart && (isNearStartPoint || canClose) ? 7 : 4}
-                    fill={isStart && (isNearStartPoint || canClose) ? '#3b82f6' : '#10b981'}
-                    stroke="#ffffff"
-                    strokeWidth={1.5}
-                    vectorEffect="non-scaling-stroke"
-                    style={{ pointerEvents: 'none' }}
-                  />
-                  {canClose && (
-                    <circle
-                      cx={v.x}
-                      cy={v.y}
-                      r={Math.max(12, 16 / zoom)}
-                      fill="none"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      strokeDasharray="3 3"
-                      vectorEffect="non-scaling-stroke"
-                      style={{ pointerEvents: 'none' }}
-                    />
+                <g key={`vertex-${i}`}>
+                  {/* Đỉnh chốt tiếp theo (anchor hoặc arc_mid) */}
+                  {!isStart && (
+                    <>
+                      <circle
+                        cx={v.x}
+                        cy={v.y}
+                        r={3.5 / zoom}
+                        fill={isArcMid ? '#38bdf8' : '#10b981'}
+                        stroke="#ffffff"
+                        strokeWidth={1.5 / zoom}
+                        style={{ pointerEvents: 'none' }}
+                      />
+                      {isArcMid && (
+                        <circle
+                          cx={v.x}
+                          cy={v.y}
+                          r={6.5 / zoom}
+                          fill="none"
+                          stroke="#38bdf8"
+                          strokeWidth={1 / zoom}
+                          strokeDasharray={`${2 / zoom} ${2 / zoom}`}
+                          style={{ pointerEvents: 'none' }}
+                        />
+                      )}
+                    </>
+                  )}
+
+                  {/* ĐIỂM ĐẦU TIÊN P0: Highlight & Snap Ring */}
+                  {isStart && (
+                    <>
+                      {/* Chấm tròn tâm P0 */}
+                      <circle
+                        cx={v.x}
+                        cy={v.y}
+                        r={isNearStartPoint ? 4.5 / zoom : 3.5 / zoom}
+                        fill={isNearStartPoint ? '#facc15' : '#10b981'}
+                        stroke="#ffffff"
+                        strokeWidth={1.5 / zoom}
+                        style={{ pointerEvents: 'none' }}
+                      />
+
+                      {/* Vòng tròn viền báo hiệu khi có đủ >= 3 điểm */}
+                      {canClose && (
+                        <>
+                          <circle
+                            cx={v.x}
+                            cy={v.y}
+                            r={isNearStartPoint ? 12 / zoom : 7 / zoom}
+                            fill={isNearStartPoint ? 'rgba(56, 189, 248, 0.3)' : 'none'}
+                            stroke={isNearStartPoint ? (isShiftPressed ? '#facc15' : '#38bdf8') : '#10b981'}
+                            strokeWidth={isNearStartPoint ? 2 / zoom : 1.5 / zoom}
+                            strokeDasharray={isNearStartPoint ? undefined : `${3 / zoom} ${2 / zoom}`}
+                            style={{ pointerEvents: 'none' }}
+                          />
+
+                          {/* Nhãn tooltip nổi phía trên P0 khi rê chuột vào bán kính snap */}
+                          {isNearStartPoint && (
+                            <g transform={`translate(${v.x}, ${v.y - 18 / zoom})`} style={{ pointerEvents: 'none' }}>
+                              <rect
+                                x={-62 / zoom}
+                                y={-10 / zoom}
+                                width={124 / zoom}
+                                height={20 / zoom}
+                                rx={4 / zoom}
+                                fill="rgba(15, 23, 42, 0.95)"
+                                stroke={isShiftPressed ? '#facc15' : '#38bdf8'}
+                                strokeWidth={1.5 / zoom}
+                              />
+                              <text
+                                x={0}
+                                y={4 / zoom}
+                                textAnchor="middle"
+                                fill={isShiftPressed ? '#facc15' : '#38bdf8'}
+                                fontSize={10 / zoom}
+                                fontWeight="bold"
+                              >
+                                {committedVertices.length === 3 && committedVertices[1]?.role === 'arc_mid' && isShiftPressed
+                                  ? '● Khép Tròn 360°'
+                                  : '● Click Khép Hình'}
+                              </text>
+                            </g>
+                          )}
+
+                          {/* Vùng cảm ứng Click khép hình trực tiếp trên P0 */}
+                          <circle
+                            cx={v.x}
+                            cy={v.y}
+                            r={Math.max(14 / zoom, 16)}
+                            fill="transparent"
+                            style={{ cursor: 'pointer' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFinishClosing(e.shiftKey || isShiftPressed);
+                            }}
+                          />
+                        </>
+                      )}
+                    </>
                   )}
                 </g>
               );
             })}
 
-            {/* 2.6. Render các đỉnh điều khiển để kéo tinh chỉnh khi đã khép kín */}
+            {/* 3.6. Render các đỉnh điều khiển để kéo chỉnh sau khi khép kín */}
             {completedPoints &&
               completedPoints.map((p, i) => (
                 <circle
-                  key={`anchor-${i}`}
+                  key={`handle-${i}`}
                   cx={p.x}
                   cy={p.y}
-                  r={5}
+                  r={3.5 / zoom}
                   fill="#f59e0b"
                   stroke="#ffffff"
-                  strokeWidth={1.5}
-                  vectorEffect="non-scaling-stroke"
+                  strokeWidth={1.5 / zoom}
                   style={{ cursor: 'move' }}
                   onMouseDown={(e) => {
                     e.stopPropagation();
@@ -1402,31 +1506,17 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
                   }}
                 />
               ))}
-
-            {/* 2.7. Vòng tròn chỉ thị lực hút Snap tại con trỏ chuột */}
-            {cursorSheetPos && isDrawingMode && !completedPoints && !isSpacePressed && (
-              <circle
-                cx={cursorSheetPos.x}
-                cy={cursorSheetPos.y}
-                r={isLivewireSnapped ? 8 : 5}
-                fill="none"
-                stroke={isLivewireSnapped ? '#10b981' : 'rgba(255,255,255,0.6)'}
-                strokeWidth={1.2}
-                strokeDasharray={isLivewireSnapped ? undefined : '2 2'}
-                vectorEffect="non-scaling-stroke"
-              />
-            )}
           </svg>
         </div>
 
-        {/* 3. BẢNG HƯỚNG DẪN NHANH */}
+        {/* 4. BẢNG HƯỚNG DẪN NHANH */}
         <div
           style={{
             position: 'absolute',
             bottom: 16,
             left: 16,
-            padding: '6px 12px',
-            background: 'rgba(15, 23, 42, 0.8)',
+            padding: '8px 14px',
+            background: 'rgba(15, 23, 42, 0.85)',
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: 6,
@@ -1438,18 +1528,19 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         >
           <Space direction="vertical" size={2}>
             <div>
-              <ThunderboltOutlined style={{ color: '#10b981' }} />{' '}
-              Click điểm đầu (vòng xanh), ấn <b>Enter</b> hoặc <b>Double-Click</b> để khép kín đối tượng.
+              <span style={{ color: '#10b981', fontWeight: 600 }}>🖱️ Click Chuột Trái:</span> Chốt đỉnh thẳng (<b>'anchor'</b>).
             </div>
             <div>
-              <AimOutlined style={{ color: '#3b82f6' }} />{' '}
-              <b>1 chạm ôm trọn:</b> Double-Click vào trong lòng cấu kiện để tự ôm khép kín biên dạng.
+              <span style={{ color: '#38bdf8', fontWeight: 600 }}>📐 Shift + Click:</span> Chốt điểm giữa cung tròn (<b>'arc_mid'</b>).
+            </div>
+            <div>
+              <span style={{ color: '#facc15', fontWeight: 600 }}>🎯 Khép kín hình:</span> Rê chuột về điểm đầu P₀ (bán kính 8px), Click hoặc ấn <b>Enter</b> / <b>Double-Click</b> để tạo Cấu kiện.
             </div>
           </Space>
         </div>
       </div>
 
-      {/* 4. MODAL NHẬP THÔNG TIN OBJECT (Trạng thái luôn là PENDING) */}
+      {/* 5. MODAL NHẬP THÔNG TIN OBJECT (Trạng thái luôn là PENDING) */}
       <Modal
         title={
           <Space>
@@ -1495,7 +1586,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
       >
         <Alert
           message="Biên dạng đã được tự động ôm sát các cạnh cấu kiện."
-          description="Vui lòng nhập Mã và Tên cấu kiện. Trạng thái nghiệm thu sẽ tự động bắt đầu từ 'Chờ nghiệm thu'."
+          description="Vui lòng nhập Mã và Tên cấu kiện. Trạng thái nghiệm thu ban đầu luôn là 'Chờ nghiệm thu'."
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
@@ -1529,7 +1620,10 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
                 borderRadius: 6,
               }}
             >
-              <Tag color="blue" style={{ fontSize: 13, padding: '2px 8px', margin: 0, fontWeight: 600 }}>
+              <Tag
+                color="blue"
+                style={{ fontSize: 13, padding: '2px 8px', margin: 0, fontWeight: 600 }}
+              >
                 Chờ nghiệm thu (PENDING)
               </Tag>
               <Text type="secondary" style={{ fontSize: 12 }}>
@@ -1542,3 +1636,4 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     </div>
   );
 };
+export default SmartDrawingViewport;
