@@ -29,4 +29,5 @@ public class User
     public ICollection<FormInspection> ReviewedInspections { get; set; } = new List<FormInspection>();
     public ICollection<FormInspection> ApprovedInspections { get; set; } = new List<FormInspection>();
     public ICollection<Checklist> CreatedChecklists { get; set; } = new List<Checklist>();
+    public ICollection<Checklist> ReviewedChecklists { get; set; } = new List<Checklist>();
 }

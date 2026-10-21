@@ -11,6 +11,7 @@ public interface IApplicationDbContext
     DbSet<InspectionAuditHistory> InspectionAuditHistories { get; }
     DbSet<Checklist> Checklists { get; }
     DbSet<ChecklistItem> ChecklistItems { get; }
+    DbSet<ChecklistAuditHistory> ChecklistAuditHistories { get; }
     DbSet<User> Users { get; }
     DbSet<Role> Roles { get; }
 
