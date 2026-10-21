@@ -648,9 +648,9 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
       const prevVertex =
         committedVertices.length >= 2 ? committedVertices[committedVertices.length - 2] : null;
 
-      // Bán kính bắt dính vào điểm đầu P1: 6 / zoom (dung sai click 8 / zoom)
+      // Bán kính bắt dính vào điểm đầu P0: 7 / zoom (chuẩn xác theo điểm ảnh màn hình)
       const distToStart = Math.hypot(rawSheetPt.x - firstVertex.x, rawSheetPt.y - firstVertex.y);
-      const snapRadius = 8 / zoom;
+      const snapRadius = 7 / zoom;
       const canClose = committedVertices.length >= 3;
 
       if (canClose && distToStart <= snapRadius) {
@@ -796,7 +796,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         committedVertices.length >= 2 ? committedVertices[committedVertices.length - 2] : null;
 
       const distToStart = Math.hypot(rawSheetPt.x - firstVertex.x, rawSheetPt.y - firstVertex.y);
-      const snapRadius = 8 / zoom;
+      const snapRadius = 7 / zoom;
 
       // 2. Click lại điểm đầu tiên P0 -> Tự động khép kín hình và mở Modal tạo Object
       if (committedVertices.length >= 3 && (isNearStartPoint || distToStart <= snapRadius)) {
@@ -1461,25 +1461,10 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
                                 fontSize={10 / zoom}
                                 fontWeight="bold"
                               >
-                                {committedVertices.length === 3 && committedVertices[1]?.role === 'arc_mid' && isShiftPressed
-                                  ? '● Khép Tròn 360°'
-                                  : '● Click Khép Hình'}
+                                {isNearStartPoint ? '● Click Khép Hình' : ''}
                               </text>
                             </g>
                           )}
-
-                          {/* Vùng cảm ứng Click khép hình trực tiếp trên P0 */}
-                          <circle
-                            cx={v.x}
-                            cy={v.y}
-                            r={Math.max(14 / zoom, 16)}
-                            fill="transparent"
-                            style={{ cursor: 'pointer' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleFinishClosing(e.shiftKey || isShiftPressed);
-                            }}
-                          />
                         </>
                       )}
                     </>
