@@ -1,6 +1,9 @@
+export type PointRole = 'anchor' | 'arc_mid';
+
 export interface Point {
   x: number;
   y: number;
+  role?: PointRole;
 }
 
 export interface BoundingBox {

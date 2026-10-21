@@ -8,6 +8,39 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      if (typeof Uint8Array !== 'undefined') {
+        if (!Uint8Array.prototype.toHex) {
+          Uint8Array.prototype.toHex = function () {
+            var hex = '';
+            for (var i = 0; i < this.length; i++) {
+              hex += this[i].toString(16).padStart(2, '0');
+            }
+            return hex;
+          };
+        }
+        if (!Uint8Array.fromBase64) {
+          Uint8Array.fromBase64 = function (b64) {
+            var bin = typeof atob !== 'undefined' ? atob(b64) : '';
+            var arr = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) {
+              arr[i] = bin.charCodeAt(i);
+            }
+            return arr;
+          };
+        }
+      }
+      if (typeof Promise !== 'undefined' && !Promise.withResolvers) {
+        Promise.withResolvers = function () {
+          var resolve, reject;
+          var promise = new Promise(function (res, rej) {
+            resolve = res;
+            reject = rej;
+          });
+          return { promise: promise, resolve: resolve, reject: reject };
+        };
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
