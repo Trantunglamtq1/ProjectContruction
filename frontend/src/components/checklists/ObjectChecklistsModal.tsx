@@ -13,6 +13,7 @@ import {
   Checkbox,
   message,
   Alert,
+  Spin,
 } from 'antd';
 import {
   CheckSquareOutlined,
@@ -56,12 +57,28 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
   // Query tóm tắt Checklist theo Object
   const {
     data: summary,
-    refetch,
+    refetch: refetchSummary,
+    isLoading: summaryLoading,
   } = useQuery<ChecklistSummaryDto>({
     queryKey: ['checklist-summary-object', objectId],
     queryFn: () => checklistApi.getChecklistSummaryByObject(objectId!),
     enabled: open && !!objectId,
   });
+
+  // Query trực tiếp danh sách Checklist theo Object (đảm bảo không bị rỗng)
+  const {
+    data: rawChecklists = [],
+    refetch: refetchList,
+    isLoading: listLoading,
+  } = useQuery<ChecklistDto[]>({
+    queryKey: ['checklists-for-object', objectId],
+    queryFn: () => checklistApi.getChecklists({ objectId: objectId! }),
+    enabled: open && !!objectId,
+  });
+
+  const displayChecklists = (summary?.checklists && summary.checklists.length > 0)
+    ? summary.checklists
+    : rawChecklists;
 
   // Mutation: Tạo Checklist mới
   const createMutation = useMutation({
@@ -86,8 +103,10 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
       message.success('Đã khởi tạo bản nháp Checklist thành công!');
       setCreateModalOpen(false);
       createForm.resetFields();
-      refetch();
+      refetchSummary();
+      refetchList();
       queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      queryClient.invalidateQueries({ queryKey: ['checklist-summary-object'] });
       // Mở ngay chi tiết để Kỹ sư tiếp tục cấu hình schema Form.io
       setSelectedChecklistId(data.id);
       setDetailModalOpen(true);
@@ -139,7 +158,8 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
           </Space>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <Spin spinning={summaryLoading || listLoading}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Header Summary */}
           {summary && summary.totalChecklists > 0 && (
             <Card size="small" style={{ backgroundColor: '#f0f9ff', borderColor: '#bae0ff', borderRadius: 8 }}>
@@ -166,7 +186,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
           {/* Action: Lập checklist mới */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text strong style={{ fontSize: 14 }}>
-              Danh sách Checklist ({summary?.checklists?.length ?? 0})
+              Danh sách Checklist ({displayChecklists.length})
             </Text>
             {(isSubmitter || isAdmin) && (
               <Button
@@ -186,7 +206,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
           </div>
 
           {/* Danh sách các checklist */}
-          {(!summary?.checklists || summary.checklists.length === 0) ? (
+          {displayChecklists.length === 0 ? (
             <Empty
               description="Cấu kiện này chưa có Checklist kiểm tra nào."
               style={{ padding: '30px 0' }}
@@ -210,7 +230,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
             </Empty>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {summary.checklists.map((chk) => (
+              {displayChecklists.map((chk) => (
                 <Card
                   key={chk.id}
                   size="small"
@@ -247,7 +267,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
                         <span>•</span>
                         <span>Số tiêu chí: {chk.itemsCount}</span>
                         <span>•</span>
-                        <span>Tiến độ: {chk.itemsCompletedCount}/{chk.itemsCount} đạt</span>
+                        <span>Tiến độ: {(chk as any).doneItemsCount ?? chk.itemsCompletedCount ?? 0}/{chk.itemsCount} đạt</span>
                       </div>
                     </div>
 
@@ -272,7 +292,8 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
               ))}
             </div>
           )}
-        </div>
+          </div>
+        </Spin>
       </Modal>
 
       {/* Modal: Khởi tạo Checklist mới */}
@@ -342,9 +363,13 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
           onClose={() => {
             setDetailModalOpen(false);
             setSelectedChecklistId(null);
-            refetch();
+            refetchSummary();
+            refetchList();
           }}
-          onRefresh={() => refetch()}
+          onRefresh={() => {
+            refetchSummary();
+            refetchList();
+          }}
         />
       )}
     </>

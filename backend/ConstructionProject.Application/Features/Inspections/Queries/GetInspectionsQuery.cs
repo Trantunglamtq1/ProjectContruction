@@ -9,6 +9,8 @@ namespace ConstructionProject.Application.Features.Inspections.Queries;
 public record GetInspectionsQuery(
     Guid? ObjectId = null,
     Guid? DrawingFileId = null,
+    Guid? ChecklistId = null,
+    Guid? ChecklistItemId = null,
     InspectionStatus? Status = null,
     string? Search = null,
     int PageNumber = 1,
@@ -33,8 +35,22 @@ public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, P
             .AsNoTracking()
             .Include(i => i.Object)
                 .ThenInclude(o => o!.DrawingFile)
+            .Include(i => i.Checklist)
+            .Include(i => i.ChecklistItem)
             .Include(i => i.LinkedChecklistItems)
             .AsQueryable();
+
+        // Lọc theo ChecklistId
+        if (request.ChecklistId.HasValue && request.ChecklistId.Value != Guid.Empty)
+        {
+            query = query.Where(i => i.ChecklistId == request.ChecklistId.Value);
+        }
+
+        // Lọc theo ChecklistItemId
+        if (request.ChecklistItemId.HasValue && request.ChecklistItemId.Value != Guid.Empty)
+        {
+            query = query.Where(i => i.ChecklistItemId == request.ChecklistItemId.Value);
+        }
 
         // Lọc theo ObjectId
         if (request.ObjectId.HasValue && request.ObjectId.Value != Guid.Empty)
@@ -81,7 +97,12 @@ public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, P
             DrawingFileId = entity.Object?.DrawingFileId ?? Guid.Empty,
             DrawingFileName = entity.Object?.DrawingFile?.FileName ?? string.Empty,
             DrawingPageNumber = entity.Object?.PageNumber ?? 1,
+            ChecklistId = entity.ChecklistId,
+            ChecklistName = entity.Checklist?.Name,
+            ChecklistItemId = entity.ChecklistItemId,
+            ChecklistItemName = entity.ChecklistItem?.Name,
             FormSchemaId = entity.FormSchemaId,
+            FormSchemaJson = entity.ChecklistItem?.FormSchemaJson,
             FormDataJson = entity.FormDataJson,
             Status = entity.Status.ToString(),
             WorkflowInstanceId = entity.WorkflowInstanceId,

@@ -30,6 +30,8 @@ public class FormInspectionConfiguration : IEntityTypeConfiguration<FormInspecti
             .HasMaxLength(100);
 
         builder.HasIndex(f => f.ObjectId);
+        builder.HasIndex(f => f.ChecklistId);
+        builder.HasIndex(f => f.ChecklistItemId);
         builder.HasIndex(f => f.Status);
         builder.HasIndex(f => f.WorkflowInstanceId);
         builder.HasIndex(f => f.SubmittedById);
@@ -40,6 +42,17 @@ public class FormInspectionConfiguration : IEntityTypeConfiguration<FormInspecti
             .WithMany(o => o.FormInspections)
             .HasForeignKey(f => f.ObjectId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Quan hệ FormInspection thuộc về 1 Checklist và 1 ChecklistItem
+        builder.HasOne(f => f.Checklist)
+            .WithMany()
+            .HasForeignKey(f => f.ChecklistId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(f => f.ChecklistItem)
+            .WithMany()
+            .HasForeignKey(f => f.ChecklistItemId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Quan hệ User (1) — (n) FormInspection qua SubmittedById
         builder.HasOne(f => f.Submitter)

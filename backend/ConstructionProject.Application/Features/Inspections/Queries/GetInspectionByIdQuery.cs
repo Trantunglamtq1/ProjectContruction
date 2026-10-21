@@ -22,6 +22,8 @@ public class GetInspectionByIdQueryHandler : IRequestHandler<GetInspectionByIdQu
             .AsNoTracking()
             .Include(i => i.Object)
                 .ThenInclude(o => o!.DrawingFile)
+            .Include(i => i.Checklist)
+            .Include(i => i.ChecklistItem)
             .Include(i => i.LinkedChecklistItems)
             .FirstOrDefaultAsync(i => i.Id == request.Id, cancellationToken);
 
@@ -38,7 +40,12 @@ public class GetInspectionByIdQueryHandler : IRequestHandler<GetInspectionByIdQu
             DrawingFileId = entity.Object?.DrawingFileId ?? Guid.Empty,
             DrawingFileName = entity.Object?.DrawingFile?.FileName ?? string.Empty,
             DrawingPageNumber = entity.Object?.PageNumber ?? 1,
+            ChecklistId = entity.ChecklistId,
+            ChecklistName = entity.Checklist?.Name,
+            ChecklistItemId = entity.ChecklistItemId,
+            ChecklistItemName = entity.ChecklistItem?.Name,
             FormSchemaId = entity.FormSchemaId,
+            FormSchemaJson = entity.ChecklistItem?.FormSchemaJson,
             FormDataJson = entity.FormDataJson,
             Status = entity.Status.ToString(),
             WorkflowInstanceId = entity.WorkflowInstanceId,

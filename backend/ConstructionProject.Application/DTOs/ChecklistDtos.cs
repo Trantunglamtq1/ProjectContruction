@@ -5,6 +5,7 @@ public class ChecklistDto
     public Guid Id { get; set; }
     public Guid ObjectId { get; set; }
     public string ObjectName { get; set; } = string.Empty;
+    public string ObjectCode { get; set; } = string.Empty;
     public Guid DrawingFileId { get; set; }
     public string DrawingFileName { get; set; } = string.Empty;
     public int DrawingPageNumber { get; set; } = 1;
@@ -30,6 +31,7 @@ public class ChecklistDto
     public int ItemsCount { get; set; }
     public int RequiredItemsCount { get; set; }
     public int DoneItemsCount { get; set; }
+    public int ItemsCompletedCount => DoneItemsCount;
     public double ProgressPercentage => ItemsCount > 0 ? Math.Round((double)DoneItemsCount / ItemsCount * 100, 1) : 0;
 
     public List<ChecklistItemDto> Items { get; set; } = new();
@@ -69,14 +71,17 @@ public class ChecklistSummaryDto
 {
     public Guid ObjectId { get; set; }
     public string ObjectName { get; set; } = string.Empty;
+    public string ObjectCode { get; set; } = string.Empty;
     public int TotalChecklists { get; set; }
     public int CompletedChecklists { get; set; }
+    public int ApprovedChecklists => CompletedChecklists;
     public int InProgressChecklists { get; set; }
     public int TotalItems { get; set; }
     public int DoneItems { get; set; }
-    public double OverallProgressPercentage => TotalItems > 0 ? Math.Round((double)DoneItemsCount() / TotalItems * 100, 1) : 0;
+    public int CompletedItems => DoneItems;
+    public double OverallProgressPercentage => TotalItems > 0 ? Math.Round((double)DoneItems / TotalItems * 100, 1) : 0;
 
-    private int DoneItemsCount() => DoneItems;
+    public List<ChecklistDto> Checklists { get; set; } = new();
 }
 
 // Request Models

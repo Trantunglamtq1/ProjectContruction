@@ -139,26 +139,22 @@ export const SubmitterInspectionListPage: React.FC = () => {
       ),
     },
     {
-      title: 'Hạng mục / Cấu kiện (Object)',
+      title: 'Hạng mục / Tiêu chí nghiệm thu',
       dataIndex: 'objectName',
       key: 'objectName',
       render: (text: string, record: InspectionDto) => {
-        let titleFromData = '';
-        if (record.formDataJson) {
-          try {
-            const parsed = JSON.parse(record.formDataJson);
-            titleFromData = parsed.inspectionTitle || '';
-          } catch {
-            // ignore
-          }
-        }
         return (
-          <div>
-            <div style={{ fontWeight: 600 }}>{titleFromData || text}</div>
-            <Text type="secondary" style={{ fontSize: 12 }}>
+          <Space direction="vertical" size={2}>
+            <div style={{ fontWeight: 600, color: '#0f172a' }}>
+              {record.checklistItemName || 'Tiêu chuẩn nghiệm thu'}
+            </div>
+            <div style={{ fontSize: 12, color: '#475569' }}>
+              Checklist: <b>{record.checklistName || 'Checklist cấu kiện'}</b>
+            </div>
+            <Text type="secondary" style={{ fontSize: 11 }}>
               Cấu kiện: {text}
             </Text>
-          </div>
+          </Space>
         );
       },
     },

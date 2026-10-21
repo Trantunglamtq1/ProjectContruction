@@ -15,7 +15,6 @@ import {
   Input,
   InputNumber,
   Switch,
-  Select,
   Card,
   Divider,
 } from 'antd';
@@ -29,14 +28,12 @@ import {
   CloseCircleOutlined,
   FileTextOutlined,
   HistoryOutlined,
-  LinkOutlined,
   LockOutlined,
   UnlockOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { checklistApi } from '../../services/checklistApi';
-import { inspectionApi } from '../../services/inspectionApi';
 import type {
   ChecklistDto,
   ChecklistItemDto,
@@ -45,6 +42,7 @@ import type {
 import type { FormIoSchema } from '../../types/inspection';
 import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
 import { ChecklistAuditTrailDrawer } from './ChecklistAuditTrailDrawer';
+import { ItemInspectionModal } from './ItemInspectionModal';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -75,12 +73,11 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
   const [builderModalOpen, setBuilderModalOpen] = useState(false);
   const [builderTargetItem, setBuilderTargetItem] = useState<ChecklistItemDto | null>(null);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
-  const [linkInspectionModalOpen, setLinkInspectionModalOpen] = useState(false);
-  const [linkTargetItem, setLinkTargetItem] = useState<ChecklistItemDto | null>(null);
+  const [inspectionModalOpen, setInspectionModalOpen] = useState(false);
+  const [inspectionTargetItem, setInspectionTargetItem] = useState<ChecklistItemDto | null>(null);
 
   const [itemForm] = Form.useForm();
   const [rejectForm] = Form.useForm();
-  const [linkForm] = Form.useForm();
 
   // Query chi tiết Checklist
   const {
@@ -90,13 +87,6 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
     queryKey: ['checklist', checklistId],
     queryFn: () => checklistApi.getChecklistById(checklistId!),
     enabled: open && !!checklistId,
-  });
-
-  // Query danh sách FormInspections của Object (để liên kết ở Phase 2)
-  const { data: availableInspections } = useQuery({
-    queryKey: ['inspections-for-object', checklist?.objectId],
-    queryFn: () => inspectionApi.getInspections({ objectId: checklist?.objectId }),
-    enabled: open && !!checklist?.objectId && (checklist?.status === 'Approved' || checklist?.status === 'InProgress'),
   });
 
   // Mutation: Thêm tiêu chí
@@ -193,24 +183,6 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
     },
     onError: (err: any) => {
       message.error(err.response?.data?.message || 'Lỗi khi từ chối kế hoạch.');
-    },
-  });
-
-  // Mutation: Liên kết FormInspection vào ChecklistItem
-  const linkInspectionMutation = useMutation({
-    mutationFn: ({ itemId, inspectionId }: { itemId: string; inspectionId: string }) =>
-      checklistApi.linkInspection(checklistId!, itemId, { inspectionId }),
-    onSuccess: () => {
-      message.success('Đã liên kết phiếu nghiệm thu vào tiêu chí thành công!');
-      setLinkInspectionModalOpen(false);
-      setLinkTargetItem(null);
-      linkForm.resetFields();
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ['checklists'] });
-      onRefresh?.();
-    },
-    onError: (err: any) => {
-      message.error(err.response?.data?.message || 'Lỗi khi liên kết phiếu nghiệm thu.');
     },
   });
 
@@ -505,32 +477,74 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                 },
               },
               {
-                title: 'Phiếu nghiệm thu',
+                title: 'Phiếu nghiệm thu hiện trường',
                 key: 'inspection',
                 render: (_: any, record: ChecklistItemDto) => {
-                  if (record.linkedInspectionId) {
-                    return (
-                      <Tag color="purple" icon={<LinkOutlined />}>
-                        Phiếu: {record.linkedInspectionId.substring(0, 8)}...
+                  if (checklist.canFillInspection) {
+                    if (record.linkedInspectionId) {
+                      return (
+                        <Space size={6}>
+                          <Tag
+                            color={
+                              record.linkedInspectionStatus === 'Approved'
+                                ? 'success'
+                                : record.linkedInspectionStatus === 'Submitted'
+                                ? 'processing'
+                                : record.linkedInspectionStatus === 'Rejected'
+                                ? 'error'
+                                : 'default'
+                            }
+                          >
+                            {record.linkedInspectionStatus === 'Approved'
+                              ? 'Đã duyệt'
+                              : record.linkedInspectionStatus === 'Submitted'
+                              ? 'Chờ duyệt'
+                              : record.linkedInspectionStatus === 'Rejected'
+                              ? 'Cần sửa đổi'
+                              : 'Bản nháp'}
+                          </Tag>
+                          <Button
+                            size="small"
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => {
+                              setInspectionTargetItem(record);
+                              setInspectionModalOpen(true);
+                            }}
+                          >
+                            Xem / Cập nhật
+                          </Button>
+                        </Space>
+                      );
+                    }
+
+                    if (isSubmitter || isAdmin) {
+                      return (
+                        <Button
+                          size="small"
+                          type="primary"
+                          ghost
+                          icon={<EditOutlined />}
+                          onClick={() => {
+                            setInspectionTargetItem(record);
+                            setInspectionModalOpen(true);
+                          }}
+                        >
+                          Điền phiếu nghiệm thu
+                        </Button>
+                      );
+                    }
+
+                    return <Text type="secondary" style={{ fontSize: 12 }}>Chưa có phiếu</Text>;
+                  }
+
+                  return (
+                    <Tooltip title="Chỉ mở chức năng điền phiếu nghiệm thu sau khi Giám sát phê duyệt Kế hoạch Checklist.">
+                      <Tag color="default" icon={<LockOutlined />}>
+                        Khóa (Chờ duyệt kế hoạch)
                       </Tag>
-                    );
-                  }
-                  if (checklist.canFillInspection && (isSubmitter || isAdmin)) {
-                    return (
-                      <Button
-                        size="small"
-                        type="dashed"
-                        icon={<LinkOutlined />}
-                        onClick={() => {
-                          setLinkTargetItem(record);
-                          setLinkInspectionModalOpen(true);
-                        }}
-                      >
-                        Gắn phiếu
-                      </Button>
-                    );
-                  }
-                  return <Text type="secondary" style={{ fontSize: 12 }}>Chưa gắn</Text>;
+                    </Tooltip>
+                  );
                 },
               },
               {
@@ -723,47 +737,22 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
         </Form>
       </Modal>
 
-      {/* Modal: Gắn FormInspection vào ChecklistItem */}
-      <Modal
-        open={linkInspectionModalOpen}
-        onCancel={() => {
-          setLinkInspectionModalOpen(false);
-          setLinkTargetItem(null);
-        }}
-        zIndex={1350}
-        title={`Gắn Phiếu Nghiệm Thu vào "${linkTargetItem?.name}"`}
-        okText="Liên kết phiếu"
-        cancelText="Hủy"
-        onOk={() => {
-          linkForm.validateFields()
-            .then((values) => {
-              if (linkTargetItem) {
-                linkInspectionMutation.mutate({
-                  itemId: linkTargetItem.id,
-                  inspectionId: values.inspectionId,
-                });
-              }
-            })
-            .catch((err) => console.warn('Link form validation error:', err));
-        }}
-        confirmLoading={linkInspectionMutation.isPending}
-      >
-        <Form form={linkForm} layout="vertical">
-          <Form.Item
-            name="inspectionId"
-            label="Chọn Phiếu nghiệm thu hiện có của Cấu kiện này"
-            rules={[{ required: true, message: 'Vui lòng chọn phiếu nghiệm thu!' }]}
-          >
-            <Select placeholder="Chọn phiếu nghiệm thu...">
-              {(((availableInspections as any)?.items || (Array.isArray(availableInspections) ? availableInspections : [])) as any[]).map((insp: any) => (
-                <Select.Option key={insp.id} value={insp.id}>
-                  [{insp.id.substring(0, 8)}] {insp.title || 'Phiếu nghiệm thu'} - Trạng thái: {insp.status}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
+      {/* Modal: Điền & Xem Phiếu Nghiệm Thu gắn trực tiếp với Checklist Item */}
+      {inspectionTargetItem && checklist && (
+        <ItemInspectionModal
+          open={inspectionModalOpen}
+          item={inspectionTargetItem}
+          checklist={checklist}
+          onClose={() => {
+            setInspectionModalOpen(false);
+            setInspectionTargetItem(null);
+          }}
+          onSuccess={() => {
+            refetch();
+            if (onRefresh) onRefresh();
+          }}
+        />
+      )}
 
       {/* Visual Form.io Builder Modal */}
       {builderTargetItem && (

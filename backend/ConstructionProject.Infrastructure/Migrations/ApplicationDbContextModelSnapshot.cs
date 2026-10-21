@@ -301,6 +301,12 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Property<Guid?>("ApprovedById")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ChecklistId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ChecklistItemId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -353,6 +359,10 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApprovedById");
+
+                    b.HasIndex("ChecklistId");
+
+                    b.HasIndex("ChecklistItemId");
 
                     b.HasIndex("ObjectId");
 
@@ -572,8 +582,7 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.HasOne("ConstructionProject.Domain.Entities.Checklist", "Checklist")
                         .WithMany("AuditHistories")
                         .HasForeignKey("ChecklistId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Checklist");
                 });
@@ -631,6 +640,16 @@ namespace ConstructionProject.Infrastructure.Migrations
                         .HasForeignKey("ApprovedById")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ConstructionProject.Domain.Entities.Checklist", "Checklist")
+                        .WithMany()
+                        .HasForeignKey("ChecklistId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ConstructionProject.Domain.Entities.ChecklistItem", "ChecklistItem")
+                        .WithMany()
+                        .HasForeignKey("ChecklistItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ConstructionProject.Domain.Entities.ConstructionObject", "Object")
                         .WithMany("FormInspections")
                         .HasForeignKey("ObjectId")
@@ -648,6 +667,10 @@ namespace ConstructionProject.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Approver");
+
+                    b.Navigation("Checklist");
+
+                    b.Navigation("ChecklistItem");
 
                     b.Navigation("Object");
 
