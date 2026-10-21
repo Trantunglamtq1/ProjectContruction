@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Modal,
   Button,
@@ -8,6 +8,8 @@ import {
   Alert,
   Spin,
   Form,
+  Input,
+  Card,
   message,
 } from 'antd';
 import {
@@ -17,12 +19,23 @@ import {
   CloseCircleOutlined,
   SaveOutlined,
   SendOutlined,
+  ToolOutlined,
+  PictureOutlined,
+  InfoCircleOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { inspectionApi } from '../../services/inspectionApi';
 import type { ChecklistDto, ChecklistItemDto } from '../../types/checklist';
-import type { FormIoSchema, InspectionDto, InspectionStatus } from '../../types/inspection';
+import type {
+  FormIoSchema,
+  InspectionDto,
+  InspectionStatus,
+  InspectionAttachmentDto,
+} from '../../types/inspection';
 import { DynamicFormIoRenderer } from '../formio/DynamicFormIoRenderer';
+import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
+import { InspectionImageGallery } from '../inspections/InspectionImageGallery';
 import { useAuth } from '../../contexts/AuthContext';
 
 const { Text, Title, Paragraph } = Typography;
@@ -46,10 +59,12 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
   const { user } = useAuth();
   const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as string) || '';
   const isSubmitter = currentRole === 'Submitter';
-  const isAdmin = currentRole === 'Admin';
 
   const [form] = Form.useForm();
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [attachments, setAttachments] = useState<InspectionAttachmentDto[]>([]);
+  const [customSchema, setCustomSchema] = useState<FormIoSchema | null>(null);
+  const [builderModalOpen, setBuilderModalOpen] = useState(false);
   const [submittingAction, setSubmittingAction] = useState<'draft' | 'submit' | null>(null);
 
   // Lấy chi tiết phiếu nghiệm thu nếu item đã có linkedInspectionId
@@ -62,8 +77,8 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
     enabled: open && !!item?.linkedInspectionId,
   });
 
-  // Parse schema JSON của item
-  const parsedSchema: FormIoSchema = React.useMemo(() => {
+  // Parse schema JSON mặc định của item
+  const parsedItemSchema: FormIoSchema = useMemo(() => {
     if (!item?.formSchemaJson || item.formSchemaJson === '{}') {
       return {
         display: 'form',
@@ -73,13 +88,13 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
             key: 'inspectionTitle',
             label: 'Nội dung kiểm tra / Hạng mục',
             placeholder: `Nghiệm thu: ${item?.name || ''}`,
-            required: true,
+            validate: { required: true },
           },
           {
             type: 'radio',
             key: 'result',
             label: 'Kết luận đánh giá hiện trường',
-            required: true,
+            validate: { required: true },
             values: [
               { label: 'Đạt yêu cầu (Pass)', value: 'pass' },
               { label: 'Không đạt (Fail)', value: 'fail' },
@@ -90,7 +105,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
             type: 'number',
             key: 'measuredValue',
             label: 'Thông số đo đạc thực tế (nếu có)',
-            placeholder: 'Nhập giá trị đo đạc...',
+            placeholder: 'Nhập số liệu đo đạc...',
           },
           {
             type: 'textarea',
@@ -115,13 +130,13 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
             key: 'inspectionTitle',
             label: 'Nội dung kiểm tra',
             placeholder: `Nghiệm thu: ${item.name}`,
-            required: true,
+            validate: { required: true },
           },
           {
             type: 'radio',
             key: 'result',
             label: 'Kết luận đánh giá',
-            required: true,
+            validate: { required: true },
             values: [
               { label: 'Đạt yêu cầu (Pass)', value: 'pass' },
               { label: 'Không đạt (Fail)', value: 'fail' },
@@ -140,36 +155,51 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
     }
   }, [item]);
 
-  // Cập nhật formData từ inspection nếu có
+  const activeSchema = customSchema || parsedItemSchema;
+
+  // Cập nhật dữ liệu form và attachments khi mở modal
   useEffect(() => {
-    if (open) {
+    if (open && item) {
       if (inspection?.formDataJson) {
         try {
           const parsed = JSON.parse(inspection.formDataJson);
           setFormData(parsed);
           form.setFieldsValue(parsed);
+
+          const atts: InspectionAttachmentDto[] = Array.isArray(parsed.attachments)
+            ? parsed.attachments
+            : (inspection.attachments || []);
+          setAttachments(atts);
+
+          if (parsed._customSchema && parsed._customSchema.components?.length > 0) {
+            setCustomSchema(parsed._customSchema);
+          }
         } catch {
           setFormData({});
+          setAttachments([]);
           form.resetFields();
         }
       } else {
+        const defaultTitle = `Nghiệm thu: ${item.name} - ${checklist.objectCode || checklist.objectName}`;
         const defaultInit = {
-          inspectionTitle: `Nghiệm thu: ${item?.name || ''}`,
+          inspectionTitle: defaultTitle,
           result: 'pass',
         };
         setFormData(defaultInit);
         form.setFieldsValue(defaultInit);
+        setAttachments([]);
+        setCustomSchema(null);
       }
     }
-  }, [open, inspection, item, form]);
+  }, [open, inspection, item, checklist, form]);
 
-  // Kiểm tra quyền chỉnh sửa
-  const canEdit = React.useMemo(() => {
+  // Quyền chỉnh sửa: Submitter khi chưa có phiếu, hoặc khi phiếu ở trạng thái Draft / Rejected
+  const canEdit = useMemo(() => {
     if (!item) return false;
-    if (!item.linkedInspectionId) return isSubmitter || isAdmin;
+    if (!item.linkedInspectionId) return isSubmitter;
     if (!inspection) return false;
-    return (inspection.status === 'Draft' || inspection.status === 'Rejected') && (isSubmitter || isAdmin);
-  }, [item, inspection, isSubmitter, isAdmin]);
+    return (inspection.status === 'Draft' || inspection.status === 'Rejected') && isSubmitter;
+  }, [item, inspection, isSubmitter]);
 
   // Trạng thái badge
   const renderStatusTag = (status?: InspectionStatus) => {
@@ -191,15 +221,31 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
     }
   };
 
+  // Lưu tùy biến schema từ builder
+  const handleSaveCustomSchema = (newSchema: FormIoSchema) => {
+    setCustomSchema(newSchema);
+    setBuilderModalOpen(false);
+    message.success(`Đã cập nhật biểu mẫu đo đạc với ${newSchema.components.length} chỉ tiêu!`);
+  };
+
   // Submit / Lưu nháp
   const handleSaveOrSubmit = async (isSubmitImmediately: boolean) => {
     if (!item) return;
 
     try {
       const formValues = await form.validateFields();
-      const payloadData = { ...formData, ...formValues };
-      const jsonString = JSON.stringify(payloadData);
+      const payloadData: Record<string, any> = {
+        ...formData,
+        ...formValues,
+        inspectionTitle: formValues.inspectionTitle?.trim() || `Nghiệm thu: ${item.name}`,
+        attachments: attachments,
+      };
 
+      if (customSchema) {
+        payloadData._customSchema = customSchema;
+      }
+
+      const jsonString = JSON.stringify(payloadData);
       setSubmittingAction(isSubmitImmediately ? 'submit' : 'draft');
 
       if (!item.linkedInspectionId) {
@@ -256,125 +302,193 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
   if (!item) return null;
 
   return (
-    <Modal
-      open={open}
-      onCancel={onClose}
-      width={800}
-      zIndex={1300}
-      destroyOnClose
-      title={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 24 }}>
-          <Space>
-            <FileTextOutlined style={{ fontSize: 18, color: '#1677ff' }} />
-            <div>
-              <Title level={5} style={{ margin: 0 }}>
-                Phiếu Nghiệm Thu: {item.name}
-              </Title>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Checklist: {checklist.name} • Cấu kiện: {checklist.objectCode || checklist.objectName}
-              </Text>
-            </div>
-          </Space>
-          {renderStatusTag(inspection?.status)}
-        </div>
-      }
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            {inspection?.status === 'Approved' && (
-              <Tag color="success">
-                <CheckCircleOutlined /> Tiêu chí này đã được nghiệm thu ĐẠT
-              </Tag>
-            )}
-          </div>
-          <Space>
-            <Button onClick={onClose}>Đóng</Button>
-            {canEdit && (
-              <>
-                <Button
-                  icon={<SaveOutlined />}
-                  loading={submittingAction === 'draft'}
-                  onClick={() => handleSaveOrSubmit(false)}
-                >
-                  Lưu nháp (Draft)
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<SendOutlined />}
-                  loading={submittingAction === 'submit'}
-                  onClick={() => handleSaveOrSubmit(true)}
-                >
-                  Gửi nghiệm thu (Submit)
-                </Button>
-              </>
-            )}
-          </Space>
-        </div>
-      }
-    >
-      <div style={{ maxHeight: 'calc(80vh - 160px)', overflowY: 'auto', paddingRight: 8 }}>
-        {/* Banner cảnh báo nếu bị từ chối */}
-        {inspection?.status === 'Rejected' && inspection.rejectReason && (
-          <Alert
-            type="error"
-            showIcon
-            message="Hồ sơ bị Tư vấn giám sát yêu cầu sửa đổi"
-            description={
+    <>
+      <Modal
+        open={open}
+        onCancel={onClose}
+        width={850}
+        zIndex={1300}
+        destroyOnClose
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 24 }}>
+            <Space align="center">
+              <FileTextOutlined style={{ fontSize: 20, color: '#1677ff' }} />
               <div>
-                <Paragraph style={{ margin: '4px 0', color: '#cf1322', fontWeight: 500 }}>
-                  Lý do: {inspection.rejectReason}
-                </Paragraph>
-                <Text style={{ fontSize: 12 }}>
-                  Vui lòng điều chỉnh các thông số hoặc bổ sung hình ảnh bên dưới, sau đó bấm <b>"Gửi nghiệm thu"</b> để nộp lại.
+                <Title level={4} style={{ margin: 0, fontSize: 16 }}>
+                  Hồ sơ Nghiệm thu: {item.name}
+                </Title>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Checklist: <b>{checklist.name}</b> • Cấu kiện: <b>{checklist.objectCode || checklist.objectName}</b>
                 </Text>
               </div>
-            }
-            style={{ marginBottom: 16 }}
-          />
-        )}
+            </Space>
+            {renderStatusTag(inspection?.status)}
+          </div>
+        }
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              {inspection?.status === 'Approved' && (
+                <Tag color="success">
+                  <CheckCircleOutlined /> Tiêu chí này đã được phê duyệt nghiệm thu ĐẠT
+                </Tag>
+              )}
+            </div>
+            <Space>
+              <Button onClick={onClose}>Đóng</Button>
+              {canEdit && (
+                <>
+                  <Button
+                    icon={<SaveOutlined />}
+                    loading={submittingAction === 'draft'}
+                    onClick={() => handleSaveOrSubmit(false)}
+                  >
+                    Lưu nháp (Draft)
+                  </Button>
+                  <Button
+                    type="primary"
+                    icon={<SendOutlined />}
+                    loading={submittingAction === 'submit'}
+                    style={{ backgroundColor: '#1677ff' }}
+                    onClick={() => handleSaveOrSubmit(true)}
+                  >
+                    Gửi nghiệm thu (Submit)
+                  </Button>
+                </>
+              )}
+            </Space>
+          </div>
+        }
+      >
+        <div style={{ maxHeight: 'calc(80vh - 150px)', overflowY: 'auto', paddingRight: 8 }}>
+          {/* Banner cảnh báo nếu bị từ chối */}
+          {inspection?.status === 'Rejected' && inspection.rejectReason && (
+            <Alert
+              type="error"
+              showIcon
+              message="Hồ sơ bị Tư vấn giám sát yêu cầu sửa đổi"
+              description={
+                <div>
+                  <Paragraph style={{ margin: '4px 0', color: '#cf1322', fontWeight: 500 }}>
+                    Lý do: {inspection.rejectReason}
+                  </Paragraph>
+                  <Text style={{ fontSize: 12 }}>
+                    Vui lòng điều chỉnh thông số hoặc bổ sung ảnh minh chứng bên dưới, sau đó bấm <b>"Gửi nghiệm thu"</b> để nộp lại.
+                  </Text>
+                </div>
+              }
+              style={{ marginBottom: 16, borderRadius: 8 }}
+            />
+          )}
 
-        {/* Thông tin ngữ cảnh Checklist */}
-        <div
-          style={{
-            backgroundColor: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            borderRadius: 8,
-            padding: '10px 14px',
-            marginBottom: 16,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Space direction="vertical" size={2}>
-            <Text style={{ fontSize: 12, color: '#64748b' }}>
-              Phiếu kiểm tra này thuộc Checklist cố định: <b>{checklist.name}</b>
-            </Text>
-            <Text style={{ fontSize: 12, color: '#64748b' }}>
-              Mục kiểm tra thứ {item.orderIndex}: <b>{item.name}</b> {item.isRequired && <Tag color="volcano" style={{ fontSize: 10 }}>Bắt buộc</Tag>}
-            </Text>
-          </Space>
-          {checklist.canFillInspection ? (
-            <Tag color="cyan">Giai đoạn 2: Nghiệm thu hiện trường</Tag>
+          {/* Ngữ cảnh Checklist */}
+          <Alert
+            message="Quy trình nghiệm thu 2 giai đoạn"
+            description={
+              <span>
+                Hồ sơ nghiệm thu gắn liền với tiêu chí <b>{item.orderIndex}. {item.name}</b>{' '}
+                {item.isRequired && <Tag color="volcano" style={{ fontSize: 10 }}>Bắt buộc</Tag>} thuộc Checklist của cấu kiện. Bạn có thể lưu nháp nhiều lần trước khi nộp chính thức gửi Giám sát thẩm tra.
+              </span>
+            }
+            type="info"
+            showIcon
+            icon={<InfoCircleOutlined />}
+            style={{ marginBottom: 16, borderRadius: 8 }}
+          />
+
+          {loadingInspection ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <Spin tip="Đang tải dữ liệu hồ sơ nghiệm thu..." />
+            </div>
           ) : (
-            <Tag color="orange">Giai đoạn 1: Lập kế hoạch</Tag>
+            <Form form={form} layout="vertical">
+              {/* 1. Tiêu đề hồ sơ nghiệm thu */}
+              <Form.Item
+                name="inspectionTitle"
+                label={<Text strong>1. Tiêu đề hồ sơ nghiệm thu</Text>}
+                rules={[{ required: true, message: 'Vui lòng nhập tiêu đề hồ sơ' }]}
+              >
+                <Input
+                  size="middle"
+                  disabled={!canEdit}
+                  placeholder="VD: Nghiệm thu cốt thép đài móng - Cột C12"
+                  prefix={<AppstoreOutlined style={{ color: '#BFBFBF' }} />}
+                />
+              </Form.Item>
+
+              {/* 2. Biểu mẫu thông số kỹ thuật Form.io */}
+              <Card
+                size="small"
+                title={
+                  <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+                    <Space>
+                      <CheckCircleOutlined style={{ color: '#1677ff' }} />
+                      <Text strong>2. Biểu mẫu thông số kiểm tra kỹ thuật ({activeSchema.components.length} chỉ tiêu)</Text>
+                      {customSchema && <Tag color="success">Đã tùy biến</Tag>}
+                    </Space>
+                    {canEdit && (
+                      <Button
+                        size="small"
+                        type="primary"
+                        ghost
+                        icon={<ToolOutlined />}
+                        onClick={() => setBuilderModalOpen(true)}
+                      >
+                        Tùy biến trường
+                      </Button>
+                    )}
+                  </Space>
+                }
+                style={{
+                  marginBottom: 16,
+                  borderRadius: 8,
+                  backgroundColor: '#FAFCFF',
+                  border: '1px solid #E1EDFA',
+                }}
+              >
+                <DynamicFormIoRenderer
+                  schema={activeSchema}
+                  initialData={formData}
+                  readonly={!canEdit}
+                  form={form}
+                  onChange={(vals) => setFormData((prev) => ({ ...prev, ...vals }))}
+                />
+              </Card>
+
+              {/* 3. Tải lên ảnh hiện trường */}
+              <Card
+                size="small"
+                title={
+                  <Space>
+                    <PictureOutlined style={{ color: '#52c41a' }} />
+                    <Text strong>3. Ảnh chụp & Tài liệu minh chứng hiện trường ({attachments.length} tệp)</Text>
+                  </Space>
+                }
+                style={{
+                  marginBottom: 16,
+                  borderRadius: 8,
+                  backgroundColor: '#FAFAFA',
+                  border: '1px solid #F0F0F0',
+                }}
+              >
+                <InspectionImageGallery
+                  attachments={attachments}
+                  onChange={setAttachments}
+                  readonly={!canEdit}
+                />
+              </Card>
+            </Form>
           )}
         </div>
+      </Modal>
 
-        {loadingInspection ? (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <Spin tip="Đang tải dữ liệu biểu mẫu nghiệm thu..." />
-          </div>
-        ) : (
-          <DynamicFormIoRenderer
-            schema={parsedSchema}
-            initialData={formData}
-            readonly={!canEdit}
-            form={form}
-            onChange={(vals) => setFormData(vals)}
-          />
-        )}
-      </div>
-    </Modal>
+      {/* Modal Form Builder để kéo thả tùy biến trường nếu cần */}
+      <FormIoBuilderModal
+        visible={builderModalOpen}
+        initialSchema={activeSchema}
+        onCancel={() => setBuilderModalOpen(false)}
+        onSave={handleSaveCustomSchema}
+      />
+    </>
   );
 };
