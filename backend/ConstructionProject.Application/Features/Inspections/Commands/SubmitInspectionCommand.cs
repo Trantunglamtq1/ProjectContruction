@@ -58,6 +58,8 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
         var inspection = await _context.FormInspections
             .Include(i => i.Object)
                 .ThenInclude(o => o!.DrawingFile)
+            .Include(i => i.Checklist)
+            .Include(i => i.ChecklistItem)
             .Include(i => i.LinkedChecklistItems)
             .FirstOrDefaultAsync(i => i.Id == request.Id, cancellationToken);
 
@@ -140,7 +142,12 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
             DrawingFileId = inspection.Object?.DrawingFileId ?? Guid.Empty,
             DrawingFileName = inspection.Object?.DrawingFile?.FileName ?? string.Empty,
             DrawingPageNumber = inspection.Object?.PageNumber ?? 1,
+            ChecklistId = inspection.ChecklistId,
+            ChecklistName = inspection.Checklist?.Name,
+            ChecklistItemId = inspection.ChecklistItemId,
+            ChecklistItemName = inspection.ChecklistItem?.Name,
             FormSchemaId = inspection.FormSchemaId,
+            FormSchemaJson = inspection.ChecklistItem?.FormSchemaJson,
             FormDataJson = inspection.FormDataJson,
             Status = inspection.Status.ToString(),
             WorkflowInstanceId = inspection.WorkflowInstanceId,
@@ -162,7 +169,7 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
 
     private static void ValidateFormDataAgainstSchema(string json)
     {
-        if (string.IsNullOrWhiteSpace(json) || json == "{}")
+        if (string.IsNullOrWhiteSpace(json) || json.Trim() == "{}" || json.Trim() == "[]")
         {
             throw new InvalidOperationException("Không thể gửi duyệt hồ sơ rỗng. Vui lòng điền các thông tin kiểm tra hiện trường trước khi Submit.");
         }
@@ -176,21 +183,15 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
                 throw new InvalidOperationException("Dữ liệu form nộp phải là một JSON Object.");
             }
 
-            // Kiểm tra các trường bắt buộc cơ bản theo schema default-inspection-schema
-            // 1. Tiêu đề hạng mục kiểm tra
-            bool hasTitle = (root.TryGetProperty("inspectionTitle", out var titleProp) || root.TryGetProperty("title", out titleProp))
-                            && !string.IsNullOrWhiteSpace(titleProp.GetString());
-
-            if (!hasTitle)
+            int propertyCount = 0;
+            foreach (var _ in root.EnumerateObject())
             {
-                throw new InvalidOperationException("Vui lòng nhập 'Tên hạng mục kiểm tra' (inspectionTitle) trước khi gửi duyệt.");
+                propertyCount++;
             }
 
-            // 2. Kết quả đánh giá
-            bool hasResult = root.TryGetProperty("result", out var resultProp) && !string.IsNullOrWhiteSpace(resultProp.GetString());
-            if (!hasResult)
+            if (propertyCount == 0)
             {
-                throw new InvalidOperationException("Vui lòng chọn 'Kết quả đánh giá' (result: pass / fail / pending_fix) trước khi gửi duyệt.");
+                throw new InvalidOperationException("Không thể gửi duyệt hồ sơ rỗng. Vui lòng điền các thông tin kiểm tra hiện trường trước khi Submit.");
             }
         }
         catch (JsonException ex)

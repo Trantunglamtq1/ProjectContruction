@@ -256,7 +256,7 @@ public class ChecklistsController : ControllerBase
     /// Xóa mềm toàn bộ Kế hoạch Checklist (Khóa xóa nếu đã có phiếu nghiệm thu phát sinh)
     /// </summary>
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = $"{RoleConstants.Submitter},{RoleConstants.Admin}")]
+    [Authorize(Roles = RoleConstants.Submitter)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

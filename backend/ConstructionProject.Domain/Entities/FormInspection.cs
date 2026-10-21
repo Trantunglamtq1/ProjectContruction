@@ -12,6 +12,10 @@ public class FormInspection
     
     // FK tới Object (đã được xác định từ bản vẽ) mà Inspection này thuộc về
     public Guid ObjectId { get; set; }
+
+    // FK bắt buộc tới Checklist và ChecklistItem mà phiếu nghiệm thu này gắn liền
+    public Guid? ChecklistId { get; set; }
+    public Guid? ChecklistItemId { get; set; }
     
     // FK/định danh schema FormIO được dùng để render form
     public string FormSchemaId { get; set; } = "default-inspection-schema";
@@ -48,6 +52,8 @@ public class FormInspection
 
     // Navigation Properties
     public ConstructionObject? Object { get; set; }
+    public Checklist? Checklist { get; set; }
+    public ChecklistItem? ChecklistItem { get; set; }
     public User? Submitter { get; set; }
     public User? Reviewer { get; set; }
     public User? Approver { get; set; }

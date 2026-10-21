@@ -14,6 +14,9 @@ export interface GetInspectionsParams {
   pageSize?: number;
   status?: string;
   objectId?: string;
+  drawingFileId?: string;
+  checklistId?: string;
+  checklistItemId?: string;
   search?: string;
 }
 
@@ -51,11 +54,13 @@ export const inspectionApi = {
     return response.data;
   },
 
-  // Khởi tạo mới hồ sơ kiểm tra (chỉ Submitter)
+  // Khởi tạo mới hồ sơ kiểm tra gắn liền với ChecklistItem (chỉ Submitter)
   createInspection: async (data: {
-    objectId: string;
-    formSchemaId?: string;
+    checklistId: string;
+    checklistItemId: string;
+    objectId?: string;
     formDataJson?: string;
+    submitImmediately?: boolean;
   }): Promise<InspectionDto> => {
     const response = await apiClient.post<InspectionDto>('/inspections', data);
     return response.data;

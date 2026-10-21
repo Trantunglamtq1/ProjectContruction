@@ -4,7 +4,6 @@ import {
   Form,
   Select,
   Input,
-  Radio,
   Typography,
   Space,
   Tag,
@@ -20,17 +19,19 @@ import {
   InfoCircleOutlined,
   ToolOutlined,
   CheckCircleOutlined,
+  CheckSquareOutlined,
 } from '@ant-design/icons';
 import { inspectionApi } from '../../services/inspectionApi';
+import { checklistApi } from '../../services/checklistApi';
 import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
 import { InspectionImageGallery } from './InspectionImageGallery';
 import type {
   InspectionDto,
   ConstructionObjectDto,
-  FormSchemaItemDto,
   FormIoSchema,
   InspectionAttachmentDto,
 } from '../../types/inspection';
+import type { ChecklistDto } from '../../types/checklist';
 
 const { Text, Title } = Typography;
 
@@ -39,6 +40,8 @@ interface CreateInspectionModalProps {
   onCancel: () => void;
   onSuccess: (newInspection: InspectionDto) => void;
   preselectedObjectId?: string;
+  preselectedChecklistId?: string;
+  preselectedChecklistItemId?: string;
 }
 
 export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
@@ -46,13 +49,18 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
   onCancel,
   onSuccess,
   preselectedObjectId,
+  preselectedChecklistId,
+  preselectedChecklistItemId,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [objects, setObjects] = useState<ConstructionObjectDto[]>([]);
-  const [schemas, setSchemas] = useState<FormSchemaItemDto[]>([]);
-  const [selectedSchema, setSelectedSchema] = useState<string>('rebar-inspection-schema');
+  
+  // Danh sách Checklist của cấu kiện đã chọn
+  const [objectChecklists, setObjectChecklists] = useState<ChecklistDto[]>([]);
+  const [loadingChecklists, setLoadingChecklists] = useState(false);
+  const [selectedChecklist, setSelectedChecklist] = useState<ChecklistDto | null>(null);
 
   // Schema tùy biến & Modal Form Builder
   const [activeSchemaObj, setActiveSchemaObj] = useState<FormIoSchema | null>(null);
@@ -62,85 +70,134 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
 
   useEffect(() => {
     if (visible) {
-      loadInitialData();
+      loadInitialObjects();
     }
   }, [visible]);
 
-  const loadInitialData = async () => {
+  const loadInitialObjects = async () => {
     setLoading(true);
     try {
-      const [objsData, schemasData] = await Promise.all([
-        inspectionApi.getObjects(),
-        inspectionApi.getSchemas(),
-      ]);
+      const objsData = await inspectionApi.getObjects();
       setObjects(objsData);
-      setSchemas(schemasData);
 
-      const defaultSchema = schemasData[0]?.id || 'rebar-inspection-schema';
-      setSelectedSchema(defaultSchema);
-
-      form.setFieldsValue({
-        objectId: preselectedObjectId || (objsData.length > 0 ? objsData[0].id : undefined),
-        formSchemaId: defaultSchema,
-      });
-
-      updateSuggestedTitle(
-        preselectedObjectId || (objsData.length > 0 ? objsData[0].id : ''),
-        defaultSchema,
-        objsData,
-        schemasData
-      );
-
-      // Tải chi tiết schema mặc định
-      fetchSchemaDetail(defaultSchema);
+      const targetObjId = preselectedObjectId || (objsData.length > 0 ? objsData[0].id : undefined);
+      if (targetObjId) {
+        form.setFieldsValue({ objectId: targetObjId });
+        await loadChecklistsForObject(targetObjId);
+      }
     } catch {
-      message.error('Không thể tải danh sách Object hoặc Schema.');
+      message.error('Không thể tải danh sách Cấu kiện.');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchSchemaDetail = async (schemaId: string) => {
+  const loadChecklistsForObject = async (objId: string) => {
+    setLoadingChecklists(true);
     try {
-      const detail = await inspectionApi.getSchemaById(schemaId);
-      setActiveSchemaObj(detail);
-      setIsCustomized(false);
+      const chks = await checklistApi.getChecklists({ objectId: objId });
+      // Lọc các Checklist ở trạng thái đã được duyệt (Approved / InProgress)
+      const approvedChks = chks.filter((c) => c.status === 'Approved' || c.status === 'InProgress');
+      setObjectChecklists(approvedChks);
+
+      if (approvedChks.length > 0) {
+        const chosenChk = preselectedChecklistId 
+          ? approvedChks.find((c) => c.id === preselectedChecklistId) || approvedChks[0]
+          : approvedChks[0];
+
+        setSelectedChecklist(chosenChk);
+        form.setFieldsValue({ checklistId: chosenChk.id });
+
+        const items = chosenChk.items || [];
+        if (items.length > 0) {
+          const chosenItem = preselectedChecklistItemId
+            ? items.find((i) => i.id === preselectedChecklistItemId) || items[0]
+            : items[0];
+
+          form.setFieldsValue({ checklistItemId: chosenItem.id });
+          parseAndSetSchema(chosenItem.formSchemaJson, chosenItem.name);
+        } else {
+          form.setFieldsValue({ checklistItemId: undefined });
+          setActiveSchemaObj(null);
+        }
+      } else {
+        setSelectedChecklist(null);
+        form.setFieldsValue({ checklistId: undefined, checklistItemId: undefined });
+        setActiveSchemaObj(null);
+      }
     } catch {
-      // ignore
+      message.error('Không thể tải danh sách Checklist của cấu kiện.');
+    } finally {
+      setLoadingChecklists(false);
     }
   };
 
-  const updateSuggestedTitle = (
-    objId: string,
-    schemaId: string,
-    objsList = objects,
-    schemasList = schemas
-  ) => {
-    const obj = objsList.find((o) => o.id === objId);
-    const schema = schemasList.find((s) => s.id === schemaId);
-    if (obj && schema) {
-      const prefix = schema.id.includes('rebar')
-        ? 'Nghiệm thu cốt thép'
-        : schema.id.includes('concrete')
-        ? 'Nghiệm thu đổ bê tông'
-        : 'Biên bản nghiệm thu';
-      form.setFieldsValue({
-        title: `${prefix} - ${obj.name}`,
-      });
+  const parseAndSetSchema = (schemaJson?: string, itemName?: string) => {
+    if (!schemaJson || schemaJson === '{}') {
+      const fallback: FormIoSchema = {
+        display: 'form',
+        components: [
+          {
+            type: 'textfield',
+            key: 'inspectionTitle',
+            label: 'Nội dung kiểm tra / Hạng mục',
+            placeholder: `Nghiệm thu: ${itemName || ''}`,
+            validate: { required: true },
+          },
+          {
+            type: 'radio',
+            key: 'result',
+            label: 'Kết luận đánh giá hiện trường',
+            validate: { required: true },
+            values: [
+              { label: 'Đạt yêu cầu (Pass)', value: 'pass' },
+              { label: 'Không đạt (Fail)', value: 'fail' },
+              { label: 'Chờ khắc phục xử lý (Pending Fix)', value: 'pending_fix' },
+            ],
+          },
+          {
+            type: 'textarea',
+            key: 'notes',
+            label: 'Ghi chú kỹ thuật & Nhật ký hiện trường',
+          },
+        ],
+      };
+      setActiveSchemaObj(fallback);
+      form.setFieldsValue({ title: `Nghiệm thu: ${itemName || ''}` });
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(schemaJson);
+      setActiveSchemaObj(parsed);
+      form.setFieldsValue({ title: `Nghiệm thu: ${itemName || ''}` });
+    } catch {
+      setActiveSchemaObj(null);
     }
   };
 
-  const handleObjectChange = (objId: string) => {
-    const currentSchema = form.getFieldValue('formSchemaId') || selectedSchema;
-    updateSuggestedTitle(objId, currentSchema);
+  const handleObjectChange = async (objId: string) => {
+    await loadChecklistsForObject(objId);
   };
 
-  const handleSchemaChange = (schemaId: string) => {
-    setSelectedSchema(schemaId);
-    fetchSchemaDetail(schemaId);
-    const currentObjId = form.getFieldValue('objectId');
-    if (currentObjId) {
-      updateSuggestedTitle(currentObjId, schemaId);
+  const handleChecklistChange = (chkId: string) => {
+    const chk = objectChecklists.find((c) => c.id === chkId);
+    setSelectedChecklist(chk || null);
+
+    const items = chk?.items || [];
+    if (items.length > 0) {
+      form.setFieldsValue({ checklistItemId: items[0].id });
+      parseAndSetSchema(items[0].formSchemaJson, items[0].name);
+    } else {
+      form.setFieldsValue({ checklistItemId: undefined });
+      setActiveSchemaObj(null);
+    }
+  };
+
+  const handleItemChange = (itemId: string) => {
+    const item = selectedChecklist?.items?.find((i) => i.id === itemId);
+    if (item) {
+      parseAndSetSchema(item.formSchemaJson, item.name);
     }
   };
 
@@ -154,6 +211,11 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      if (!values.checklistId || !values.checklistItemId) {
+        message.warning('Phiếu nghiệm thu phải gắn liền với 1 Checklist và 1 Tiêu chí cụ thể.');
+        return;
+      }
+
       setSubmitting(true);
 
       const formDataPayload: Record<string, any> = {
@@ -166,9 +228,11 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
       }
 
       const newInspection = await inspectionApi.createInspection({
+        checklistId: values.checklistId,
+        checklistItemId: values.checklistItemId,
         objectId: values.objectId,
-        formSchemaId: values.formSchemaId,
         formDataJson: JSON.stringify(formDataPayload),
+        submitImmediately: false,
       });
 
       message.success('Khởi tạo hồ sơ nghiệm thu thành công! Trạng thái: Bản nháp (Draft).');
@@ -194,23 +258,23 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
           <Space align="center">
             <FileTextOutlined style={{ color: '#1677FF', fontSize: 20 }} />
             <Title level={4} style={{ margin: 0 }}>
-              Khởi tạo Hồ sơ Nghiệm thu mới (Inspection)
+              Khởi tạo Phiếu Nghiệm Thu Hiện Trường
             </Title>
           </Space>
         }
         open={visible}
         onCancel={onCancel}
         onOk={handleSubmit}
-        okText="Khởi tạo hồ sơ (Draft)"
+        okText="Khởi tạo phiếu (Draft)"
         cancelText="Hủy bỏ"
         confirmLoading={submitting}
         width={720}
         destroyOnClose
       >
-        <Spin spinning={loading}>
+        <Spin spinning={loading || loadingChecklists}>
           <Alert
-            message="Ghi chú quy trình"
-            description="Hồ sơ mới được tạo sẽ ở trạng thái 'Bản nháp' (Draft). Bạn có thể chọn mẫu có sẵn hoặc tùy biến/sắp xếp lại các chỉ tiêu kỹ thuật trước khi nộp."
+            message="Quy tắc nghiệp vụ cốt lõi"
+            description="Mỗi phiếu nghiệm thu là một tiêu chí (ChecklistItem) nằm trong Kế hoạch Checklist đã được Giám sát phê duyệt. Không được phép tạo phiếu nghiệm thu đứng riêng lẻ."
             type="info"
             showIcon
             icon={<InfoCircleOutlined />}
@@ -221,12 +285,12 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
             {/* 1. Chọn Cấu kiện (Object) */}
             <Form.Item
               name="objectId"
-              label={<Text strong>1. Chọn Cấu kiện / Hạng mục kiểm tra (Object từ bản vẽ CAD)</Text>}
+              label={<Text strong>1. Chọn Cấu kiện / Hạng mục (Object từ bản vẽ)</Text>}
               rules={[{ required: true, message: 'Vui lòng chọn cấu kiện kiểm tra' }]}
             >
               <Select
                 placeholder="Chọn cấu kiện đã khoanh vùng trên bản vẽ..."
-                size="large"
+                size="middle"
                 onChange={handleObjectChange}
                 showSearch
                 filterOption={(input, option) =>
@@ -236,76 +300,60 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
                   value: obj.id,
                   label: `${obj.name} (Bản vẽ trang ${obj.pageNumber})`,
                 }))}
-                notFoundContent={
-                  <div style={{ padding: 12, textAlign: 'center' }}>
-                    <Text type="secondary">
-                      Chưa có cấu kiện nào được tạo. Vui lòng vào màn "Bản vẽ & Object" để khoanh vùng trước.
-                    </Text>
-                  </div>
-                }
               />
             </Form.Item>
 
-            {/* 2. Chọn Mẫu FormIO Schema */}
+            {/* 2. Chọn Checklist đã được phê duyệt */}
             <Form.Item
-              name="formSchemaId"
-              label={<Text strong>2. Chọn Mẫu biểu kiểm tra cơ sở</Text>}
-              rules={[{ required: true, message: 'Vui lòng chọn mẫu biểu nghiệm thu' }]}
+              name="checklistId"
+              label={<Text strong>2. Kế hoạch Checklist đã phê duyệt (Approved / InProgress)</Text>}
+              rules={[{ required: true, message: 'Vui lòng chọn Kế hoạch Checklist!' }]}
             >
-              <Radio.Group
-                style={{ width: '100%' }}
-                onChange={(e) => handleSchemaChange(e.target.value)}
-                value={selectedSchema}
-              >
-                <Space direction="vertical" style={{ width: '100%' }} size={10}>
-                  {schemas.map((schema) => (
-                    <Card
-                      key={schema.id}
-                      size="small"
-                      hoverable
-                      style={{
-                        border:
-                          selectedSchema === schema.id
-                            ? '2px solid #1677FF'
-                            : '1px solid #E5E7EB',
-                        backgroundColor:
-                          selectedSchema === schema.id ? '#F0F7FF' : '#FFFFFF',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => {
-                        form.setFieldsValue({ formSchemaId: schema.id });
-                        handleSchemaChange(schema.id);
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Radio value={schema.id}>
-                          <Text strong style={{ fontSize: 14 }}>
-                            {schema.name}
-                          </Text>
-                        </Radio>
-                        <Space>
-                          <Tag color="blue">{schema.category}</Tag>
-                          <Tag color="cyan">{schema.componentsCount} chỉ tiêu</Tag>
-                        </Space>
-                      </div>
-                      <div style={{ paddingLeft: 24, marginTop: 4 }}>
-                        <Text type="secondary" style={{ fontSize: 13 }}>
-                          {schema.description}
-                        </Text>
-                      </div>
-                    </Card>
-                  ))}
-                </Space>
-              </Radio.Group>
+              {objectChecklists.length === 0 ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="Cấu kiện này chưa có Checklist nào được phê duyệt"
+                  description="Theo quy trình 2 giai đoạn, Kỹ sư phải vào màn xem bản vẽ để Lập Checklist và gửi Giám sát duyệt trước khi tiến hành nghiệm thu."
+                />
+              ) : (
+                <Select
+                  placeholder="Chọn Checklist đã phê duyệt..."
+                  size="middle"
+                  onChange={handleChecklistChange}
+                  options={objectChecklists.map((chk) => ({
+                    value: chk.id,
+                    label: `${chk.name} (${chk.itemsCount} tiêu chí • Trạng thái: ${chk.status})`,
+                  }))}
+                />
+              )}
             </Form.Item>
 
-            {/* 3. Danh sách các chỉ tiêu trong mẫu & Nút Tùy biến / Sắp xếp */}
+            {/* 3. Chọn Tiêu chí / ChecklistItem */}
+            {selectedChecklist && (
+              <Form.Item
+                name="checklistItemId"
+                label={<Text strong>3. Tiêu chí kiểm tra trong Checklist (ChecklistItem)</Text>}
+                rules={[{ required: true, message: 'Vui lòng chọn tiêu chí kiểm tra!' }]}
+              >
+                <Select
+                  placeholder="Chọn tiêu chí cần nghiệm thu..."
+                  size="middle"
+                  onChange={handleItemChange}
+                  options={(selectedChecklist.items || []).map((item) => ({
+                    value: item.id,
+                    label: `${item.orderIndex}. ${item.name} ${item.isRequired ? '(Bắt buộc)' : ''} - Trạng thái: ${item.status}`,
+                  }))}
+                />
+              </Form.Item>
+            )}
+
+            {/* 4. Xem / Tùy biến Schema của ChecklistItem */}
             {activeSchemaObj && (
               <Card
                 size="small"
                 style={{
-                  marginBottom: 20,
+                  marginBottom: 16,
                   backgroundColor: '#FAFCFF',
                   borderRadius: 8,
                   border: isCustomized ? '1.5px solid #52C41A' : '1px solid #E1EDFA',
@@ -313,23 +361,24 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <Space>
+                    <CheckSquareOutlined style={{ color: '#1677ff' }} />
                     <Text strong style={{ color: '#003A8C' }}>
-                      3. Các chỉ tiêu kỹ thuật trong biểu mẫu ({activeSchemaObj.components.length} trường):
+                      Cấu trúc biểu mẫu của tiêu chí ({activeSchemaObj.components.length} trường):
                     </Text>
                     {isCustomized && (
                       <Tag color="success" icon={<CheckCircleOutlined />}>
-                        Đã tùy biến riêng
+                        Đã chỉnh sửa
                       </Tag>
                     )}
                   </Space>
                   <Button
                     type="primary"
                     ghost
+                    size="small"
                     icon={<ToolOutlined />}
                     onClick={() => setBuilderOpen(true)}
-                    style={{ fontWeight: 600 }}
                   >
-                    Kéo thả & Sắp xếp / Chỉnh sửa trường
+                    Xem / Sửa trường
                   </Button>
                 </div>
 
@@ -343,20 +392,20 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
               </Card>
             )}
 
-            {/* 4. Tiêu đề hồ sơ */}
+            {/* 5. Tiêu đề hồ sơ */}
             <Form.Item
               name="title"
               label={<Text strong>4. Tiêu đề hồ sơ nghiệm thu</Text>}
               rules={[{ required: true, message: 'Vui lòng nhập tiêu đề hồ sơ' }]}
             >
               <Input
-                size="large"
+                size="middle"
                 placeholder="VD: Nghiệm thu cốt thép cột C12 tầng 3"
                 prefix={<AppstoreOutlined style={{ color: '#BFBFBF' }} />}
               />
             </Form.Item>
 
-            {/* 5. Tải lên ảnh hiện trường */}
+            {/* 6. Tải lên ảnh hiện trường */}
             <div style={{ marginTop: 8, marginBottom: 8 }}>
               <InspectionImageGallery
                 attachments={attachments}

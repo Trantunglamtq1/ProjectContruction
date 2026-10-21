@@ -16,6 +16,7 @@ export interface ChecklistItemDto {
   isRequired: boolean;
   formSchemaJson: string;
   linkedInspectionId: string | null;
+  linkedInspectionStatus?: string | null;
   status: ChecklistItemStatus;
   rowVersion?: string;
 }

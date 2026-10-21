@@ -11,9 +11,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace ConstructionProject.API.Controllers;
 
 public record CreateInspectionRequest(
-    Guid ObjectId,
-    string? FormSchemaId,
-    string? FormDataJson
+    Guid ChecklistId,
+    Guid ChecklistItemId,
+    Guid? ObjectId = null,
+    string? FormDataJson = null,
+    bool SubmitImmediately = false
 );
 
 public record UpdateInspectionDraftRequest(
@@ -51,7 +53,7 @@ public class InspectionsController : ControllerBase
     }
 
     /// <summary>
-    /// Tạo mới một Form Inspection ở trạng thái Draft (Chỉ Submitter)
+    /// Điền/Khởi tạo phiếu nghiệm thu cho một tiêu chí trong Checklist (Chỉ Submitter)
     /// </summary>
     [HttpPost]
     [Authorize(Roles = RoleConstants.Submitter)]
@@ -65,9 +67,11 @@ public class InspectionsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var command = new CreateInspectionCommand(
+            request.ChecklistId,
+            request.ChecklistItemId,
             request.ObjectId,
-            request.FormSchemaId,
             request.FormDataJson,
+            request.SubmitImmediately,
             _currentUserService.UserId,
             _currentUserService.FullName ?? _currentUserService.Username
         );
@@ -156,6 +160,8 @@ public class InspectionsController : ControllerBase
     public async Task<IActionResult> GetInspections(
         [FromQuery] Guid? objectId,
         [FromQuery] Guid? drawingFileId,
+        [FromQuery] Guid? checklistId,
+        [FromQuery] Guid? checklistItemId,
         [FromQuery] InspectionStatus? status,
         [FromQuery] string? search,
         [FromQuery] int page = 1,
@@ -165,6 +171,8 @@ public class InspectionsController : ControllerBase
         var query = new GetInspectionsQuery(
             objectId,
             drawingFileId,
+            checklistId,
+            checklistItemId,
             status,
             search,
             page,

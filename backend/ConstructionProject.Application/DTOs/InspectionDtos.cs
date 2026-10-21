@@ -29,7 +29,14 @@ public class InspectionDto
     public Guid DrawingFileId { get; set; }
     public string DrawingFileName { get; set; } = string.Empty;
     public int DrawingPageNumber { get; set; }
+
+    public Guid? ChecklistId { get; set; }
+    public string? ChecklistName { get; set; }
+    public Guid? ChecklistItemId { get; set; }
+    public string? ChecklistItemName { get; set; }
+
     public string FormSchemaId { get; set; } = string.Empty;
+    public string? FormSchemaJson { get; set; }
     public string FormDataJson { get; set; } = "{}";
     public string Status { get; set; } = "Draft";
     public string? WorkflowInstanceId { get; set; }

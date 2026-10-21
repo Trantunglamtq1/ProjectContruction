@@ -13,7 +13,12 @@ export interface InspectionDto {
   drawingFileId: string;
   drawingFileName: string;
   drawingPageNumber: number;
+  checklistId?: string | null;
+  checklistName?: string | null;
+  checklistItemId?: string | null;
+  checklistItemName?: string | null;
   formSchemaId: string;
+  formSchemaJson?: string | null;
   formDataJson: string;
   status: InspectionStatus;
   workflowInstanceId?: string | null;
