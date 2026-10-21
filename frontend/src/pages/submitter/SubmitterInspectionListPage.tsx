@@ -17,7 +17,6 @@ import {
   Tooltip,
 } from 'antd';
 import {
-  PlusOutlined,
   SearchOutlined,
   ReloadOutlined,
   EditOutlined,
@@ -29,7 +28,6 @@ import {
   FileDoneOutlined,
 } from '@ant-design/icons';
 import { inspectionApi } from '../../services/inspectionApi';
-import { CreateInspectionModal } from '../../components/inspections/CreateInspectionModal';
 import { InspectionDetailDrawer } from '../../components/inspections/InspectionDetailDrawer';
 import type { InspectionDto, InspectionStatus } from '../../types/inspection';
 
@@ -46,7 +44,6 @@ export const SubmitterInspectionListPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   // Modals state
-  const [createModalVisible, setCreateModalVisible] = useState(false);
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
   const [selectedInspectionId, setSelectedInspectionId] = useState<string | null>(null);
 
@@ -85,14 +82,6 @@ export const SubmitterInspectionListPage: React.FC = () => {
 
   const handleOpenDetail = (id: string) => {
     setSelectedInspectionId(id);
-    setDetailDrawerVisible(true);
-  };
-
-  const handleCreateSuccess = (newInspection: InspectionDto) => {
-    setCreateModalVisible(false);
-    loadData();
-    // Mở ngay Drawer chi tiết để kỹ sư điền thông số kỹ thuật
-    setSelectedInspectionId(newInspection.id);
     setDetailDrawerVisible(true);
   };
 
@@ -269,7 +258,7 @@ export const SubmitterInspectionListPage: React.FC = () => {
             <Text strong>Quản lý Hồ sơ Nghiệm thu (Form Inspection)</Text>
           </Space>
         }
-        description="Khởi tạo biên bản kiểm tra gắn với các cấu kiện Object đã khoanh vùng trên bản vẽ CAD. Bạn có thể lưu nháp nhiều lần trước khi nộp chính thức gửi Tư vấn giám sát thẩm tra."
+        description="Theo dõi và quản lý các hồ sơ nghiệm thu kỹ thuật. Mỗi hồ sơ nghiệm thu bắt buộc phải thuộc về một tiêu chí trong Kế hoạch Checklist của cấu kiện (khoanh vùng trên bản vẽ CAD) và được khởi tạo trực tiếp từ bản vẽ."
         type="info"
         showIcon
       />
@@ -367,14 +356,6 @@ export const SubmitterInspectionListPage: React.FC = () => {
             <Button icon={<ReloadOutlined />} onClick={loadData} loading={loading}>
               Làm mới
             </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setCreateModalVisible(true)}
-              style={{ backgroundColor: '#1677FF', fontWeight: 600 }}
-            >
-              + Tạo mới Inspection
-            </Button>
           </Space>
         </div>
 
@@ -398,12 +379,6 @@ export const SubmitterInspectionListPage: React.FC = () => {
         />
       </Card>
 
-      {/* Modal Khởi tạo Inspection mới */}
-      <CreateInspectionModal
-        visible={createModalVisible}
-        onCancel={() => setCreateModalVisible(false)}
-        onSuccess={handleCreateSuccess}
-      />
 
       {/* Drawer xem chi tiết, điền form động và xem lịch sử */}
       <InspectionDetailDrawer

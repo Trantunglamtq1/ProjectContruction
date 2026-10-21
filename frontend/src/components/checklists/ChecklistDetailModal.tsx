@@ -64,7 +64,6 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
   const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as string) || '';
   const isSubmitter = currentRole === 'Submitter';
   const isReviewer = currentRole === 'Reviewer';
-  const isAdmin = currentRole === 'Admin';
 
   // State quản lý Modals con
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false);
@@ -189,8 +188,8 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
   if (!checklist) return null;
 
   const canEditStructure =
-    (checklist.status === 'Draft' || checklist.status === 'Rejected') && (isSubmitter || isAdmin);
-  const canSupervisorModify = checklist.status === 'PendingSupervisor' && (isReviewer || isAdmin);
+    (checklist.status === 'Draft' || checklist.status === 'Rejected') && isSubmitter;
+  const canSupervisorModify = checklist.status === 'PendingSupervisor' && isReviewer;
   const canModifyItem = canEditStructure || canSupervisorModify;
 
   // Xử lý mở modal sửa tiêu chí
@@ -518,7 +517,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                       );
                     }
 
-                    if (isSubmitter || isAdmin) {
+                    if (isSubmitter) {
                       return (
                         <Button
                           size="small"
@@ -626,7 +625,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
               )}
 
               {/* Hành động của Giám sát (Reviewer) khi PendingSupervisor */}
-              {checklist.status === 'PendingSupervisor' && (isReviewer || isAdmin) && (
+              {checklist.status === 'PendingSupervisor' && isReviewer && (
                 <>
                   <Button
                     danger
