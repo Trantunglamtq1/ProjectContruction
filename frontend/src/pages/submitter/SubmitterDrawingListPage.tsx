@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   Table,
@@ -24,21 +25,18 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { drawingApi, type DrawingFileDto } from '../../services/drawingApi';
 import { useAuth } from '../../contexts/AuthContext';
-import { DrawingViewportModal } from '../../components/viewport/DrawingViewportModal';
 
 const { Text } = Typography;
 const { Dragger } = Upload;
 
 export const SubmitterDrawingListPage: React.FC = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchText, setSearchText] = useState('');
-  const [viewportDrawing, setViewportDrawing] = useState<DrawingFileDto | null>(null);
-  const [isViewportOpen, setIsViewportOpen] = useState(false);
 
   const handleOpenViewport = (drawing: DrawingFileDto) => {
-    setViewportDrawing(drawing);
-    setIsViewportOpen(true);
+    navigate(`/submitter/drawings/${drawing.id}/viewport`);
   };
 
   // Fetch drawings query
@@ -284,14 +282,6 @@ export const SubmitterDrawingListPage: React.FC = () => {
           size="middle"
         />
       </Card>
-
-      {/* INTERACTIVE DRAWING VIEWPORT MODAL */}
-      <DrawingViewportModal
-        open={isViewportOpen}
-        drawing={viewportDrawing}
-        onClose={() => setIsViewportOpen(false)}
-        onObjectCreated={() => refetch()}
-      />
     </div>
   );
 };

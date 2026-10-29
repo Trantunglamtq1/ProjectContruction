@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Card,
   Table,
@@ -13,6 +14,8 @@ import {
   Statistic,
   Progress,
   Tabs,
+  Popconfirm,
+  message,
 } from 'antd';
 import {
   CheckSquareOutlined,
@@ -23,8 +26,10 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined,
   FieldTimeOutlined,
+  DeleteOutlined,
+  FileDoneOutlined,
 } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { checklistApi } from '../../services/checklistApi';
 import type { ChecklistDto, ChecklistStatus } from '../../types/checklist';
 import { ChecklistDetailModal } from '../../components/checklists/ChecklistDetailModal';
@@ -32,10 +37,37 @@ import { ChecklistDetailModal } from '../../components/checklists/ChecklistDetai
 const { Text } = Typography;
 
 export const SubmitterChecklistPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlChecklistId = searchParams.get('checklistId');
+
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (urlChecklistId) {
+      setSelectedChecklistId(urlChecklistId);
+      setDetailModalOpen(true);
+      setActiveTab('ALL');
+    }
+  }, [urlChecklistId]);
+
+  // Mutation: Xóa bản nháp Checklist
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => checklistApi.deleteChecklist(id),
+    onSuccess: () => {
+      message.success('Đã xóa bản nháp Checklist thành công!');
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      queryClient.invalidateQueries({ queryKey: ['checklist-summary-object'] });
+    },
+    onError: (err: any) => {
+      message.error(err.response?.data?.message || 'Lỗi khi xóa Checklist.');
+    },
+  });
 
   // Query danh sách Checklist từ backend
   const {
@@ -174,21 +206,35 @@ export const SubmitterChecklistPage: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 140,
+      width: 170,
       align: 'center' as const,
       render: (_: any, record: ChecklistDto) => (
-        <Button
-          type="primary"
-          size="small"
-          onClick={() => {
-            setSelectedChecklistId(record.id);
-            setDetailModalOpen(true);
-          }}
-        >
-          {record.status === 'Draft' || record.status === 'Rejected'
-            ? 'Thiết kế Form'
-            : 'Chi tiết'}
-        </Button>
+        <Space size={6}>
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              setSelectedChecklistId(record.id);
+              setDetailModalOpen(true);
+            }}
+          >
+            {record.status === 'Draft' || record.status === 'Rejected'
+              ? 'Thiết kế Form'
+              : 'Chi tiết'}
+          </Button>
+          {(record.status === 'Draft' || record.status === 'Rejected') && (
+            <Popconfirm
+              title="Xóa kế hoạch Checklist?"
+              description={`Bạn có chắc muốn xóa bản nháp "${record.name}" không?`}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true, loading: deleteMutation.isPending }}
+              onConfirm={() => deleteMutation.mutate(record.id)}
+            >
+              <Button danger size="small" icon={<DeleteOutlined />} />
+            </Popconfirm>
+          )}
+        </Space>
       ),
     },
   ];
@@ -208,6 +254,15 @@ export const SubmitterChecklistPage: React.FC = () => {
         description="Giai đoạn 1 (Planning): Thiết lập các tiêu chí kiểm tra cho từng cấu kiện khoanh vùng và thiết kế biểu mẫu Form.io. Gửi Tư vấn giám sát phê duyệt cấu trúc trước khi tiến hành nghiệm thu thi công."
         type="info"
         showIcon
+        action={
+          <Button
+            size="small"
+            icon={<FileDoneOutlined />}
+            onClick={() => navigate('/submitter/inspections')}
+          >
+            Đến Hồ sơ Inspection
+          </Button>
+        }
       />
 
       {/* Thẻ thống kê KPI */}
@@ -316,6 +371,10 @@ export const SubmitterChecklistPage: React.FC = () => {
           onClose={() => {
             setDetailModalOpen(false);
             setSelectedChecklistId(null);
+            if (searchParams.get('checklistId')) {
+              searchParams.delete('checklistId');
+              setSearchParams(searchParams, { replace: true });
+            }
             refetch();
           }}
           onRefresh={() => refetch()}

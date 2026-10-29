@@ -18,11 +18,16 @@ public class ApproveInspectionCommandHandler : IRequestHandler<ApproveInspection
 {
     private readonly IApplicationDbContext _context;
     private readonly IInspectionWorkflowService _workflowService;
+    private readonly INotificationService _notificationService;
 
-    public ApproveInspectionCommandHandler(IApplicationDbContext context, IInspectionWorkflowService workflowService)
+    public ApproveInspectionCommandHandler(
+        IApplicationDbContext context, 
+        IInspectionWorkflowService workflowService,
+        INotificationService notificationService)
     {
         _context = context;
         _workflowService = workflowService;
+        _notificationService = notificationService;
     }
 
     public async Task<InspectionDto> Handle(ApproveInspectionCommand request, CancellationToken cancellationToken)
@@ -114,6 +119,31 @@ public class ApproveInspectionCommandHandler : IRequestHandler<ApproveInspection
 
         _context.InspectionAuditHistories.Add(history);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Bắn thông báo cho Submitter (Kỹ sư nộp đơn)
+        if (inspection.SubmittedById.HasValue)
+        {
+            await _notificationService.SendNotificationToUserAsync(inspection.SubmittedById.Value.ToString(), new NotificationMessage
+            {
+                Title = "Nghiệm thu chính thức thành công (Cấp 2)",
+                Content = $"Chủ đầu tư đã phê duyệt nghiệm thu hồ sơ cấu kiện '{inspection.Object?.Name ?? "cấu kiện"}' (Mã: {inspection.Id.ToString()[..8]}). Các tiêu chí Checklist đã hoàn tất.",
+                Type = "success",
+                ReferenceId = inspection.Id.ToString(),
+                ReferenceType = "Inspection",
+                TargetUrl = "/submitter/inspections"
+            }, cancellationToken);
+        }
+
+        // Bắn thông báo cho Role Reviewer
+        await _notificationService.SendNotificationToRoleAsync("Reviewer", new NotificationMessage
+        {
+            Title = "Hồ sơ đã được Chủ đầu tư nghiệm thu",
+            Content = $"Chủ đầu tư {inspection.ApprovedBy} đã phê duyệt nghiệm thu hồ sơ '{inspection.Object?.Name ?? inspection.Id.ToString()}'.",
+            Type = "success",
+            ReferenceId = inspection.Id.ToString(),
+            ReferenceType = "Inspection",
+            TargetUrl = "/reviewer/checklists"
+        }, cancellationToken);
 
         return new InspectionDto
         {

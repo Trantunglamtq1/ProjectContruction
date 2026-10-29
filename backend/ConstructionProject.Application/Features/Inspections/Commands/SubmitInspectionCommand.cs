@@ -46,11 +46,16 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
 {
     private readonly IApplicationDbContext _context;
     private readonly IInspectionWorkflowService _workflowService;
+    private readonly INotificationService _notificationService;
 
-    public SubmitInspectionCommandHandler(IApplicationDbContext context, IInspectionWorkflowService workflowService)
+    public SubmitInspectionCommandHandler(
+        IApplicationDbContext context, 
+        IInspectionWorkflowService workflowService,
+        INotificationService notificationService)
     {
         _context = context;
         _workflowService = workflowService;
+        _notificationService = notificationService;
     }
 
     public async Task<InspectionDto> Handle(SubmitInspectionCommand request, CancellationToken cancellationToken)
@@ -133,6 +138,16 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
         _context.InspectionAuditHistories.Add(history);
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _notificationService.SendNotificationToRoleAsync("Reviewer", new NotificationMessage
+        {
+            Title = isResubmit ? "Hồ sơ nộp lại cần thẩm tra" : "Hồ sơ nghiệm thu mới cần thẩm tra",
+            Content = $"Kỹ sư {inspection.SubmittedBy ?? "hiện trường"} đã nộp hồ sơ kiểm tra cho cấu kiện '{inspection.Object?.Name ?? "cấu kiện"}'",
+            Type = "info",
+            ReferenceId = inspection.Id.ToString(),
+            ReferenceType = "Inspection",
+            TargetUrl = "/reviewer/checklists"
+        }, cancellationToken);
 
         return new InspectionDto
         {

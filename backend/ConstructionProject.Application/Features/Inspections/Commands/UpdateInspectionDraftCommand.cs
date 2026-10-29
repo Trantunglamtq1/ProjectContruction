@@ -62,9 +62,10 @@ public class UpdateInspectionDraftCommandHandler : IRequestHandler<UpdateInspect
             throw new KeyNotFoundException($"Không tìm thấy Form Inspection với Id = {request.Id}.");
         }
 
-        if (inspection.Status != InspectionStatus.Draft)
+        // Cho phép chỉnh sửa khi trạng thái là Draft hoặc Rejected (nộp lại sau khi bị từ chối)
+        if (inspection.Status != InspectionStatus.Draft && inspection.Status != InspectionStatus.Rejected)
         {
-            throw new InvalidOperationException($"Chỉ có thể chỉnh sửa hồ sơ kiểm tra khi ở trạng thái 'Draft' (Bản nháp). Trạng thái hiện tại: {inspection.Status}.");
+            throw new InvalidOperationException($"Chỉ có thể chỉnh sửa hồ sơ kiểm tra khi ở trạng thái 'Draft' hoặc 'Rejected'. Trạng thái hiện tại: {inspection.Status}.");
         }
 
         // Kiểm tra quyền: Nếu đã lưu SubmittedById thì chỉ chính người đó mới được sửa (hoặc kiểm tra role Submitter)

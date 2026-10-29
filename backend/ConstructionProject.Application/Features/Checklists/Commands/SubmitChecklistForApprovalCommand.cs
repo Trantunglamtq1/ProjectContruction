@@ -17,13 +17,16 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
 {
     private readonly IApplicationDbContext _context;
     private readonly IChecklistWorkflowService _workflowService;
+    private readonly INotificationService _notificationService;
 
     public SubmitChecklistForApprovalCommandHandler(
         IApplicationDbContext context, 
-        IChecklistWorkflowService workflowService)
+        IChecklistWorkflowService workflowService,
+        INotificationService notificationService)
     {
         _context = context;
         _workflowService = workflowService;
+        _notificationService = notificationService;
     }
 
     public async Task<ChecklistDto> Handle(SubmitChecklistForApprovalCommand request, CancellationToken cancellationToken)
@@ -81,6 +84,17 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
         _context.ChecklistAuditHistories.Add(auditHistory);
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Bắn thông báo Realtime SignalR cho Reviewers (Tư vấn giám sát)
+        await _notificationService.SendNotificationToRoleAsync("Reviewer", new NotificationMessage
+        {
+            Title = "Kế hoạch Checklist mới chờ thẩm định",
+            Content = $"Kỹ sư {submitter} đã trình duyệt kế hoạch Checklist '{checklist.Name}'. Vui lòng thẩm định cấu trúc và biểu mẫu.",
+            Type = "info",
+            ReferenceId = checklist.Id.ToString(),
+            ReferenceType = "Checklist",
+            TargetUrl = "/reviewer/checklists"
+        }, cancellationToken);
 
         var auditList = await _context.ChecklistAuditHistories
             .Where(a => a.ChecklistId == checklist.Id)

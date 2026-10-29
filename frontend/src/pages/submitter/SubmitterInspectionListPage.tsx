@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Card,
   Table,
@@ -26,6 +27,7 @@ import {
   ClockCircleOutlined,
   CloseCircleOutlined,
   FileDoneOutlined,
+  CheckSquareOutlined,
 } from '@ant-design/icons';
 import { inspectionApi } from '../../services/inspectionApi';
 import { InspectionDetailDrawer } from '../../components/inspections/InspectionDetailDrawer';
@@ -34,18 +36,36 @@ import type { InspectionDto, InspectionStatus } from '../../types/inspection';
 const { Text } = Typography;
 
 export const SubmitterInspectionListPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlInspectionId = searchParams.get('inspectionId');
+  const urlSearch = searchParams.get('search');
+
   const [loading, setLoading] = useState(false);
   const [inspections, setInspections] = useState<InspectionDto[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [pageIndex, setPageIndex] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState(urlSearch || '');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   // Modals state
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
   const [selectedInspectionId, setSelectedInspectionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (urlInspectionId) {
+      setSelectedInspectionId(urlInspectionId);
+      setDetailDrawerVisible(true);
+    }
+  }, [urlInspectionId]);
+
+  useEffect(() => {
+    if (urlSearch && urlSearch !== searchText) {
+      setSearchText(urlSearch);
+    }
+  }, [urlSearch]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -137,9 +157,24 @@ export const SubmitterInspectionListPage: React.FC = () => {
             <div style={{ fontWeight: 600, color: '#0f172a' }}>
               {record.checklistItemName || 'Tiêu chuẩn nghiệm thu'}
             </div>
-            <div style={{ fontSize: 12, color: '#475569' }}>
-              Checklist: <b>{record.checklistName || 'Checklist cấu kiện'}</b>
-            </div>
+            {record.checklistId ? (
+              <Button
+                type="link"
+                size="small"
+                icon={<CheckSquareOutlined />}
+                style={{ padding: 0, height: 'auto', fontSize: 12, fontWeight: 600 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/submitter/checklists?checklistId=${record.checklistId}`);
+                }}
+              >
+                {record.checklistName || `Mã Checklist #${record.checklistId.substring(0, 8).toUpperCase()}`}
+              </Button>
+            ) : (
+              <div style={{ fontSize: 12, color: '#475569' }}>
+                Checklist: <b>{record.checklistName || 'Checklist cấu kiện'}</b>
+              </div>
+            )}
             <Text type="secondary" style={{ fontSize: 11 }}>
               Cấu kiện: {text}
             </Text>
@@ -199,7 +234,7 @@ export const SubmitterInspectionListPage: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 170,
+      width: 210,
       align: 'center' as const,
       render: (_: any, record: InspectionDto) => {
         const isDraft = record.status === 'Draft';
@@ -225,6 +260,20 @@ export const SubmitterInspectionListPage: React.FC = () => {
                 onClick={() => handleOpenDetail(record.id)}
               >
                 Xem
+              </Button>
+            )}
+
+            {record.checklistId && (
+              <Button
+                size="small"
+                type="dashed"
+                icon={<CheckSquareOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/submitter/checklists?checklistId=${record.checklistId}`);
+                }}
+              >
+                Checklist
               </Button>
             )}
 
@@ -261,6 +310,16 @@ export const SubmitterInspectionListPage: React.FC = () => {
         description="Theo dõi và quản lý các hồ sơ nghiệm thu kỹ thuật. Mỗi hồ sơ nghiệm thu bắt buộc phải thuộc về một tiêu chí trong Kế hoạch Checklist của cấu kiện (khoanh vùng trên bản vẽ CAD) và được khởi tạo trực tiếp từ bản vẽ."
         type="info"
         showIcon
+        action={
+          <Button
+            size="small"
+            type="primary"
+            icon={<CheckSquareOutlined />}
+            onClick={() => navigate('/submitter/checklists')}
+          >
+            Đến Quản lý Checklist
+          </Button>
+        }
       />
 
       {/* Thẻ thống kê tổng quan */}
@@ -387,6 +446,10 @@ export const SubmitterInspectionListPage: React.FC = () => {
         onClose={() => {
           setDetailDrawerVisible(false);
           setSelectedInspectionId(null);
+          if (searchParams.get('inspectionId')) {
+            searchParams.delete('inspectionId');
+            setSearchParams(searchParams, { replace: true });
+          }
         }}
         onUpdated={loadData}
         isSubmitterRole={true}

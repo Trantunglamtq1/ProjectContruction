@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, Table, Button, Space, Input, Typography, Tag, Alert } from 'antd';
 import {
   FilePdfOutlined,
@@ -9,18 +10,15 @@ import {
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { drawingApi, type DrawingFileDto } from '../../services/drawingApi';
-import { DrawingViewportModal } from '../../components/viewport/DrawingViewportModal';
 
 const { Text } = Typography;
 
 export const ApproverDrawingListPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
-  const [viewportDrawing, setViewportDrawing] = useState<DrawingFileDto | null>(null);
-  const [isViewportOpen, setIsViewportOpen] = useState(false);
 
   const handleOpenViewport = (drawing: DrawingFileDto) => {
-    setViewportDrawing(drawing);
-    setIsViewportOpen(true);
+    navigate(`/approver/drawings/${drawing.id}/viewport`);
   };
 
   const {
@@ -151,14 +149,6 @@ export const ApproverDrawingListPage: React.FC = () => {
           size="middle"
         />
       </Card>
-
-      {/* APPROVER VIEWPORT MODAL */}
-      <DrawingViewportModal
-        open={isViewportOpen}
-        drawing={viewportDrawing}
-        onClose={() => setIsViewportOpen(false)}
-        onObjectCreated={() => refetch()}
-      />
     </div>
   );
 };

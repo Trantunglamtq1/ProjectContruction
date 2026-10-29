@@ -26,6 +26,7 @@ import {
   SendOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  ClockCircleOutlined,
   FileTextOutlined,
   HistoryOutlined,
   LockOutlined,
@@ -34,6 +35,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { checklistApi } from '../../services/checklistApi';
+import { inspectionApi } from '../../services/inspectionApi';
 import type {
   ChecklistDto,
   ChecklistItemDto,
@@ -64,6 +66,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
   const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as string) || '';
   const isSubmitter = currentRole === 'Submitter';
   const isReviewer = currentRole === 'Reviewer';
+  const isApprover = currentRole === 'Approver';
 
   // State quản lý Modals con
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false);
@@ -75,8 +78,14 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
   const [inspectionModalOpen, setInspectionModalOpen] = useState(false);
   const [inspectionTargetItem, setInspectionTargetItem] = useState<ChecklistItemDto | null>(null);
 
+  // State thẩm tra / phê duyệt phiếu nghiệm thu của từng tiêu chí bên trong Checklist
+  const [itemRejectModalOpen, setItemRejectModalOpen] = useState(false);
+  const [itemRejectTarget, setItemRejectTarget] = useState<ChecklistItemDto | null>(null);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
   const [itemForm] = Form.useForm();
   const [rejectForm] = Form.useForm();
+  const [itemRejectForm] = Form.useForm();
 
   // Query chi tiết Checklist
   const {
@@ -185,6 +194,77 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
     },
   });
 
+  // Mutation: Xóa toàn bộ Kế hoạch Checklist (khi còn là Draft hoặc Rejected)
+  const deleteChecklistMutation = useMutation({
+    mutationFn: () => checklistApi.deleteChecklist(checklistId!),
+    onSuccess: () => {
+      message.success('Đã xóa bản nháp Checklist thành công!');
+      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      queryClient.invalidateQueries({ queryKey: ['checklist-summary-object'] });
+      onRefresh?.();
+      onClose();
+    },
+    onError: (err: any) => {
+      message.error(err.response?.data?.message || 'Lỗi khi xóa Checklist.');
+    },
+  });
+
+  // Xử lý Reviewer phê duyệt Cấp 1 phiếu nghiệm thu của tiêu chí bên trong Checklist
+  const handleReviewItemInspection = async (item: ChecklistItemDto) => {
+    if (!item.linkedInspectionId) return;
+    try {
+      setActionLoadingId(item.id);
+      await inspectionApi.reviewInspection(item.linkedInspectionId);
+      message.success(`Đã thẩm tra đạt tiêu chuẩn kỹ thuật tiêu chí "${item.name}"!`);
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      onRefresh?.();
+    } catch (err: any) {
+      message.error(err.response?.data?.message || 'Lỗi khi thẩm tra tiêu chí.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Xử lý Approver phê duyệt Cấp 2 phiếu nghiệm thu của tiêu chí bên trong Checklist
+  const handleApproveItemInspection = async (item: ChecklistItemDto) => {
+    if (!item.linkedInspectionId) return;
+    try {
+      setActionLoadingId(item.id);
+      await inspectionApi.approveInspection(item.linkedInspectionId);
+      message.success(`Đã phê duyệt chính thức tiêu chí "${item.name}" sang ĐẠT!`);
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      onRefresh?.();
+    } catch (err: any) {
+      message.error(err.response?.data?.message || 'Lỗi khi phê duyệt tiêu chí.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Xử lý Từ chối (Reviewer hoặc Approver) phiếu nghiệm thu kèm lý do
+  const handleConfirmRejectItem = async () => {
+    if (!itemRejectTarget || !itemRejectTarget.linkedInspectionId) return;
+    try {
+      const values = await itemRejectForm.validateFields();
+      setActionLoadingId(itemRejectTarget.id);
+      await inspectionApi.rejectInspection(itemRejectTarget.linkedInspectionId, { reason: values.reason });
+      message.warning(`Đã từ chối tiêu chí "${itemRejectTarget.name}" và gửi yêu cầu sửa đổi cho Kỹ sư!`);
+      setItemRejectModalOpen(false);
+      setItemRejectTarget(null);
+      itemRejectForm.resetFields();
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      onRefresh?.();
+    } catch (err: any) {
+      if (err.errorFields) return;
+      message.error(err.response?.data?.message || 'Lỗi khi từ chối tiêu chí.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
   if (!checklist) return null;
 
   const canEditStructure =
@@ -278,13 +358,15 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
               </Title>
               {getStatusTag(checklist.status)}
             </Space>
-            <Button
-              icon={<HistoryOutlined />}
-              onClick={() => setAuditDrawerOpen(true)}
-              size="small"
-            >
-              Nhật ký kiểm toán ({checklist.auditHistories?.length ?? 0})
-            </Button>
+            <Space size={8}>
+              <Button
+                icon={<HistoryOutlined />}
+                onClick={() => setAuditDrawerOpen(true)}
+                size="small"
+              >
+                Nhật ký kiểm toán ({checklist.auditHistories?.length ?? 0})
+              </Button>
+            </Space>
           </div>
         }
       >
@@ -487,20 +569,24 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                             color={
                               record.linkedInspectionStatus === 'Approved'
                                 ? 'success'
-                                : record.linkedInspectionStatus === 'Submitted'
-                                ? 'processing'
-                                : record.linkedInspectionStatus === 'Rejected'
-                                ? 'error'
-                                : 'default'
+                                : record.linkedInspectionStatus === 'Reviewed'
+                                  ? 'blue'
+                                  : record.linkedInspectionStatus === 'Submitted'
+                                    ? 'processing'
+                                    : record.linkedInspectionStatus === 'Rejected'
+                                      ? 'error'
+                                      : 'default'
                             }
                           >
                             {record.linkedInspectionStatus === 'Approved'
                               ? 'Đã duyệt'
-                              : record.linkedInspectionStatus === 'Submitted'
-                              ? 'Chờ duyệt'
-                              : record.linkedInspectionStatus === 'Rejected'
-                              ? 'Cần sửa đổi'
-                              : 'Bản nháp'}
+                              : record.linkedInspectionStatus === 'Reviewed'
+                                ? 'Đã thẩm tra'
+                                : record.linkedInspectionStatus === 'Submitted'
+                                  ? 'Chờ duyệt'
+                                  : record.linkedInspectionStatus === 'Rejected'
+                                    ? 'Cần sửa đổi'
+                                    : 'Bản nháp'}
                           </Tag>
                           <Button
                             size="small"
@@ -511,7 +597,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                               setInspectionModalOpen(true);
                             }}
                           >
-                            Xem / Cập nhật
+                            {isSubmitter ? 'Xem / Cập nhật' : 'Xem phiếu'}
                           </Button>
                         </Space>
                       );
@@ -549,7 +635,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
               {
                 title: 'Kết quả',
                 dataIndex: 'status',
-                width: 140,
+                width: 130,
                 align: 'center',
                 render: (status: string) => (
                   <Tag
@@ -562,43 +648,135 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                 ),
               },
               {
-                title: 'Thao tác',
+                title: 'Thao tác & Phê duyệt',
                 key: 'actions',
-                width: 100,
+                width: 210,
                 align: 'center',
                 render: (_: any, record: ChecklistItemDto) => {
-                  if (!canModifyItem) return <Text type="secondary">-</Text>;
-                  return (
-                    <Space size={2}>
-                      <Tooltip title="Chỉnh sửa tên & cấu hình">
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<EditOutlined style={{ color: '#1677ff' }} />}
-                          onClick={() => handleOpenEditItem(record)}
-                        />
-                      </Tooltip>
-                      <Popconfirm
-                        title="Xóa tiêu chí này?"
-                        description="Hành động này sẽ xóa mềm tiêu chí khỏi checklist."
-                        onConfirm={() => deleteItemMutation.mutate(record.id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                        okButtonProps={{ danger: true }}
-                        disabled={!!record.linkedInspectionId}
-                      >
-                        <Tooltip title={record.linkedInspectionId ? 'Không thể xóa tiêu chí đã gắn phiếu' : 'Xóa tiêu chí'}>
+                  // Giai đoạn nghiệm thu hiện trường: Giám sát và CĐT thẩm tra & phê duyệt trực tiếp trong Checklist
+                  if (checklist.canFillInspection && record.linkedInspectionId) {
+                    // Reviewer thẩm tra Cấp 1 khi hồ sơ ở trạng thái Submitted
+                    if (isReviewer && record.linkedInspectionStatus === 'Submitted') {
+                      return (
+                        <Space size={6}>
+                          <Popconfirm
+                            title="Xác nhận thẩm tra ĐẠT?"
+                            description={`Phê duyệt Cấp 1 cho tiêu chí "${record.name}".`}
+                            onConfirm={() => handleReviewItemInspection(record)}
+                            okText="Duyệt Đạt"
+                            cancelText="Hủy"
+                            okButtonProps={{ loading: actionLoadingId === record.id }}
+                          >
+                            <Button
+                              size="small"
+                              type="primary"
+                              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                              icon={<CheckCircleOutlined />}
+                              loading={actionLoadingId === record.id}
+                            >
+                              Duyệt Cấp 1
+                            </Button>
+                          </Popconfirm>
+                          <Button
+                            size="small"
+                            danger
+                            icon={<CloseCircleOutlined />}
+                            onClick={() => {
+                              setItemRejectTarget(record);
+                              setItemRejectModalOpen(true);
+                            }}
+                          >
+                            Yêu cầu sửa
+                          </Button>
+                        </Space>
+                      );
+                    }
+
+                    // Approver phê duyệt Cấp 2 khi hồ sơ ở trạng thái Reviewed
+                    if (isApprover && record.linkedInspectionStatus === 'Reviewed') {
+                      return (
+                        <Space size={6}>
+                          <Popconfirm
+                            title="Phê duyệt nghiệm thu chính thức?"
+                            description={`Phê duyệt Cấp 2 cho tiêu chí "${record.name}" và chuyển sang ĐẠT.`}
+                            onConfirm={() => handleApproveItemInspection(record)}
+                            okText="Phê duyệt"
+                            cancelText="Hủy"
+                            okButtonProps={{ loading: actionLoadingId === record.id }}
+                          >
+                            <Button
+                              size="small"
+                              type="primary"
+                              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                              icon={<CheckCircleOutlined />}
+                              loading={actionLoadingId === record.id}
+                            >
+                              Duyệt Cấp 2
+                            </Button>
+                          </Popconfirm>
+                          <Button
+                            size="small"
+                            danger
+                            icon={<CloseCircleOutlined />}
+                            onClick={() => {
+                              setItemRejectTarget(record);
+                              setItemRejectModalOpen(true);
+                            }}
+                          >
+                            Từ chối
+                          </Button>
+                        </Space>
+                      );
+                    }
+
+                    // Trạng thái đã duyệt xong hoặc đang chờ
+                    if (record.linkedInspectionStatus === 'Approved') {
+                      return <Tag color="success" icon={<CheckCircleOutlined />}>Đã hoàn thành</Tag>;
+                    }
+                    if (isReviewer && record.linkedInspectionStatus === 'Reviewed') {
+                      return <Tag color="blue" icon={<ClockCircleOutlined />}>Đã duyệt C1 (Chờ CĐT)</Tag>;
+                    }
+                    if (record.linkedInspectionStatus === 'Rejected') {
+                      return <Tag color="error" icon={<CloseCircleOutlined />}>Đã từ chối</Tag>;
+                    }
+                  }
+
+                  // Giai đoạn lập kế hoạch (Draft/PendingSupervisor): Cho phép chỉnh sửa/xóa
+                  if (canModifyItem) {
+                    return (
+                      <Space size={2}>
+                        <Tooltip title="Chỉnh sửa tên & cấu hình">
                           <Button
                             type="text"
                             size="small"
-                            danger
-                            disabled={!!record.linkedInspectionId}
-                            icon={<DeleteOutlined />}
+                            icon={<EditOutlined style={{ color: '#1677ff' }} />}
+                            onClick={() => handleOpenEditItem(record)}
                           />
                         </Tooltip>
-                      </Popconfirm>
-                    </Space>
-                  );
+                        <Popconfirm
+                          title="Xóa tiêu chí này?"
+                          description="Hành động này sẽ xóa mềm tiêu chí khỏi checklist."
+                          onConfirm={() => deleteItemMutation.mutate(record.id)}
+                          okText="Xóa"
+                          cancelText="Hủy"
+                          okButtonProps={{ danger: true }}
+                          disabled={!!record.linkedInspectionId}
+                        >
+                          <Tooltip title={record.linkedInspectionId ? 'Không thể xóa tiêu chí đã gắn phiếu' : 'Xóa tiêu chí'}>
+                            <Button
+                              type="text"
+                              size="small"
+                              danger
+                              disabled={!!record.linkedInspectionId}
+                              icon={<DeleteOutlined />}
+                            />
+                          </Tooltip>
+                        </Popconfirm>
+                      </Space>
+                    );
+                  }
+
+                  return <Text type="secondary" style={{ fontSize: 12 }}>-</Text>;
                 },
               },
             ]}
@@ -608,7 +786,23 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
 
           {/* Thanh công cụ hành động phía dưới */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button onClick={onClose}>Đóng</Button>
+            <Space>
+              <Button onClick={onClose}>Đóng</Button>
+              {canEditStructure && (
+                <Popconfirm
+                  title="Xóa kế hoạch Checklist?"
+                  description={`Bạn có chắc chắn muốn xóa bản nháp "${checklist.name}" không?`}
+                  okText="Xóa"
+                  cancelText="Hủy"
+                  okButtonProps={{ danger: true, loading: deleteChecklistMutation.isPending }}
+                  onConfirm={() => deleteChecklistMutation.mutate()}
+                >
+                  <Button danger icon={<DeleteOutlined />} loading={deleteChecklistMutation.isPending}>
+                    Xóa Checklist
+                  </Button>
+                </Popconfirm>
+              )}
+            </Space>
 
             <Space>
               {/* Hành động của Kỹ sư (Submitter) khi Draft hoặc Rejected */}
@@ -769,6 +963,55 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
           onSave={handleSaveFormSchema}
         />
       )}
+
+      {/* Modal: Giám sát / CĐT Từ chối tiêu chí nghiệm thu */}
+      <Modal
+        open={itemRejectModalOpen}
+        onCancel={() => {
+          setItemRejectModalOpen(false);
+          setItemRejectTarget(null);
+          itemRejectForm.resetFields();
+        }}
+        zIndex={1360}
+        title={
+          <Space>
+            <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+            <span>
+              {isReviewer
+                ? `Yêu cầu sửa đổi tiêu chí: ${itemRejectTarget?.name || ''}`
+                : `Từ chối phê duyệt tiêu chí: ${itemRejectTarget?.name || ''}`}
+            </span>
+          </Space>
+        }
+        okText="Xác nhận từ chối"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true, loading: actionLoadingId !== null }}
+        onOk={handleConfirmRejectItem}
+      >
+        <Form form={itemRejectForm} layout="vertical">
+          <Form.Item
+            name="reason"
+            label={
+              isReviewer
+                ? 'Nội dung yêu cầu sửa đổi (Gửi phản hồi cho Kỹ sư hiện trường)'
+                : 'Lý do từ chối phê duyệt nghiệm thu'
+            }
+            rules={[
+              { required: true, message: 'Vui lòng nhập lý do từ chối!' },
+              { min: 3, message: 'Lý do phải có ít nhất 3 ký tự!' },
+            ]}
+          >
+            <Input.TextArea
+              rows={4}
+              placeholder={
+                isReviewer
+                  ? 'Ví dụ: Kích thước hình học chưa đạt, cần kiểm tra và khắc phục lại...'
+                  : 'Ví dụ: Cần đối chiếu lại với bản vẽ hoàn công và nhật ký thi công...'
+              }
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* Nhật ký kiểm toán Drawer */}
       <ChecklistAuditTrailDrawer

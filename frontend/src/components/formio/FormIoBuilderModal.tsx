@@ -244,7 +244,6 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
     const updatedList = [...components];
     updatedList[selectedCompIndex] = updatedComp;
     setComponents(updatedList);
-    message.success('Đã cập nhật thuộc tính trường!');
   };
 
   // Di chuyển trường lên / xuống
@@ -284,6 +283,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
       components: components,
     };
     onSave(finalSchema);
+    message.success('Đã áp dụng biểu mẫu thành công!');
   };
 
   const currentComp = selectedCompIndex !== null ? components[selectedCompIndex] : null;

@@ -52,7 +52,11 @@ export const checklistApi = {
 
   // Giám sát từ chối Checklist
   supervisorReject: async (id: string, payload: SupervisorRejectPayload): Promise<ChecklistDto> => {
-    const res = await apiClient.post<ChecklistDto>(`/checklists/${id}/supervisor-reject`, payload);
+    const res = await apiClient.post<ChecklistDto>(`/checklists/${id}/supervisor-reject`, {
+      reason: payload.reason,
+      rejectReason: payload.rejectReason || payload.reason,
+      comment: payload.comment || payload.reason,
+    });
     return res.data;
   },
 

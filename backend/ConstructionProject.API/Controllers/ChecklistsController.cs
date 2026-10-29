@@ -105,12 +105,18 @@ public class ChecklistsController : ControllerBase
         [FromBody] SupervisorDecisionRequest request, 
         CancellationToken cancellationToken)
     {
+        var reason = !string.IsNullOrWhiteSpace(request.RejectReason)
+            ? request.RejectReason
+            : (!string.IsNullOrWhiteSpace(request.Reason)
+                ? request.Reason
+                : (request.Comment ?? string.Empty));
+
         var command = new SupervisorRejectChecklistCommand(
             id,
-            request.RejectReason ?? request.Comment ?? string.Empty,
+            reason,
             _currentUserService.UserId,
             _currentUserService.Username ?? "Supervisor",
-            request.Comment
+            request.Comment ?? reason
         );
 
         var result = await _mediator.Send(command, cancellationToken);

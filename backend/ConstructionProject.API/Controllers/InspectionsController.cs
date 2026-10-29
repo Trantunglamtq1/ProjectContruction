@@ -27,12 +27,23 @@ public record SubmitInspectionRequest(
 );
 
 public record WorkflowActionRequest(
-    string? Comment
-);
+    string? Comment = null,
+    string? Notes = null
+)
+{
+    public string? GetEffectiveComment() =>
+        !string.IsNullOrWhiteSpace(Comment) ? Comment : (!string.IsNullOrWhiteSpace(Notes) ? Notes : null);
+}
 
 public record RejectInspectionRequest(
-    string Reason
-);
+    string? Reason = null,
+    string? Comment = null,
+    string? Notes = null
+)
+{
+    public string GetEffectiveReason() =>
+        !string.IsNullOrWhiteSpace(Reason) ? Reason : (!string.IsNullOrWhiteSpace(Comment) ? Comment : (!string.IsNullOrWhiteSpace(Notes) ? Notes : string.Empty));
+}
 
 [ApiController]
 [Route("api/[controller]")]
@@ -231,8 +242,9 @@ public class InspectionsController : ControllerBase
     }
 
     /// <summary>
-    /// Reviewer thẩm tra đạt kỹ thuật - Phê duyệt Cấp 1 (UnderReview -> Reviewed)
+    /// Reviewer thẩm tra đạt kỹ thuật - Phê duyệt Cấp 1 (Submitted/UnderReview -> Reviewed)
     /// </summary>
+    [HttpPost("{id:guid}/review")]
     [HttpPost("{id:guid}/review-pass")]
     [Authorize(Roles = RoleConstants.Reviewer)]
     [ProducesResponseType(typeof(InspectionDto), StatusCodes.Status200OK)]
@@ -240,16 +252,16 @@ public class InspectionsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ReviewPassInspection(
+    public async Task<IActionResult> ReviewInspection(
         Guid id,
         [FromBody] WorkflowActionRequest? request,
         CancellationToken cancellationToken)
     {
-        var command = new ReviewPassInspectionCommand(
+        var command = new ReviewInspectionCommand(
             id,
             _currentUserService.UserId,
             _currentUserService.FullName ?? _currentUserService.Username,
-            request?.Comment
+            request?.GetEffectiveComment()
         );
         var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
@@ -275,7 +287,7 @@ public class InspectionsController : ControllerBase
             id,
             _currentUserService.UserId,
             _currentUserService.FullName ?? _currentUserService.Username,
-            request?.Comment
+            request?.GetEffectiveComment()
         );
         var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
@@ -296,9 +308,10 @@ public class InspectionsController : ControllerBase
         [FromBody] RejectInspectionRequest request,
         CancellationToken cancellationToken)
     {
+        var reason = request?.GetEffectiveReason() ?? string.Empty;
         var command = new RejectInspectionCommand(
             id,
-            request.Reason,
+            reason,
             _currentUserService.UserId,
             _currentUserService.FullName ?? _currentUserService.Username,
             _currentUserService.Role

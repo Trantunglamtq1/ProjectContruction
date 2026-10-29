@@ -14,11 +14,13 @@ import {
   message,
   Alert,
   Spin,
+  Popconfirm,
 } from 'antd';
 import {
   CheckSquareOutlined,
   PlusOutlined,
   RightOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
@@ -47,7 +49,6 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
   const { user } = useAuth();
   const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as string) || '';
   const isSubmitter = currentRole === 'Submitter';
-  const isAdmin = currentRole === 'Admin';
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
@@ -113,6 +114,22 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || err.message || 'Lỗi khi tạo Checklist.';
+      message.error(msg);
+    },
+  });
+
+  // Mutation: Xóa bản nháp Checklist
+  const deleteMutation = useMutation({
+    mutationFn: (checklistId: string) => checklistApi.deleteChecklist(checklistId),
+    onSuccess: () => {
+      message.success('Đã xóa bản nháp Checklist thành công!');
+      refetchSummary();
+      refetchList();
+      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      queryClient.invalidateQueries({ queryKey: ['checklist-summary-object'] });
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.message || err.message || 'Lỗi khi xóa Checklist.';
       message.error(msg);
     },
   });
@@ -188,7 +205,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
             <Text strong style={{ fontSize: 14 }}>
               Danh sách Checklist ({displayChecklists.length})
             </Text>
-            {(isSubmitter || isAdmin) && (
+            {isSubmitter && (
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -211,7 +228,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
               description="Cấu kiện này chưa có Checklist kiểm tra nào."
               style={{ padding: '30px 0' }}
             >
-              {(isSubmitter || isAdmin) && (
+              {isSubmitter && (
                 <Button
                   type="dashed"
                   icon={<PlusOutlined />}
@@ -271,21 +288,47 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 120 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 140 }}>
                       <Progress
                         percent={chk.progressPercentage}
                         size="small"
                         style={{ width: 100, marginBottom: 6 }}
                         status={chk.status === 'Completed' ? 'success' : 'normal'}
                       />
-                      <Button
-                        type="link"
-                        size="small"
-                        icon={<RightOutlined />}
-                        style={{ padding: 0 }}
-                      >
-                        Chi tiết
-                      </Button>
+                      <Space size={4}>
+                        {isSubmitter && (chk.status === 'Draft' || chk.status === 'Rejected') && (
+                          <Popconfirm
+                            title="Xóa kế hoạch Checklist?"
+                            description={`Bạn có chắc chắn muốn xóa bản nháp "${chk.name}" không?`}
+                            okText="Xóa"
+                            cancelText="Hủy"
+                            okButtonProps={{ danger: true, loading: deleteMutation.isPending }}
+                            onConfirm={(e) => {
+                              e?.stopPropagation();
+                              deleteMutation.mutate(chk.id);
+                            }}
+                            onCancel={(e) => e?.stopPropagation()}
+                          >
+                            <Button
+                              type="text"
+                              danger
+                              size="small"
+                              icon={<DeleteOutlined />}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Xóa
+                            </Button>
+                          </Popconfirm>
+                        )}
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<RightOutlined />}
+                          style={{ padding: 0 }}
+                        >
+                          Chi tiết
+                        </Button>
+                      </Space>
                     </div>
                   </div>
                 </Card>
