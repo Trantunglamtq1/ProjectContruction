@@ -136,8 +136,9 @@ public record SupervisorModifyItemDto(
 );
 
 public record SupervisorDecisionRequest(
-    string? Comment,
-    string? RejectReason
+    string? Comment = null,
+    string? RejectReason = null,
+    string? Reason = null
 );
 
 public record LinkInspectionToChecklistItemRequest(

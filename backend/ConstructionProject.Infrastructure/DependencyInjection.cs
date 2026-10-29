@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddElsa();
         services.AddScoped<IInspectionWorkflowService, InspectionWorkflowService>();
         services.AddScoped<IChecklistWorkflowService, ChecklistWorkflowService>();
+        services.AddScoped<INotificationService, SignalRNotificationService>();
 
         return services;
     }

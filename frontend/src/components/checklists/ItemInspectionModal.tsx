@@ -38,6 +38,8 @@ import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
 import { InspectionImageGallery } from '../inspections/InspectionImageGallery';
 import { useAuth } from '../../contexts/AuthContext';
 
+
+
 const { Text, Title, Paragraph } = Typography;
 
 interface ItemInspectionModalProps {
@@ -59,6 +61,8 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
   const { user } = useAuth();
   const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as string) || '';
   const isSubmitter = currentRole === 'Submitter';
+  const isReviewer = currentRole === 'Reviewer';
+  const isApprover = currentRole === 'Approver';
 
   const [form] = Form.useForm();
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -201,6 +205,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
     return (inspection.status === 'Draft' || inspection.status === 'Rejected') && isSubmitter;
   }, [item, inspection, isSubmitter]);
 
+
   // Trạng thái badge
   const renderStatusTag = (status?: InspectionStatus) => {
     switch (status) {
@@ -333,9 +338,21 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
                   <CheckCircleOutlined /> Tiêu chí này đã được phê duyệt nghiệm thu ĐẠT
                 </Tag>
               )}
+              {inspection?.status === 'Submitted' && isReviewer && (
+                <Tag color="processing">
+                  <ClockCircleOutlined /> Đang chờ thẩm tra — Thực hiện phê duyệt tại danh mục Checklist
+                </Tag>
+              )}
+              {inspection?.status === 'Reviewed' && isApprover && (
+                <Tag color="blue">
+                  <ClockCircleOutlined /> Đã qua thẩm tra — Thực hiện phê duyệt tại danh mục Checklist
+                </Tag>
+              )}
             </div>
             <Space>
               <Button onClick={onClose}>Đóng</Button>
+
+              {/* Nút hành động Submitter */}
               {canEdit && (
                 <>
                   <Button
@@ -489,6 +506,8 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
         onCancel={() => setBuilderModalOpen(false)}
         onSave={handleSaveCustomSchema}
       />
+
+
     </>
   );
 };

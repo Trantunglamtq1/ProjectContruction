@@ -4,6 +4,7 @@ import { ConfigProvider, App as AntdApp } from 'antd';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { themeConfig } from './config/theme';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { AuthGuard, RoleGuard, PublicOnlyGuard } from './components/guards/RouteGuards';
 import { MasterLayout } from './components/layout/MasterLayout';
 import { RegisterPage } from './pages/auth/RegisterPage';
@@ -19,6 +20,7 @@ import { ReviewerChecklistPage } from './pages/reviewer/ReviewerChecklistPage';
 import { ApproverDrawingListPage } from './pages/approver/ApproverDrawingListPage';
 import { ApproverInspectionListPage } from './pages/approver/ApproverInspectionListPage';
 import { ApproverChecklistPage } from './pages/approver/ApproverChecklistPage';
+import { DrawingViewportPage } from './pages/drawings/DrawingViewportPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,7 +37,8 @@ export const App: React.FC = () => {
       <ConfigProvider theme={themeConfig}>
         <AntdApp>
           <AuthProvider>
-            <BrowserRouter>
+            <NotificationProvider>
+              <BrowserRouter>
               <Routes>
                 {/* Public only routes */}
                 <Route
@@ -89,6 +92,14 @@ export const App: React.FC = () => {
                     }
                   />
                   <Route
+                    path="/submitter/drawings/:id/viewport"
+                    element={
+                      <RoleGuard allowedRoles={['Submitter']}>
+                        <DrawingViewportPage />
+                      </RoleGuard>
+                    }
+                  />
+                  <Route
                     path="/submitter/checklists"
                     element={
                       <RoleGuard allowedRoles={['Submitter']}>
@@ -111,6 +122,14 @@ export const App: React.FC = () => {
                     element={
                       <RoleGuard allowedRoles={['Reviewer']}>
                         <ReviewerDrawingListPage />
+                      </RoleGuard>
+                    }
+                  />
+                  <Route
+                    path="/reviewer/drawings/:id/viewport"
+                    element={
+                      <RoleGuard allowedRoles={['Reviewer']}>
+                        <DrawingViewportPage />
                       </RoleGuard>
                     }
                   />
@@ -141,6 +160,14 @@ export const App: React.FC = () => {
                     }
                   />
                   <Route
+                    path="/approver/drawings/:id/viewport"
+                    element={
+                      <RoleGuard allowedRoles={['Approver']}>
+                        <DrawingViewportPage />
+                      </RoleGuard>
+                    }
+                  />
+                  <Route
                     path="/approver/inspections"
                     element={
                       <RoleGuard allowedRoles={['Approver']}>
@@ -153,6 +180,16 @@ export const App: React.FC = () => {
                     element={
                       <RoleGuard allowedRoles={['Approver']}>
                         <ApproverChecklistPage />
+                      </RoleGuard>
+                    }
+                  />
+
+                  {/* Unified Direct Drawing Viewport Route */}
+                  <Route
+                    path="/drawings/:id/viewport"
+                    element={
+                      <RoleGuard allowedRoles={['Submitter', 'Reviewer', 'Approver', 'Admin']}>
+                        <DrawingViewportPage />
                       </RoleGuard>
                     }
                   />
@@ -182,9 +219,10 @@ export const App: React.FC = () => {
                 />
               </Routes>
             </BrowserRouter>
-          </AuthProvider>
-        </AntdApp>
-      </ConfigProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </AntdApp>
+    </ConfigProvider>
     </QueryClientProvider>
   );
 };

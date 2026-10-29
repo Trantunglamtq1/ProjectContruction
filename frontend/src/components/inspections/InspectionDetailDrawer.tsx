@@ -26,7 +26,10 @@ import {
   ToolOutlined,
   BranchesOutlined,
   PictureOutlined,
+  CheckSquareOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { inspectionApi } from '../../services/inspectionApi';
 import { DynamicFormIoRenderer } from '../formio/DynamicFormIoRenderer';
 import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
@@ -56,6 +59,15 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
   onUpdated,
   isSubmitterRole = true,
 }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const currentRole = ((Array.isArray(user?.role) ? user?.role[0] : user?.role) as string) || '';
+  const roleBase = currentRole.toLowerCase() === 'approver'
+    ? '/approver'
+    : currentRole.toLowerCase() === 'reviewer'
+      ? '/reviewer'
+      : '/submitter';
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -292,6 +304,23 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
       onClose={onClose}
       width={880}
       destroyOnClose
+      extra={
+        <Button
+          type="primary"
+          ghost
+          size="small"
+          icon={<CheckSquareOutlined />}
+          onClick={() => {
+            onClose();
+            const target = inspection?.checklistId
+              ? `${roleBase}/checklists?checklistId=${inspection.checklistId}`
+              : `${roleBase}/checklists`;
+            navigate(target);
+          }}
+        >
+          {inspection?.checklistId ? 'Mở Kế hoạch Checklist' : 'Quản lý Checklist'}
+        </Button>
+      }
       footer={
         isEditable ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -364,8 +393,37 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
                 <Descriptions.Item label={<Text type="secondary">Ngày tạo</Text>}>
                   <Text>{new Date(inspection.createdAt).toLocaleString('vi-VN')}</Text>
                 </Descriptions.Item>
-                <Descriptions.Item label={<Text type="secondary">Checklist liên kết</Text>}>
-                  <Tag color="cyan">{inspection.linkedChecklistItemsCount} tiêu chí</Tag>
+                <Descriptions.Item label={<Text type="secondary">Kế hoạch Checklist</Text>}>
+                  {inspection.checklistId ? (
+                    <Space size={6} wrap>
+                      <Button
+                        type="link"
+                        size="small"
+                        icon={<CheckSquareOutlined />}
+                        style={{ padding: 0, height: 'auto', fontWeight: 600 }}
+                        onClick={() => {
+                          onClose();
+                          navigate(`${roleBase}/checklists?checklistId=${inspection.checklistId}`);
+                        }}
+                      >
+                        {inspection.checklistName || `Mã #${inspection.checklistId.substring(0, 8).toUpperCase()}`}
+                      </Button>
+                      <Tag color="cyan">{inspection.linkedChecklistItemsCount} tiêu chí</Tag>
+                    </Space>
+                  ) : (
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<CheckSquareOutlined />}
+                      style={{ padding: 0, height: 'auto' }}
+                      onClick={() => {
+                        onClose();
+                        navigate(`${roleBase}/checklists`);
+                      }}
+                    >
+                      Đến danh sách Checklist
+                    </Button>
+                  )}
                 </Descriptions.Item>
                 {inspection.workflowInstanceId && (
                   <Descriptions.Item label={<Text type="secondary">Elsa Workflow ID</Text>}>
@@ -376,6 +434,49 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
                 )}
               </Descriptions>
             </Card>
+
+            {/* Thanh điều hướng trực tiếp sang Kế hoạch Checklist */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '10px 14px',
+                background: '#F0F5FF',
+                border: '1px solid #ADC6FF',
+                borderRadius: 8,
+              }}
+            >
+              <Space>
+                <CheckSquareOutlined style={{ color: '#1677FF', fontSize: 16 }} />
+                <div>
+                  <Text strong style={{ color: '#1D39C4', fontSize: 13 }}>
+                    {inspection.checklistId
+                      ? `Hồ sơ này thuộc Checklist: ${inspection.checklistName || inspection.objectName}`
+                      : 'Hồ sơ thuộc quy trình nghiệm thu Checklist'}
+                  </Text>
+                  {inspection.checklistItemName && (
+                    <div style={{ fontSize: 12, color: '#595959' }}>
+                      Tiêu chí nghiệm thu liên kết: <b>{inspection.checklistItemName}</b>
+                    </div>
+                  )}
+                </div>
+              </Space>
+              <Button
+                type="primary"
+                size="small"
+                icon={<CheckSquareOutlined />}
+                onClick={() => {
+                  onClose();
+                  const target = inspection.checklistId
+                    ? `${roleBase}/checklists?checklistId=${inspection.checklistId}`
+                    : `${roleBase}/checklists`;
+                  navigate(target);
+                }}
+              >
+                Chuyển sang Checklist &rarr;
+              </Button>
+            </div>
 
             {/* Tabs: Nội dung Biểu mẫu vs Lịch sử thẩm tra */}
             <Tabs

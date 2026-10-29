@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Typography, Avatar, Tag, Button, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import {
@@ -12,14 +13,45 @@ import {
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import type { UserRole } from '../../types/auth';
+import { NotificationBell } from './NotificationBell';
 
-const { Header, Sider, Content } = Layout;
+const { Header, Sider, Content, Footer } = Layout;
 const { Text } = Typography;
 
 export const MasterLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isViewportPage = location.pathname.includes('/viewport');
+  const [collapsed, setCollapsed] = useState<boolean>(isViewportPage);
+
+  useEffect(() => {
+    setCollapsed(isViewportPage);
+  }, [isViewportPage]);
+
+  // Tự động active Menu item tương ứng kể cả khi đang xem trang con (như Viewport)
+  const getActiveMenuKey = () => {
+    const path = location.pathname;
+    if (path.includes('/drawings')) {
+      if (path.startsWith('/submitter')) return '/submitter/drawings';
+      if (path.startsWith('/reviewer')) return '/reviewer/drawings';
+      if (path.startsWith('/approver')) return '/approver/drawings';
+      return '/submitter/drawings';
+    }
+    if (path.includes('/checklists')) {
+      if (path.startsWith('/submitter')) return '/submitter/checklists';
+      if (path.startsWith('/reviewer')) return '/reviewer/checklists';
+      if (path.startsWith('/approver')) return '/approver/checklists';
+    }
+    if (path.includes('/inspections')) {
+      if (path.startsWith('/submitter')) return '/submitter/inspections';
+      if (path.startsWith('/reviewer')) return '/reviewer/inspections';
+      if (path.startsWith('/approver')) return '/approver/inspections';
+    }
+    if (path.startsWith('/admin/users')) return '/admin/users';
+    return path;
+  };
 
   const handleLogout = () => {
     logout();
@@ -149,6 +181,8 @@ export const MasterLayout: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <NotificationBell />
+          <div style={{ width: 1, height: 24, backgroundColor: '#E5E7EB' }} />
           <Space orientation="horizontal" size={8} align="center">
             <Avatar size={32} icon={<UserOutlined />} style={{ backgroundColor: '#1677FF' }} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -179,7 +213,11 @@ export const MasterLayout: React.FC = () => {
       <Layout>
         {currentRole && (
           <Sider
+            collapsible
+            collapsed={collapsed}
+            onCollapse={(val) => setCollapsed(val)}
             width={220}
+            collapsedWidth={isViewportPage ? 0 : 80}
             style={{
               backgroundColor: '#FFFFFF',
               borderRight: '1px solid #E4E7ED',
@@ -187,7 +225,7 @@ export const MasterLayout: React.FC = () => {
           >
             <Menu
               mode="inline"
-              selectedKeys={[location.pathname]}
+              selectedKeys={[getActiveMenuKey()]}
               onClick={({ key }) => navigate(key)}
               items={getMenuItems()}
               style={{ height: '100%', borderRight: 0, paddingTop: 8 }}
@@ -195,15 +233,35 @@ export const MasterLayout: React.FC = () => {
           </Sider>
         )}
 
-        <Content
-          style={{
-            backgroundColor: '#F5F7FA',
-            padding: '24px',
-            minHeight: 'calc(100vh - 64px)',
-          }}
-        >
-          <Outlet />
-        </Content>
+        <Layout style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)' }}>
+          <Content
+            style={{
+              backgroundColor: isViewportPage ? '#0f172a' : '#F5F7FA',
+              padding: isViewportPage ? 0 : '24px',
+              height: isViewportPage ? 'calc(100vh - 64px)' : undefined,
+              minHeight: isViewportPage ? undefined : 'calc(100vh - 64px - 54px)',
+              overflow: isViewportPage ? 'hidden' : 'auto',
+              flex: 1,
+            }}
+          >
+            <Outlet />
+          </Content>
+
+          {!isViewportPage && (
+            <Footer
+              style={{
+                textAlign: 'center',
+                padding: '16px 24px',
+                backgroundColor: '#FFFFFF',
+                borderTop: '1px solid #E4E7ED',
+                color: '#8C8C8C',
+                fontSize: 13,
+              }}
+            >
+              ConstructInspect © {new Date().getFullYear()} — Hệ thống Quản lý & Giám sát Nghiệm thu Công trình
+            </Footer>
+          )}
+        </Layout>
       </Layout>
     </Layout>
   );

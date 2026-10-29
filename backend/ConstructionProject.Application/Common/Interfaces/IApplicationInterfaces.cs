@@ -14,6 +14,7 @@ public interface IApplicationDbContext
     DbSet<ChecklistAuditHistory> ChecklistAuditHistories { get; }
     DbSet<User> Users { get; }
     DbSet<Role> Roles { get; }
+    DbSet<Notification> Notifications { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -30,13 +30,16 @@ public class SupervisorRejectChecklistCommandHandler : IRequestHandler<Superviso
 {
     private readonly IApplicationDbContext _context;
     private readonly IChecklistWorkflowService _workflowService;
+    private readonly INotificationService _notificationService;
 
     public SupervisorRejectChecklistCommandHandler(
         IApplicationDbContext context, 
-        IChecklistWorkflowService workflowService)
+        IChecklistWorkflowService workflowService,
+        INotificationService notificationService)
     {
         _context = context;
         _workflowService = workflowService;
+        _notificationService = notificationService;
     }
 
     public async Task<ChecklistDto> Handle(SupervisorRejectChecklistCommand request, CancellationToken cancellationToken)
@@ -91,6 +94,20 @@ public class SupervisorRejectChecklistCommandHandler : IRequestHandler<Superviso
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Bắn thông báo Realtime SignalR cho Submitter (Kỹ sư nộp checklist)
+        if (checklist.CreatedById.HasValue)
+        {
+            await _notificationService.SendNotificationToUserAsync(checklist.CreatedById.Value.ToString(), new NotificationMessage
+            {
+                Title = "Kế hoạch Checklist bị từ chối",
+                Content = $"Giám sát {checklist.ReviewedBy} đã từ chối kế hoạch Checklist '{checklist.Name}'. Lý do: \"{checklist.RejectReason}\"",
+                Type = "error",
+                ReferenceId = checklist.Id.ToString(),
+                ReferenceType = "Checklist",
+                TargetUrl = "/submitter/checklists"
+            }, cancellationToken);
+        }
 
         var auditList = await _context.ChecklistAuditHistories
             .Where(a => a.ChecklistId == checklist.Id)

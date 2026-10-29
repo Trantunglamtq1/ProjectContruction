@@ -92,6 +92,8 @@ export interface SupervisorApprovePayload {
 
 export interface SupervisorRejectPayload {
   reason: string;
+  rejectReason?: string;
+  comment?: string;
 }
 
 export interface SupervisorModifyPayload {

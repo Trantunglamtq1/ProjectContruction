@@ -88,6 +88,9 @@ export interface SmartDrawingViewportProps {
   // Callback khi xóa một Object
   onDeleteObject?: (objectId: string) => Promise<void> | void;
   readOnly?: boolean;
+  headerLeft?: React.ReactNode;
+  headerRight?: React.ReactNode;
+  footerContent?: React.ReactNode;
 }
 
 export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
@@ -100,6 +103,9 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
   onSaveObject,
   onDeleteObject,
   readOnly = false,
+  headerLeft,
+  headerRight,
+  footerContent,
 }) => {
   // 1. PDF Document, Image & Page States
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -1002,17 +1008,18 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          height: 46,
-          minHeight: 46,
-          maxHeight: 46,
+          height: 48,
+          minHeight: 48,
+          maxHeight: 48,
           flexShrink: 0,
           padding: '0 16px',
-          background: 'rgba(30, 41, 59, 0.9)',
+          background: 'rgba(30, 41, 59, 0.95)',
           backdropFilter: 'blur(8px)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           zIndex: 10,
           overflow: 'hidden',
           whiteSpace: 'nowrap',
+          gap: 10,
         }}
       >
         <div
@@ -1026,6 +1033,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
             whiteSpace: 'nowrap',
           }}
         >
+          {headerLeft}
           <Badge status="processing" color="#10b981" style={{ flexShrink: 0 }} />
           <Text
             strong
@@ -1163,6 +1171,8 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
               Fit
             </Button>
           </Tooltip>
+
+          {headerRight}
         </div>
       </div>
 
@@ -1493,35 +1503,54 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
               ))}
           </svg>
         </div>
+      </div>
 
-        {/* 4. BẢNG HƯỚNG DẪN NHANH */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 16,
-            left: 16,
-            padding: '8px 14px',
-            background: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 6,
-            color: '#94a3b8',
-            fontSize: 12,
-            pointerEvents: 'none',
-            zIndex: 10,
-          }}
-        >
-          <Space direction="vertical" size={2}>
-            <div>
-              <span style={{ color: '#10b981', fontWeight: 600 }}>🖱️ Click Chuột Trái:</span> Chốt đỉnh thẳng (<b>'anchor'</b>).
-            </div>
-            <div>
-              <span style={{ color: '#38bdf8', fontWeight: 600 }}>📐 Shift + Click:</span> Chốt điểm giữa cung tròn (<b>'arc_mid'</b>).
-            </div>
-            <div>
-              <span style={{ color: '#facc15', fontWeight: 600 }}>🎯 Khép kín hình:</span> Rê chuột về điểm đầu P₀ (bán kính 8px), Click hoặc ấn <b>Enter</b> / <b>Double-Click</b> để tạo Cấu kiện.
-            </div>
-          </Space>
+      {/* 4. THANH TRẠNG THÁI & HƯỚNG DẪN CAD (FOOTER STATUS BAR) */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          height: 36,
+          minHeight: 36,
+          maxHeight: 36,
+          flexShrink: 0,
+          padding: '0 16px',
+          background: 'rgba(15, 23, 42, 0.98)',
+          backdropFilter: 'blur(8px)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          zIndex: 10,
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          color: '#94a3b8',
+          fontSize: 12,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
+          {!readOnly ? (
+            <>
+              <span><span style={{ color: '#10b981', fontWeight: 600 }}>🖱️ Click:</span> Đỉnh thẳng</span>
+              <span style={{ color: '#334155' }}>•</span>
+              <span><span style={{ color: '#38bdf8', fontWeight: 600 }}>📐 Shift+Click:</span> Đỉnh cong</span>
+              <span style={{ color: '#334155' }}>•</span>
+              <span><span style={{ color: '#facc15', fontWeight: 600 }}>🎯 P₀/Enter:</span> Khép hình</span>
+              <span style={{ color: '#334155' }}>•</span>
+              <span><span style={{ color: '#cbd5e1', fontWeight: 600 }}>⌨️ Backspace:</span> Lùi điểm</span>
+              <span style={{ color: '#334155' }}>•</span>
+              <span><span style={{ color: '#f87171', fontWeight: 600 }}>Esc:</span> Hủy</span>
+            </>
+          ) : (
+            <span><span style={{ color: '#38bdf8', fontWeight: 600 }}>👁️ Chế độ giám sát:</span> Bấm vào cấu kiện trên bản vẽ hoặc danh sách để tra cứu thông tin & Checklist</span>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <span>Trang: <b>{currentPage} / {totalPages}</b></span>
+          <span style={{ color: '#334155' }}>•</span>
+          <span>Thu phóng: <b>{Math.round(zoom * 100)}%</b></span>
+          <span style={{ color: '#334155' }}>•</span>
+          <span>Cấu kiện: <b style={{ color: '#38bdf8' }}>{existingObjects.length}</b></span>
+          {footerContent}
         </div>
       </div>
 

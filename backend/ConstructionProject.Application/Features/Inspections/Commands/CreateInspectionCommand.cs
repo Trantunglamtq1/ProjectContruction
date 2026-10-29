@@ -53,11 +53,16 @@ public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCo
 {
     private readonly IApplicationDbContext _context;
     private readonly IInspectionWorkflowService _workflowService;
+    private readonly INotificationService _notificationService;
 
-    public CreateInspectionCommandHandler(IApplicationDbContext context, IInspectionWorkflowService workflowService)
+    public CreateInspectionCommandHandler(
+        IApplicationDbContext context, 
+        IInspectionWorkflowService workflowService,
+        INotificationService notificationService)
     {
         _context = context;
         _workflowService = workflowService;
+        _notificationService = notificationService;
     }
 
     public async Task<InspectionDto> Handle(CreateInspectionCommand request, CancellationToken cancellationToken)
@@ -214,6 +219,19 @@ public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCo
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (request.SubmitImmediately)
+        {
+            await _notificationService.SendNotificationToRoleAsync("Reviewer", new NotificationMessage
+            {
+                Title = "Hồ sơ nghiệm thu mới cần thẩm tra",
+                Content = $"Kỹ sư {entity.SubmittedBy ?? "hiện trường"} đã nộp hồ sơ kiểm tra cho tiêu chí '{item.Name}' thuộc cấu kiện '{constructionObject.Name}'",
+                Type = "info",
+                ReferenceId = entity.Id.ToString(),
+                ReferenceType = "Inspection",
+                TargetUrl = "/reviewer/checklists"
+            }, cancellationToken);
+        }
 
         return new InspectionDto
         {

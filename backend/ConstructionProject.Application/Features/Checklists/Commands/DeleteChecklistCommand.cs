@@ -1,4 +1,5 @@
 using ConstructionProject.Application.Common.Interfaces;
+using ConstructionProject.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,6 +38,12 @@ public class DeleteChecklistCommandHandler : IRequestHandler<DeleteChecklistComm
         if (hasInspection)
         {
             throw new InvalidOperationException("Không thể xóa Checklist này vì đã có phiếu nghiệm thu phát sinh trên các tiêu chí.");
+        }
+
+        // Ràng buộc trạng thái: Chỉ cho phép xóa khi chưa nộp duyệt (Draft) hoặc đã bị từ chối (Rejected)
+        if (checklist.Status != ChecklistStatus.Draft && checklist.Status != ChecklistStatus.Rejected)
+        {
+            throw new InvalidOperationException($"Không thể xóa Kế hoạch Checklist ở trạng thái '{checklist.Status}'. Chỉ có thể xóa bản nháp (Draft) hoặc kế hoạch bị từ chối (Rejected).");
         }
 
         // Thực hiện Xóa mềm (Soft Delete - NFR-1)

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Card,
   Table,
@@ -21,6 +22,7 @@ import {
   CheckCircleOutlined,
   SafetyCertificateOutlined,
   EyeOutlined,
+  FileDoneOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { checklistApi } from '../../services/checklistApi';
@@ -30,10 +32,22 @@ import { ChecklistDetailModal } from '../../components/checklists/ChecklistDetai
 const { Text } = Typography;
 
 export const ApproverChecklistPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlChecklistId = searchParams.get('checklistId');
+
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (urlChecklistId) {
+      setSelectedChecklistId(urlChecklistId);
+      setDetailModalOpen(true);
+      setActiveTab('ALL');
+    }
+  }, [urlChecklistId]);
 
   // Query danh sách Checklist từ backend
   const {
@@ -185,6 +199,15 @@ export const ApproverChecklistPage: React.FC = () => {
         description="Theo dõi toàn bộ các danh mục kiểm tra kỹ thuật của dự án, tiến độ hoàn thành các tiêu chuẩn thi công và kết quả nghiệm thu giữa Tư vấn giám sát và Kỹ sư nhà thầu."
         type="success"
         showIcon
+        action={
+          <Button
+            size="small"
+            icon={<FileDoneOutlined />}
+            onClick={() => navigate('/approver/inspections')}
+          >
+            Đến Hồ sơ Inspection
+          </Button>
+        }
       />
 
       {/* Thẻ thống kê KPI */}
@@ -264,6 +287,10 @@ export const ApproverChecklistPage: React.FC = () => {
           onClose={() => {
             setDetailModalOpen(false);
             setSelectedChecklistId(null);
+            if (searchParams.get('checklistId')) {
+              searchParams.delete('checklistId');
+              setSearchParams(searchParams, { replace: true });
+            }
             refetch();
           }}
           onRefresh={() => refetch()}

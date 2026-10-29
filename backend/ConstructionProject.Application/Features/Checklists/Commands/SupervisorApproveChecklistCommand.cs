@@ -18,13 +18,16 @@ public class SupervisorApproveChecklistCommandHandler : IRequestHandler<Supervis
 {
     private readonly IApplicationDbContext _context;
     private readonly IChecklistWorkflowService _workflowService;
+    private readonly INotificationService _notificationService;
 
     public SupervisorApproveChecklistCommandHandler(
         IApplicationDbContext context, 
-        IChecklistWorkflowService workflowService)
+        IChecklistWorkflowService workflowService,
+        INotificationService notificationService)
     {
         _context = context;
         _workflowService = workflowService;
+        _notificationService = notificationService;
     }
 
     public async Task<ChecklistDto> Handle(SupervisorApproveChecklistCommand request, CancellationToken cancellationToken)
@@ -78,6 +81,20 @@ public class SupervisorApproveChecklistCommandHandler : IRequestHandler<Supervis
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Bắn thông báo Realtime SignalR cho Submitter (Kỹ sư nộp checklist)
+        if (checklist.CreatedById.HasValue)
+        {
+            await _notificationService.SendNotificationToUserAsync(checklist.CreatedById.Value.ToString(), new NotificationMessage
+            {
+                Title = "Kế hoạch Checklist đã được phê duyệt",
+                Content = $"Giám sát {checklist.ReviewedBy} đã phê duyệt kế hoạch Checklist '{checklist.Name}'. Bạn có thể bắt đầu nghiệm thu hiện trường.",
+                Type = "success",
+                ReferenceId = checklist.Id.ToString(),
+                ReferenceType = "Checklist",
+                TargetUrl = "/submitter/checklists"
+            }, cancellationToken);
+        }
 
         var auditList = await _context.ChecklistAuditHistories
             .Where(a => a.ChecklistId == checklist.Id)
