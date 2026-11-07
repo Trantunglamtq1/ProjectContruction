@@ -38,9 +38,7 @@ e:/Contruction_Project/
 │   ├── test_auth_jwt.py                    # Script tự động test 10 kịch bản Auth & Role
 │   ├── test_day2_api.py                    # Script test Upload bản vẽ & Tạo Object từ Marker
 │   └── api-tests.http                      # File HTTP request cho REST Client / VS Code
-├── CHECKLIST-TIEN-DO-23-NGAY.md            # Bảng theo dõi tiến độ chi tiết từng ngày
-├── du-an-inspection-checklist.md           # Tài liệu đặc tả nghiệp vụ tổng thể 23 ngày
-└── dac-ta-man-hinh.md                      # Đặc tả chi tiết giao diện màn hình
+└── test_sample_drawing.pdf                 # File PDF mẫu dùng cho test tự động
 ```
 
 ---
