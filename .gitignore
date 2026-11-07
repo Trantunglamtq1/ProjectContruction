@@ -43,3 +43,13 @@ Thumbs.db
 .env
 .vscode/
 
+
+.fake
+
+## Internal business & design docs (local only, not published)
+BAO-CAO-TONG-KET-REVIEW-SAN-PHAM.md
+CHECKLIST-TIEN-DO-23-NGAY.md
+dac-ta-man-hinh.md
+du-an-inspection-checklist.md
+phan-tich-chuc-nang-theo-role.md
+stitch_ui_design_and_navigation_flow/
