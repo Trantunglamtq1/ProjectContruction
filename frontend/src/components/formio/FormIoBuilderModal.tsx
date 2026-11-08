@@ -45,43 +45,25 @@ import {
 } from '@ant-design/icons';
 import { DynamicFormIoRenderer } from './DynamicFormIoRenderer';
 import { FORM_TEMPLATES, type FormTemplateOption } from './formTemplates';
+import { calculateButtonFitSize } from './formioLayout';
+import {
+  canRedo as historyCanRedo,
+  canUndo as historyCanUndo,
+  cloneComponents,
+  createHistory,
+  pushSnapshot,
+  redo,
+  undo,
+  type HistorySnapshot,
+  type HistoryState,
+} from './formioHistory';
 import type { FormIoComponent, FormIoSchema } from '../../types/inspection';
-
-interface HistorySnapshot {
-  components: FormIoComponent[];
-  selectedCompIndex: number | null;
-  formTitle: string;
-}
 
 const { Text, Title, Paragraph } = Typography;
 
 // Khổ thiết kế cơ sở (tương thích các form mẫu cũ). Khi mở ở chế độ toàn màn hình,
 // canvas sẽ tự mở rộng theo bề rộng còn trống để không bị cắt mất các nút dài.
 const CANVAS_W = 820;
-
-/**
- * Tính toán kích thước bo gọn chuẩn xác theo độ lớn (fontSize) và độ dài của text
- */
-export const calculateButtonFitSize = (label: string, fontSize = 13, hasIcon = true) => {
-  const fs = fontSize || 13;
-  let textWidth = 0;
-  if (typeof document !== 'undefined') {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.font = `600 ${fs}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`;
-      textWidth = ctx.measureText(label || '').width;
-    }
-  }
-  if (!textWidth) {
-    textWidth = (label || '').length * (fs * 0.7);
-  }
-  // Padding: icon (20px) + padding trái phải (24px) + khoảng đệm chữ (8px)
-  const iconPadding = hasIcon ? 20 : 0;
-  const fitW = Math.max(50, Math.ceil(textWidth + iconPadding + 32));
-  const fitH = Math.max(28, Math.round(fs * 2.2));
-  return { w: fitW, h: fitH };
-};
 
 interface FormIoBuilderModalProps {
   visible: boolean;
@@ -607,8 +589,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
   // Undo / Redo
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  const historyRef = useRef<HistorySnapshot[]>([]);
-  const historyIndexRef = useRef<number>(-1);
+  const historyRef = useRef<HistoryState>(createHistory());
   const isApplyingHistoryRef = useRef(false);
   const historyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formTitleRef = useRef(formTitle);
@@ -673,37 +654,17 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
 
   /* ========================================================================
    *  UNDO / REDO HISTORY
+   *  Logic thuần nằm ở formioHistory.ts để có thể unit test độc lập.
    * ======================================================================== */
-  const cloneComponents = (list: FormIoComponent[]): FormIoComponent[] =>
-    JSON.parse(JSON.stringify(list || []));
-
   const syncHistoryButtons = useCallback(() => {
-    setCanUndo(historyIndexRef.current > 0);
-    setCanRedo(
-      historyIndexRef.current >= 0 &&
-        historyIndexRef.current < historyRef.current.length - 1
-    );
+    setCanUndo(historyCanUndo(historyRef.current));
+    setCanRedo(historyCanRedo(historyRef.current));
   }, []);
 
   const pushHistory = useCallback((snap: HistorySnapshot) => {
-    const hist = historyRef.current;
-    const current = hist[historyIndexRef.current];
-    const sameAsCurrent =
-      !!current &&
-      current.formTitle === snap.formTitle &&
-      JSON.stringify(current.components) === JSON.stringify(snap.components);
-    if (sameAsCurrent) return;
-
-    // Cắt bỏ nhánh redo cũ khi có thay đổi mới
-    hist.splice(historyIndexRef.current + 1);
-    hist.push({
-      components: cloneComponents(snap.components),
-      selectedCompIndex: snap.selectedCompIndex,
-      formTitle: snap.formTitle,
-    });
-    // Giới hạn bộ nhớ lịch sử
-    if (hist.length > 100) hist.shift();
-    historyIndexRef.current = hist.length - 1;
+    const next = pushSnapshot(historyRef.current, snap);
+    if (next === historyRef.current) return;
+    historyRef.current = next;
     syncHistoryButtons();
   }, [syncHistoryButtons]);
 
@@ -713,7 +674,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
       clearTimeout(historyTimerRef.current);
       historyTimerRef.current = null;
     }
-    if (historyIndexRef.current < 0) return;
+    if (historyRef.current.index < 0) return;
     pushHistory({
       components: componentsRef.current,
       selectedCompIndex: selectedCompIndexRef.current,
@@ -739,25 +700,24 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
 
   const handleUndo = useCallback(() => {
     flushPendingHistory();
-    const idx = historyIndexRef.current;
-    if (idx <= 0) return;
-    historyIndexRef.current = idx - 1;
-    applySnapshot(historyRef.current[idx - 1]);
+    const result = undo(historyRef.current);
+    if (!result.snapshot) return;
+    historyRef.current = result.state;
+    applySnapshot(result.snapshot);
   }, [applySnapshot, flushPendingHistory]);
 
   const handleRedo = useCallback(() => {
     flushPendingHistory();
-    const idx = historyIndexRef.current;
-    if (idx < 0 || idx >= historyRef.current.length - 1) return;
-    historyIndexRef.current = idx + 1;
-    applySnapshot(historyRef.current[idx + 1]);
+    const result = redo(historyRef.current);
+    if (!result.snapshot) return;
+    historyRef.current = result.state;
+    applySnapshot(result.snapshot);
   }, [applySnapshot, flushPendingHistory]);
 
   /* Reset lịch sử khi đóng modal (khởi tạo lịch sử nằm trong effect khởi tạo modal) */
   useEffect(() => {
     if (visible) return;
-    historyRef.current = [];
-    historyIndexRef.current = -1;
+    historyRef.current = createHistory();
     if (historyTimerRef.current) {
       clearTimeout(historyTimerRef.current);
       historyTimerRef.current = null;
@@ -768,7 +728,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
 
   /* Tự động ghi nhận lịch sử (debounce) khi nội dung form thay đổi */
   useEffect(() => {
-    if (!visible || historyIndexRef.current < 0) return;
+    if (!visible || historyRef.current.index < 0) return;
 
     if (isApplyingHistoryRef.current) {
       isApplyingHistoryRef.current = false;
@@ -866,8 +826,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
         const nextTitle = initialSchema.title || 'Biểu mẫu tùy chỉnh';
         setFormTitle(nextTitle);
         setSelectedCompIndex(0);
-        historyRef.current = [];
-        historyIndexRef.current = -1;
+        historyRef.current = createHistory();
         pushHistory({ components: normalized, selectedCompIndex: 0, formTitle: nextTitle });
       } else {
         const defaultTpl = FORM_TEMPLATES[1];
@@ -877,8 +836,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
         const nextTitle = defaultTpl.schema.title || 'Biên bản nghiệm thu';
         setFormTitle(nextTitle);
         setSelectedCompIndex(0);
-        historyRef.current = [];
-        historyIndexRef.current = -1;
+        historyRef.current = createHistory();
         pushHistory({ components: cloned, selectedCompIndex: 0, formTitle: nextTitle });
       }
     } else if (!visible) {

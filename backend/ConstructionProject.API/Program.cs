@@ -116,8 +116,11 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Auto migration / database create
-using (var scope = app.Services.CreateScope())
+// Môi trường "Testing" dùng database in-memory do test fixture tự tạo schema,
+// nên bỏ qua migration để không chạy migration SQL Server trên provider khác.
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     try
     {
@@ -153,3 +156,6 @@ app.MapControllers();
 app.MapHub<ConstructionProject.Infrastructure.Hubs.NotificationHub>("/hubs/notifications");
 
 app.Run();
+
+// Cần thiết để WebApplicationFactory<Program> (integration tests) truy cập được entry point.
+public partial class Program { }

@@ -34,10 +34,15 @@ e:/Contruction_Project/
 │   ├── ConstructionProject.Application/    # CQRS Commands, Queries, DTOs, Behaviors, Interfaces
 │   ├── ConstructionProject.Infrastructure/ # EF Core DbContext, Configurations, Storage, JWT, BCrypt
 │   └── ConstructionProject.API/            # Controllers, Middlewares, Program.cs
+├── frontend/                               # React + TypeScript + Vite + Ant Design + FormIO
+│   └── src/components/formio/              # Builder, renderer, layout & history logic (có unit test)
 ├── tests/
+│   ├── ConstructionProject.UnitTests/      # xUnit + Moq + FluentAssertions + EF InMemory
+│   ├── ConstructionProject.IntegrationTests/ # WebApplicationFactory + JWT + authorization matrix
 │   ├── test_auth_jwt.py                    # Script tự động test 10 kịch bản Auth & Role
 │   ├── test_day2_api.py                    # Script test Upload bản vẽ & Tạo Object từ Marker
 │   └── api-tests.http                      # File HTTP request cho REST Client / VS Code
+├── .github/workflows/ci.yml                # CI: build + test + coverage cho backend & frontend
 └── test_sample_drawing.pdf                 # File PDF mẫu dùng cho test tự động
 ```
 
@@ -69,6 +74,60 @@ Truy cập Swagger UI trực tiếp trên trình duyệt:
 👉 **[http://localhost:5092/swagger](http://localhost:5092/swagger)**
 
 ### 4. Chạy kiểm thử tự động
+
+Dự án có 3 tầng kiểm thử, tất cả đều chạy được **offline, không cần Docker/SQL Server**:
+
+#### Backend — Unit tests (xUnit + Moq + FluentAssertions + EF InMemory)
+
+Kiểm thử toàn bộ vòng đời trạng thái Inspection (`Submit` → `Review` → `Approve`/`Reject`),
+validator, password hashing và các nhánh lỗi nghiệp vụ:
+
+```bash
+dotnet test tests/ConstructionProject.UnitTests/ConstructionProject.UnitTests.csproj
+```
+
+#### Backend — Integration tests (WebApplicationFactory)
+
+Dựng API thật (controllers, JWT, middleware, SignalR) với database in-memory và seed sẵn
+4 tài khoản theo 4 role. Kiểm thử ma trận phân quyền `401 / 403 / 200` và các endpoint chính:
+
+```bash
+dotnet test tests/ConstructionProject.IntegrationTests/ConstructionProject.IntegrationTests.csproj
+```
+
+#### Frontend — Unit tests (Vitest)
+
+Kiểm thử logic thuần đã tách khỏi component: undo/redo history và tính toán kích thước nút bấm:
+
+```bash
+cd frontend
+npm test              # chạy 1 lần
+npm run test:watch    # watch mode
+npm run test:coverage # kèm báo cáo coverage (v8)
+```
+
+#### Kết quả hiện tại
+
+| Tầng | Công cụ | Số test | Trạng thái |
+|------|---------|---------|------------|
+| Backend Unit | xUnit + Moq + EF InMemory | **31** | ✅ Pass |
+| Backend Integration | WebApplicationFactory + JWT | **11** | ✅ Pass |
+| Frontend Unit | Vitest + v8 coverage | **16** | ✅ Pass |
+| **Tổng** | | **58** | ✅ |
+
+#### CI/CD
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) tự động chạy khi push/PR:
+
+- **Backend job:** .NET 8 → restore → build Release → unit tests → integration tests → upload coverage.
+- **Frontend job:** Node 22 → `npm ci` → lint → type-check → unit tests + coverage → production build.
+
+---
+
+## 🧪 Script kiểm thử API thủ công (tuỳ chọn)
+
+Yêu cầu API đang chạy ở `http://localhost:5092`:
+
 ```bash
 python tests/test_auth_jwt.py
 ```

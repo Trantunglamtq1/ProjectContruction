@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (.NET 8)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: |
+          dotnet restore tests/ConstructionProject.UnitTests/ConstructionProject.UnitTests.csproj
+          dotnet restore tests/ConstructionProject.IntegrationTests/ConstructionProject.IntegrationTests.csproj
+
+      - name: Build API
+        run: dotnet build backend/ConstructionProject.API/ConstructionProject.API.csproj --configuration Release --no-restore
+
+      - name: Unit tests
+        run: >
+          dotnet test tests/ConstructionProject.UnitTests/ConstructionProject.UnitTests.csproj
+          --configuration Release --no-restore --no-build
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/Unit
+
+      - name: Integration tests
+        run: >
+          dotnet test tests/ConstructionProject.IntegrationTests/ConstructionProject.IntegrationTests.csproj
+          --configuration Release --no-restore
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/Integration
+
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: TestResults/**/coverage.cobertura.xml
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend (React + TypeScript)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npx tsc -b
+
+      - name: Unit tests + coverage
+        run: npm run test:coverage
+
+      - name: Production build
+        run: npm run build
+
+      - name: Upload frontend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+          if-no-files-found: ignore

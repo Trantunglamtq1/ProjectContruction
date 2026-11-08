@@ -5,4 +5,8 @@
     <Project Path="backend/ConstructionProject.Domain/ConstructionProject.Domain.csproj" />
     <Project Path="backend/ConstructionProject.Infrastructure/ConstructionProject.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ConstructionProject.UnitTests/ConstructionProject.UnitTests.csproj" />
+    <Project Path="tests/ConstructionProject.IntegrationTests/ConstructionProject.IntegrationTests.csproj" />
+  </Folder>
 </Solution>
