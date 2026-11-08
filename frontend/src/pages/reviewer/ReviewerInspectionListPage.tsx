@@ -5,7 +5,6 @@ import {
   SearchOutlined,
   ReloadOutlined,
   CheckSquareOutlined,
-  EyeOutlined,
 } from '@ant-design/icons';
 import { inspectionApi } from '../../services/inspectionApi';
 import { InspectionDetailDrawer } from '../../components/inspections/InspectionDetailDrawer';
@@ -172,7 +171,6 @@ export const ReviewerInspectionListPage: React.FC = () => {
             size="small"
             type="primary"
             ghost
-            icon={<EyeOutlined />}
             onClick={() => handleOpenDetail(record.id)}
           >
             Xem phiếu

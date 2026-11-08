@@ -1,7 +1,13 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider, App as AntdApp } from 'antd';
+import { ConfigProvider, App as AntdApp, message } from 'antd';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Cấu hình thông báo toàn hệ thống: tối đa 1 thông báo hiển thị cùng lúc để tránh spam / rối mắt
+message.config({
+  maxCount: 1,
+  duration: 2,
+});
 import { themeConfig } from './config/theme';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';

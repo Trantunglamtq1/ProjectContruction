@@ -21,7 +21,6 @@ import {
   ReloadOutlined,
   CheckCircleOutlined,
   SafetyCertificateOutlined,
-  EyeOutlined,
   FileDoneOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
@@ -172,7 +171,6 @@ export const ApproverChecklistPage: React.FC = () => {
       render: (_: any, record: ChecklistDto) => (
         <Button
           size="small"
-          icon={<EyeOutlined />}
           onClick={() => {
             setSelectedChecklistId(record.id);
             setDetailModalOpen(true);

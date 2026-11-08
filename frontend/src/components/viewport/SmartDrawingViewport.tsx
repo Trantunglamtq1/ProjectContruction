@@ -1092,12 +1092,12 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
               </Tag>
               {committedVertices.length >= 3 && (
                 <Tag color="gold" style={{ fontWeight: 700, margin: 0, flexShrink: 0 }}>
-                  🎯 Click P₀ khép hình
+                  Click P₀ khép hình
                 </Tag>
               )}
               {isShiftPressed && (
                 <Tag color="#f59e0b" style={{ fontWeight: 600, margin: 0, flexShrink: 0 }}>
-                  🔒 Shift
+                  Shift
                 </Tag>
               )}
             </div>
@@ -1529,18 +1529,18 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
           {!readOnly ? (
             <>
-              <span><span style={{ color: '#10b981', fontWeight: 600 }}>🖱️ Click:</span> Đỉnh thẳng</span>
+              <span><span style={{ color: '#10b981', fontWeight: 600 }}>Click:</span> Đỉnh thẳng</span>
               <span style={{ color: '#334155' }}>•</span>
-              <span><span style={{ color: '#38bdf8', fontWeight: 600 }}>📐 Shift+Click:</span> Đỉnh cong</span>
+              <span><span style={{ color: '#38bdf8', fontWeight: 600 }}>Shift+Click:</span> Đỉnh cong</span>
               <span style={{ color: '#334155' }}>•</span>
-              <span><span style={{ color: '#facc15', fontWeight: 600 }}>🎯 P₀/Enter:</span> Khép hình</span>
+              <span><span style={{ color: '#facc15', fontWeight: 600 }}>P₀/Enter:</span> Khép hình</span>
               <span style={{ color: '#334155' }}>•</span>
-              <span><span style={{ color: '#cbd5e1', fontWeight: 600 }}>⌨️ Backspace:</span> Lùi điểm</span>
+              <span><span style={{ color: '#cbd5e1', fontWeight: 600 }}>Backspace:</span> Lùi điểm</span>
               <span style={{ color: '#334155' }}>•</span>
               <span><span style={{ color: '#f87171', fontWeight: 600 }}>Esc:</span> Hủy</span>
             </>
           ) : (
-            <span><span style={{ color: '#38bdf8', fontWeight: 600 }}>👁️ Chế độ giám sát:</span> Bấm vào cấu kiện trên bản vẽ hoặc danh sách để tra cứu thông tin & Checklist</span>
+            <span><span style={{ color: '#38bdf8', fontWeight: 600 }}>Chế độ giám sát:</span> Bấm vào cấu kiện trên bản vẽ hoặc danh sách để tra cứu thông tin & Checklist</span>
           )}
         </div>
 

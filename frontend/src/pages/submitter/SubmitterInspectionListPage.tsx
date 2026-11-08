@@ -21,7 +21,6 @@ import {
   SearchOutlined,
   ReloadOutlined,
   EditOutlined,
-  EyeOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -256,7 +255,6 @@ export const SubmitterInspectionListPage: React.FC = () => {
             ) : (
               <Button
                 size="small"
-                icon={<EyeOutlined />}
                 onClick={() => handleOpenDetail(record.id)}
               >
                 Xem

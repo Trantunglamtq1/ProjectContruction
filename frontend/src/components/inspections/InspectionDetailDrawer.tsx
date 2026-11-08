@@ -363,7 +363,7 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
                     <Text strong>Lý do từ chối: </Text>
                     <span>{inspection.rejectReason}</span>
                     <div style={{ marginTop: 6, fontSize: 13, color: '#DC2626' }}>
-                      👉 Vui lòng kiểm tra lại các chỉ tiêu kỹ thuật bên dưới, chỉnh sửa và bấm <b>"Nộp hồ sơ thẩm tra"</b> để gửi lại.
+                      Vui lòng kiểm tra lại các chỉ tiêu kỹ thuật bên dưới, chỉnh sửa và bấm <b>"Nộp hồ sơ thẩm tra"</b> để gửi lại.
                     </div>
                   </div>
                 }

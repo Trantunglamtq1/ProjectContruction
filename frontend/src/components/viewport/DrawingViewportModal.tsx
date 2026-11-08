@@ -421,8 +421,8 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
                       : 'Không tìm thấy cấu kiện phù hợp bộ lọc.'}
                   </div>
                   {isSubmitter && mappedCvObjects.length === 0 && (
-                    <div style={{ fontSize: 12, color: '#38bdf8', marginTop: 8 }}>
-                      💡 Bấm chuột lên bản vẽ để cắm mốc khoanh vùng cấu kiện đầu tiên.
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 8 }}>
+                      Hướng dẫn: Bấm chuột lên bản vẽ để cắm mốc khoanh vùng cấu kiện đầu tiên.
                     </div>
                   )}
                 </div>
