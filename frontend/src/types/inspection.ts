@@ -134,6 +134,19 @@ export interface FormIoComponent {
   description?: string;
   tooltip?: string;
   disabled?: boolean;
+  colSpan?: number; // 3, 4, 6, 8, 9, 12 (trong hệ lưới 12 cột) hoặc 6, 8, 12, 16, 24 (hệ 24 cột)
+  buttonTheme?: 'primary' | 'default' | 'dashed' | 'link' | 'danger';
+  // Tọa độ & Kích thước định dạng tự do kiểu Visual Studio WinForms
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  width?: number;
+  height?: number;
+  fontSize?: number;
+  fontWeight?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  autoFit?: boolean;
 }
 
 export interface FormIoSchema {
