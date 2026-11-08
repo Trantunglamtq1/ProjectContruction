@@ -601,7 +601,6 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
 
   // Canvas mở rộng theo không gian còn trống (full-screen page)
   const [canvasWidth, setCanvasWidth] = useState<number>(CANVAS_W);
-  const [canvasMinHeight, setCanvasMinHeight] = useState<number>(680);
   const canvasWidthRef = useRef<number>(CANVAS_W);
   const canvasViewportRef = useRef<HTMLDivElement>(null);
 
@@ -629,26 +628,37 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
     selectedCompIndexRef.current = selectedCompIndex;
   }, [selectedCompIndex]);
 
-  /* Đo bề rộng vùng canvas để canvas luôn rộng tối đa theo màn hình */
+  /* Đo bề rộng vùng canvas để canvas luôn rộng tối đa theo màn hình.
+   * Chỉ đo bề rộng (không đo chiều cao) để tránh vòng lặp ResizeObserver:
+   * chiều cao canvas do nội dung quyết định nên không làm nhảy layout. */
   useEffect(() => {
     if (!visible) return;
     const el = canvasViewportRef.current;
     if (!el) return;
 
+    let frame = 0;
     const update = () => {
-      const w = Math.max(CANVAS_W, Math.floor(el.clientWidth - 32));
-      if (w !== canvasWidthRef.current) {
-        canvasWidthRef.current = w;
-        setCanvasWidth(w);
-      }
-      const h = Math.max(680, Math.floor(el.clientHeight - 32));
-      setCanvasMinHeight((prev) => (prev === h ? prev : h));
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const cw = el.clientWidth;
+        if (!cw) return;
+        const w = Math.max(CANVAS_W, Math.floor(cw - 34));
+        // Hysteresis 2px: bỏ qua các dao động nhỏ do thanh cuộn/rounding gây ra
+        if (Math.abs(w - canvasWidthRef.current) >= 2) {
+          canvasWidthRef.current = w;
+          setCanvasWidth(w);
+        }
+      });
     };
 
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, [visible, activeTab]);
 
   /* Khóa cuộn trang nền khi đang mở chế độ thiết kế toàn màn hình */
@@ -1290,7 +1300,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
 
   const currentComp = selectedCompIndex !== null ? components[selectedCompIndex] : null;
   const maxCanvasY = components.reduce((acc, c) => Math.max(acc, (c.y || 0) + (c.h || 58)), 620);
-  const canvasHeight = Math.max(maxCanvasY + 60, 680, canvasMinHeight);
+  const canvasHeight = Math.max(maxCanvasY + 60, 680);
 
   const getComponentIcon = (type: string) => {
     const icons: Record<string, React.ReactNode> = {
@@ -1330,6 +1340,8 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
 
               .formio-builder-toolbox { width: 190px; }
               .formio-builder-props { width: 300px; }
+              /* Giữ chỗ thanh cuộn để bề rộng canvas không đổi khi cuộn dọc */
+              .formio-builder-canvas { scrollbar-gutter: stable; }
               @media (max-width: 1500px) {
                 .formio-builder-toolbox { width: 175px; }
                 .formio-builder-props { width: 280px; }
@@ -1577,6 +1589,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                     {/* KHỐI 2: CANVAS */}
                     <div
                       ref={canvasViewportRef}
+                      className="formio-builder-canvas"
                       style={{
                         flex: 1,
                         minWidth: 0,
