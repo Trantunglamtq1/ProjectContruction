@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace ConstructionProject.API.Middlewares;
 
@@ -37,6 +38,10 @@ public class ExceptionHandlingMiddleware
 
         switch (exception)
         {
+            case DbUpdateConcurrencyException:
+                statusCode = HttpStatusCode.Conflict;
+                response = new { status = (int)statusCode, message = "Dữ liệu đã thay đổi. Vui lòng tải lại và thử lại." };
+                break;
             case ValidationException validationException:
                 statusCode = HttpStatusCode.BadRequest;
                 response = new

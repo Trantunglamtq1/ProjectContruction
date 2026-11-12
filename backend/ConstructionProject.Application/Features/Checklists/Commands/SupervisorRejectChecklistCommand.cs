@@ -13,7 +13,8 @@ public record SupervisorRejectChecklistCommand(
     string RejectReason,
     Guid? SupervisorId,
     string? SupervisorName,
-    string? Comment = null
+    string? Comment = null,
+    byte[]? RowVersion = null
 ) : IRequest<ChecklistDto>;
 
 public class SupervisorRejectChecklistCommandValidator : AbstractValidator<SupervisorRejectChecklistCommand>
@@ -55,6 +56,7 @@ public class SupervisorRejectChecklistCommandHandler : IRequestHandler<Superviso
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.Id}.");
         }
 
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, checklist.RowVersion);
         if (checklist.Status != ChecklistStatus.PendingSupervisor)
         {
             throw new InvalidOperationException($"Chỉ có thể từ chối Kế hoạch Checklist đang ở trạng thái 'PendingSupervisor'. Trạng thái hiện tại: '{checklist.Status}'.");
@@ -130,6 +132,7 @@ public class SupervisorRejectChecklistCommandHandler : IRequestHandler<Superviso
         return new ChecklistDto
         {
             Id = checklist.Id,
+            RowVersion = checklist.RowVersion,
             ObjectId = checklist.ObjectId,
             ObjectName = checklist.Object?.Name ?? string.Empty,
             DrawingFileId = checklist.Object?.DrawingFileId ?? Guid.Empty,
@@ -152,6 +155,7 @@ public class SupervisorRejectChecklistCommandHandler : IRequestHandler<Superviso
             Items = checklist.Items.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
             {
                 Id = i.Id,
+                RowVersion = i.RowVersion,
                 ChecklistId = i.ChecklistId,
                 Name = i.Name,
                 OrderIndex = i.OrderIndex,

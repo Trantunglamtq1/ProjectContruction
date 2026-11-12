@@ -57,7 +57,7 @@ export const SubmitterChecklistPage: React.FC = () => {
 
   // Mutation: Xóa bản nháp Checklist
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => checklistApi.deleteChecklist(id),
+    mutationFn: (checklist: ChecklistDto) => checklistApi.deleteChecklist(checklist.id, checklist.rowVersion),
     onSuccess: () => {
       message.success('Đã xóa bản nháp Checklist thành công!');
       refetch();
@@ -229,7 +229,7 @@ export const SubmitterChecklistPage: React.FC = () => {
               okText="Xóa"
               cancelText="Hủy"
               okButtonProps={{ danger: true, loading: deleteMutation.isPending }}
-              onConfirm={() => deleteMutation.mutate(record.id)}
+              onConfirm={() => deleteMutation.mutate(record)}
             >
               <Button danger size="small" icon={<DeleteOutlined />} />
             </Popconfirm>

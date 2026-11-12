@@ -72,6 +72,8 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false);
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ChecklistItemDto | null>(null);
+  const [editingChecklistVersion, setEditingChecklistVersion] = useState('');
+  const [hasConflict, setHasConflict] = useState(false);
   const [builderModalOpen, setBuilderModalOpen] = useState(false);
   const [builderTargetItem, setBuilderTargetItem] = useState<ChecklistItemDto | null>(null);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -97,10 +99,16 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
     enabled: open && !!checklistId,
   });
 
+  const showChecklistError = (err: any, fallback: string) => {
+    if (err.response?.status === 409) setHasConflict(true);
+    message.error(err.response?.data?.message || fallback);
+  };
+
   // Mutation: Thêm tiêu chí
   const addItemMutation = useMutation({
     mutationFn: (values: any) =>
       checklistApi.addItem(checklistId!, {
+        checklistRowVersion: editingChecklistVersion,
         name: values.name,
         orderIndex: values.orderIndex ?? (checklist?.items.length ?? 0) + 1,
         isRequired: values.isRequired ?? true,
@@ -114,14 +122,14 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       onRefresh?.();
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || 'Lỗi khi thêm tiêu chí.');
+      showChecklistError(err, 'Lỗi khi thêm tiêu chí.');
     },
   });
 
   // Mutation: Sửa tiêu chí
   const updateItemMutation = useMutation({
     mutationFn: ({ itemId, values }: { itemId: string; values: any }) =>
-      checklistApi.updateItem(checklistId!, itemId, values),
+      checklistApi.updateItem(checklistId!, itemId, { ...values, checklistRowVersion: editingChecklistVersion, rowVersion: editingItem?.rowVersion ?? '' }),
     onSuccess: () => {
       message.success('Đã cập nhật tiêu chí thành công!');
       setItemModalOpen(false);
@@ -132,13 +140,13 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       onRefresh?.();
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || 'Lỗi khi cập nhật tiêu chí.');
+      showChecklistError(err, 'Lỗi khi cập nhật tiêu chí.');
     },
   });
 
   // Mutation: Xóa tiêu chí
   const deleteItemMutation = useMutation({
-    mutationFn: (itemId: string) => checklistApi.deleteItem(checklistId!, itemId),
+    mutationFn: (item: ChecklistItemDto) => checklistApi.deleteItem(checklistId!, item.id, checklist!.rowVersion, item.rowVersion),
     onSuccess: () => {
       message.success('Đã xóa tiêu chí khỏi Checklist!');
       refetch();
@@ -146,13 +154,13 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       onRefresh?.();
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || 'Không thể xóa tiêu chí này.');
+      showChecklistError(err, 'Không thể xóa tiêu chí này.');
     },
   });
 
   // Mutation: Kỹ sư nộp duyệt Checklist (Kích hoạt Elsa Workflow #1)
   const submitMutation = useMutation({
-    mutationFn: () => checklistApi.submitForApproval(checklistId!),
+    mutationFn: () => checklistApi.submitForApproval(checklistId!, { rowVersion: checklist!.rowVersion }),
     onSuccess: () => {
       message.success('Đã gửi kế hoạch Checklist cho Tư vấn giám sát phê duyệt!');
       refetch();
@@ -160,13 +168,13 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       onRefresh?.();
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || 'Lỗi khi gửi duyệt kế hoạch.');
+      showChecklistError(err, 'Lỗi khi gửi duyệt kế hoạch.');
     },
   });
 
   // Mutation: Giám sát phê duyệt
   const approveMutation = useMutation({
-    mutationFn: () => checklistApi.supervisorApprove(checklistId!),
+    mutationFn: () => checklistApi.supervisorApprove(checklistId!, { rowVersion: checklist!.rowVersion }),
     onSuccess: () => {
       message.success('Đã phê duyệt kế hoạch Checklist! Cấu trúc đã được khóa cứng.');
       refetch();
@@ -174,13 +182,13 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       onRefresh?.();
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || 'Lỗi khi phê duyệt kế hoạch.');
+      showChecklistError(err, 'Lỗi khi phê duyệt kế hoạch.');
     },
   });
 
   // Mutation: Giám sát từ chối
   const rejectMutation = useMutation({
-    mutationFn: (reason: string) => checklistApi.supervisorReject(checklistId!, { reason }),
+    mutationFn: (reason: string) => checklistApi.supervisorReject(checklistId!, { reason, rowVersion: editingChecklistVersion }),
     onSuccess: () => {
       message.warning('Đã từ chối kế hoạch Checklist và gửi phản hồi cho Kỹ sư!');
       setRejectModalOpen(false);
@@ -190,13 +198,13 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       onRefresh?.();
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || 'Lỗi khi từ chối kế hoạch.');
+      showChecklistError(err, 'Lỗi khi từ chối kế hoạch.');
     },
   });
 
   // Mutation: Xóa toàn bộ Kế hoạch Checklist (khi còn là Draft hoặc Rejected)
   const deleteChecklistMutation = useMutation({
-    mutationFn: () => checklistApi.deleteChecklist(checklistId!),
+    mutationFn: () => checklistApi.deleteChecklist(checklistId!, checklist!.rowVersion),
     onSuccess: () => {
       message.success('Đã xóa bản nháp Checklist thành công!');
       queryClient.invalidateQueries({ queryKey: ['checklists'] });
@@ -205,7 +213,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       onClose();
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || 'Lỗi khi xóa Checklist.');
+      showChecklistError(err, 'Lỗi khi xóa Checklist.');
     },
   });
 
@@ -220,7 +228,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ['checklists'] });
       onRefresh?.();
     } catch (err: any) {
-      message.error(err.response?.data?.message || 'Lỗi khi thẩm tra tiêu chí.');
+      showChecklistError(err, 'Lỗi khi thẩm tra tiêu chí.');
     } finally {
       setActionLoadingId(null);
     }
@@ -237,7 +245,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ['checklists'] });
       onRefresh?.();
     } catch (err: any) {
-      message.error(err.response?.data?.message || 'Lỗi khi phê duyệt tiêu chí.');
+      showChecklistError(err, 'Lỗi khi phê duyệt tiêu chí.');
     } finally {
       setActionLoadingId(null);
     }
@@ -259,7 +267,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
       onRefresh?.();
     } catch (err: any) {
       if (err.errorFields) return;
-      message.error(err.response?.data?.message || 'Lỗi khi từ chối tiêu chí.');
+      showChecklistError(err, 'Lỗi khi từ chối tiêu chí.');
     } finally {
       setActionLoadingId(null);
     }
@@ -274,6 +282,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
 
   // Xử lý mở modal sửa tiêu chí
   const handleOpenEditItem = (item: ChecklistItemDto) => {
+    setEditingChecklistVersion(checklist.rowVersion);
     setEditingItem(item);
     itemForm.setFieldsValue({
       name: item.name,
@@ -285,6 +294,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
 
   // Xử lý mở Form.io Builder cho item
   const handleOpenFormBuilder = (item: ChecklistItemDto) => {
+    setEditingChecklistVersion(checklist.rowVersion);
     setBuilderTargetItem(item);
     setBuilderModalOpen(true);
   };
@@ -299,13 +309,15 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
         orderIndex: builderTargetItem.orderIndex,
         isRequired: builderTargetItem.isRequired,
         formSchemaJson: schemaString,
+        checklistRowVersion: editingChecklistVersion,
+        rowVersion: builderTargetItem.rowVersion,
       });
       message.success(`Đã lưu cấu trúc Form.io cho tiêu chí "${builderTargetItem.name}"!`);
       setBuilderModalOpen(false);
       setBuilderTargetItem(null);
       refetch();
     } catch (err: any) {
-      message.error(err.response?.data?.message || 'Lỗi khi lưu biểu mẫu Form.io.');
+      showChecklistError(err, 'Lỗi khi lưu biểu mẫu Form.io.');
     }
   };
 
@@ -371,6 +383,9 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {hasConflict && <Alert type="warning" showIcon message="Checklist đã thay đổi"
+            description="Hãy tải lại và mở lại biểu mẫu trước khi thực hiện. Nội dung đang sửa sẽ không tự ghi đè dữ liệu mới."
+            action={<Button size="small" onClick={async () => { await refetch(); setHasConflict(false); }}>Tải lại</Button>} />}
           {/* Thông tin Cấu kiện & Tiến độ */}
           <Card size="small" style={{ backgroundColor: '#f8fafc', borderRadius: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -489,6 +504,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                     orderIndex: (checklist.items?.length ?? 0) + 1,
                     isRequired: true,
                   });
+                  setEditingChecklistVersion(checklist.rowVersion);
                   setItemModalOpen(true);
                 }}
               >
@@ -756,7 +772,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                         <Popconfirm
                           title="Xóa tiêu chí này?"
                           description="Hành động này sẽ xóa mềm tiêu chí khỏi checklist."
-                          onConfirm={() => deleteItemMutation.mutate(record.id)}
+                          onConfirm={() => deleteItemMutation.mutate(record)}
                           okText="Xóa"
                           cancelText="Hủy"
                           okButtonProps={{ danger: true }}
@@ -824,7 +840,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                   <Button
                     danger
                     icon={<CloseCircleOutlined />}
-                    onClick={() => setRejectModalOpen(true)}
+                    onClick={() => { setEditingChecklistVersion(checklist.rowVersion); setRejectModalOpen(true); }}
                   >
                     Từ chối kế hoạch
                   </Button>

@@ -44,7 +44,10 @@ public static class DependencyInjection
         services.AddElsa();
         services.AddScoped<IInspectionWorkflowService, InspectionWorkflowService>();
         services.AddScoped<IChecklistWorkflowService, ChecklistWorkflowService>();
-        services.AddScoped<INotificationService, SignalRNotificationService>();
+        services.AddScoped<SignalRNotificationService>();
+        services.AddScoped<INotificationService>(provider => new BestEffortNotificationService(
+            provider.GetRequiredService<SignalRNotificationService>(),
+            provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<BestEffortNotificationService>>()));
 
         return services;
     }

@@ -120,7 +120,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
 
   // Mutation: Xóa bản nháp Checklist
   const deleteMutation = useMutation({
-    mutationFn: (checklistId: string) => checklistApi.deleteChecklist(checklistId),
+    mutationFn: (checklist: ChecklistDto) => checklistApi.deleteChecklist(checklist.id, checklist.rowVersion),
     onSuccess: () => {
       message.success('Đã xóa bản nháp Checklist thành công!');
       refetchSummary();
@@ -305,7 +305,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
                             okButtonProps={{ danger: true, loading: deleteMutation.isPending }}
                             onConfirm={(e) => {
                               e?.stopPropagation();
-                              deleteMutation.mutate(chk.id);
+                              deleteMutation.mutate(chk);
                             }}
                             onCancel={(e) => e?.stopPropagation()}
                           >

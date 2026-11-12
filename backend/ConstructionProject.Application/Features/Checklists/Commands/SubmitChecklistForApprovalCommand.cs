@@ -10,7 +10,8 @@ namespace ConstructionProject.Application.Features.Checklists.Commands;
 public record SubmitChecklistForApprovalCommand(
     Guid Id,
     Guid? SubmitterId,
-    string? SubmitterName
+    string? SubmitterName,
+    byte[]? RowVersion = null
 ) : IRequest<ChecklistDto>;
 
 public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitChecklistForApprovalCommand, ChecklistDto>
@@ -42,6 +43,7 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.Id}.");
         }
 
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, checklist.RowVersion);
         if (checklist.Status != ChecklistStatus.Draft && checklist.Status != ChecklistStatus.Rejected)
         {
             throw new InvalidOperationException($"Chỉ có thể trình duyệt Kế hoạch Checklist đang ở trạng thái 'Draft' hoặc 'Rejected'. Trạng thái hiện tại: '{checklist.Status}'.");
@@ -117,6 +119,7 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
         return new ChecklistDto
         {
             Id = checklist.Id,
+            RowVersion = checklist.RowVersion,
             ObjectId = checklist.ObjectId,
             ObjectName = checklist.Object?.Name ?? string.Empty,
             DrawingFileId = checklist.Object?.DrawingFileId ?? Guid.Empty,
@@ -135,6 +138,7 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
             Items = checklist.Items.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
             {
                 Id = i.Id,
+                RowVersion = i.RowVersion,
                 ChecklistId = i.ChecklistId,
                 Name = i.Name,
                 OrderIndex = i.OrderIndex,

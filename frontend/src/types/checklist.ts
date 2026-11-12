@@ -18,7 +18,7 @@ export interface ChecklistItemDto {
   linkedInspectionId: string | null;
   linkedInspectionStatus?: string | null;
   status: ChecklistItemStatus;
-  rowVersion?: string;
+  rowVersion: string;
 }
 
 export interface ChecklistAuditHistoryDto {
@@ -55,7 +55,7 @@ export interface ChecklistDto {
   progressPercentage: number;
   items: ChecklistItemDto[];
   auditHistories: ChecklistAuditHistoryDto[];
-  rowVersion?: string;
+  rowVersion: string;
 }
 
 export interface ChecklistSummaryDto {
@@ -84,24 +84,29 @@ export interface CreateChecklistPayload {
 
 export interface SubmitChecklistPayload {
   comment?: string;
+  rowVersion: string;
 }
 
 export interface SupervisorApprovePayload {
   comment?: string;
+  rowVersion: string;
 }
 
 export interface SupervisorRejectPayload {
+  rowVersion: string;
   reason: string;
   rejectReason?: string;
   comment?: string;
 }
 
 export interface SupervisorModifyPayload {
+  rowVersion: string;
   name?: string;
   description?: string;
   comment?: string;
   items?: Array<{
     id?: string;
+    rowVersion?: string;
     name: string;
     orderIndex?: number;
     isRequired?: boolean;
@@ -110,6 +115,7 @@ export interface SupervisorModifyPayload {
 }
 
 export interface AddChecklistItemPayload {
+  checklistRowVersion: string;
   name: string;
   orderIndex?: number;
   isRequired?: boolean;
@@ -117,6 +123,8 @@ export interface AddChecklistItemPayload {
 }
 
 export interface UpdateChecklistItemPayload {
+  checklistRowVersion: string;
+  rowVersion: string;
   name: string;
   orderIndex?: number;
   isRequired?: boolean;
@@ -124,5 +132,7 @@ export interface UpdateChecklistItemPayload {
 }
 
 export interface LinkInspectionPayload {
+  checklistRowVersion: string;
+  rowVersion: string;
   inspectionId: string;
 }

@@ -15,7 +15,8 @@ public record SupervisorModifyChecklistCommand(
     List<SupervisorModifyItemDto>? Items,
     Guid? SupervisorId,
     string? SupervisorName,
-    string? Comment = null
+    string? Comment = null,
+    byte[]? RowVersion = null
 ) : IRequest<ChecklistDto>;
 
 public class SupervisorModifyChecklistCommandHandler : IRequestHandler<SupervisorModifyChecklistCommand, ChecklistDto>
@@ -40,6 +41,7 @@ public class SupervisorModifyChecklistCommandHandler : IRequestHandler<Superviso
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.Id}.");
         }
 
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, checklist.RowVersion);
         if (checklist.Status != ChecklistStatus.PendingSupervisor)
         {
             throw new InvalidOperationException($"Chỉ có thể can thiệp chỉnh sửa kế hoạch khi Checklist đang ở trạng thái chờ thẩm duyệt 'PendingSupervisor'. Trạng thái hiện tại: '{checklist.Status}'.");
@@ -68,6 +70,9 @@ public class SupervisorModifyChecklistCommandHandler : IRequestHandler<Superviso
                 if (itemDto.Id.HasValue && itemDto.Id.Value != Guid.Empty)
                 {
                     var existingItem = checklist.Items.FirstOrDefault(i => i.Id == itemDto.Id.Value);
+                    if (existingItem == null)
+                        throw new KeyNotFoundException("Không tìm thấy tiêu chí trong checklist.");
+                    ChecklistVersionGuard.EnsureCurrent(itemDto.RowVersion, existingItem.RowVersion);
                     if (existingItem != null)
                     {
                         if (itemDto.IsDeleted)
@@ -170,6 +175,7 @@ public class SupervisorModifyChecklistCommandHandler : IRequestHandler<Superviso
         return new ChecklistDto
         {
             Id = checklist.Id,
+            RowVersion = checklist.RowVersion,
             ObjectId = checklist.ObjectId,
             ObjectName = checklist.Object?.Name ?? string.Empty,
             DrawingFileId = checklist.Object?.DrawingFileId ?? Guid.Empty,
@@ -188,6 +194,7 @@ public class SupervisorModifyChecklistCommandHandler : IRequestHandler<Superviso
             Items = activeItems.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
             {
                 Id = i.Id,
+                RowVersion = i.RowVersion,
                 ChecklistId = i.ChecklistId,
                 Name = i.Name,
                 OrderIndex = i.OrderIndex,

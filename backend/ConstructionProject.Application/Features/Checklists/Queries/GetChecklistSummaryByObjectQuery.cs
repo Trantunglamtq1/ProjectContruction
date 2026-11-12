@@ -57,6 +57,7 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
             return new ChecklistDto
             {
                 Id = c.Id,
+                RowVersion = c.RowVersion,
                 ObjectId = c.ObjectId,
                 ObjectName = obj.Name,
                 ObjectCode = obj.Name,
@@ -78,6 +79,7 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
                 Items = activeItems.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
                 {
                     Id = i.Id,
+                    RowVersion = i.RowVersion,
                     ChecklistId = i.ChecklistId,
                     Name = i.Name,
                     OrderIndex = i.OrderIndex,

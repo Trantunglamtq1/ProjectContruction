@@ -107,6 +107,7 @@ public class CreateChecklistCommandHandler : IRequestHandler<CreateChecklistComm
         return new ChecklistDto
         {
             Id = checklist.Id,
+            RowVersion = checklist.RowVersion,
             ObjectId = checklist.ObjectId,
             ObjectName = obj.Name,
             DrawingFileId = obj.DrawingFileId,
@@ -124,6 +125,7 @@ public class CreateChecklistCommandHandler : IRequestHandler<CreateChecklistComm
             Items = checklist.Items.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
             {
                 Id = i.Id,
+                RowVersion = i.RowVersion,
                 ChecklistId = i.ChecklistId,
                 Name = i.Name,
                 OrderIndex = i.OrderIndex,

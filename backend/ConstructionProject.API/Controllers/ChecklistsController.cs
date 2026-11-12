@@ -56,12 +56,13 @@ public class ChecklistsController : ControllerBase
     [ProducesResponseType(typeof(ChecklistDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SubmitChecklist(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> SubmitChecklist(Guid id, [FromBody] ChecklistVersionRequest request, CancellationToken cancellationToken)
     {
         var command = new SubmitChecklistForApprovalCommand(
             id,
             _currentUserService.UserId,
-            _currentUserService.Username ?? "Submitter"
+            _currentUserService.Username ?? "Submitter",
+            request.RowVersion
         );
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -85,7 +86,8 @@ public class ChecklistsController : ControllerBase
             id,
             _currentUserService.UserId,
             _currentUserService.Username ?? "Supervisor",
-            request.Comment
+            request.Comment,
+            request.RowVersion
         );
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -116,7 +118,8 @@ public class ChecklistsController : ControllerBase
             reason,
             _currentUserService.UserId,
             _currentUserService.Username ?? "Supervisor",
-            request.Comment ?? reason
+            request.Comment ?? reason,
+            request.RowVersion
         );
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -143,7 +146,8 @@ public class ChecklistsController : ControllerBase
             request.Items,
             _currentUserService.UserId,
             _currentUserService.Username ?? "Supervisor",
-            request.Comment
+            request.Comment,
+            request.RowVersion
         );
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -171,7 +175,8 @@ public class ChecklistsController : ControllerBase
             request.FormSchemaJson,
             _currentUserService.UserId,
             _currentUserService.Username,
-            _currentUserService.Role
+            _currentUserService.Role,
+            request.ChecklistRowVersion
         );
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -200,7 +205,10 @@ public class ChecklistsController : ControllerBase
             request.FormSchemaJson,
             _currentUserService.UserId,
             _currentUserService.Username,
-            _currentUserService.Role
+            _currentUserService.Role,
+            id,
+            request.ChecklistRowVersion,
+            request.RowVersion
         );
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -218,13 +226,17 @@ public class ChecklistsController : ControllerBase
     public async Task<IActionResult> DeleteItem(
         Guid id, 
         Guid itemId, 
+        [FromBody] ChecklistVersionRequest request,
         CancellationToken cancellationToken)
     {
         var command = new DeleteChecklistItemCommand(
             itemId,
             _currentUserService.UserId,
             _currentUserService.Username,
-            _currentUserService.Role
+            _currentUserService.Role,
+            id,
+            request.ChecklistRowVersion,
+            request.RowVersion
         );
 
         await _mediator.Send(command, cancellationToken);
@@ -251,7 +263,9 @@ public class ChecklistsController : ControllerBase
             request.InspectionId,
             _currentUserService.UserId,
             _currentUserService.Username,
-            _currentUserService.Role
+            _currentUserService.Role,
+            request.ChecklistRowVersion,
+            request.RowVersion
         );
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -266,13 +280,14 @@ public class ChecklistsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteChecklist(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteChecklist(Guid id, [FromBody] ChecklistVersionRequest request, CancellationToken cancellationToken)
     {
         var command = new DeleteChecklistCommand(
             id,
             _currentUserService.UserId,
             _currentUserService.Username,
-            _currentUserService.Role
+            _currentUserService.Role,
+            request.RowVersion
         );
 
         await _mediator.Send(command, cancellationToken);

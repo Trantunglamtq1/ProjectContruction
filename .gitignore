@@ -53,5 +53,11 @@ Thumbs.db
 
 .fake
 
+## Tài liệu nội bộ và cấu hình agent cục bộ
+/docs-internal/
+/.agents/
+/.specify/
+/specs/
+
 ## Internal business & design docs (local only, not published)
 docs-internal/

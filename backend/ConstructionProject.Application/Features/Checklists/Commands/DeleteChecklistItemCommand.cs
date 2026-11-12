@@ -9,7 +9,10 @@ public record DeleteChecklistItemCommand(
     Guid Id,
     Guid? ActorId,
     string? ActorName,
-    string? ActorRole
+    string? ActorRole,
+    Guid ChecklistId = default,
+    byte[]? ChecklistRowVersion = null,
+    byte[]? RowVersion = null
 ) : IRequest<bool>;
 
 public class DeleteChecklistItemCommandHandler : IRequestHandler<DeleteChecklistItemCommand, bool>
@@ -32,6 +35,11 @@ public class DeleteChecklistItemCommandHandler : IRequestHandler<DeleteChecklist
         {
             throw new KeyNotFoundException($"Không tìm thấy ChecklistItem với Id = {request.Id}.");
         }
+
+        if (item.Checklist == null || item.Checklist.Id != request.ChecklistId)
+            throw new KeyNotFoundException("Không tìm thấy tiêu chí trong checklist.");
+        ChecklistVersionGuard.EnsureCurrent(request.ChecklistRowVersion, item.Checklist.RowVersion);
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, item.RowVersion);
 
         // Ràng buộc Khóa (NFR-1 Locking): Không được xóa nếu đã có phiếu nghiệm thu phát sinh
         if (item.LinkedInspectionId.HasValue)

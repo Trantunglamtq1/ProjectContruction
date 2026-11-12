@@ -75,7 +75,7 @@ Truy cập Swagger UI trực tiếp trên trình duyệt:
 
 ### 4. Chạy kiểm thử tự động
 
-Dự án có 3 tầng kiểm thử, tất cả đều chạy được **offline, không cần Docker/SQL Server**:
+Dự án có unit test và integration test InMemory chạy không cần SQL Server. Kiểm thử migration và rowversion cần SQL Server và chỉ chạy khi cấu hình `CONSTRUCTION_TEST_SQL` như bên dưới.
 
 #### Backend — Unit tests (xUnit + Moq + FluentAssertions + EF InMemory)
 
@@ -110,10 +110,10 @@ npm run test:coverage # kèm báo cáo coverage (v8)
 
 | Tầng | Công cụ | Số test | Trạng thái |
 |------|---------|---------|------------|
-| Backend Unit | xUnit + Moq + EF InMemory | **31** | ✅ Pass |
-| Backend Integration | WebApplicationFactory + JWT | **11** | ✅ Pass |
-| Frontend Unit | Vitest + v8 coverage | **16** | ✅ Pass |
-| **Tổng** | | **58** | ✅ |
+| Backend Unit | xUnit + Moq + EF InMemory | 32 | Đạt trong lượt kiểm tra gần nhất |
+| Backend Integration | WebApplicationFactory + JWT | 11 | Đạt trong lượt kiểm tra gần nhất |
+| Backend SQL Server | Migration và cạnh tranh | 3 | Đạt với SQL Server thử nghiệm |
+| Frontend Unit | Vitest | 16 | Đạt trong lượt kiểm tra gần nhất |
 
 #### CI/CD
 
@@ -131,3 +131,11 @@ Yêu cầu API đang chạy ở `http://localhost:5092`:
 ```bash
 python tests/test_auth_jwt.py
 ```
+
+### Phiên bản checklist và kiểm thử SQL Server
+
+API trả `rowVersion` của checklist và từng tiêu chí dưới dạng base64. Các yêu cầu thay đổi phải gửi phiên bản đã đọc; thao tác trên tiêu chí gửi cả `checklistRowVersion` và `rowVersion`. Thiếu token hoặc token sai định dạng trả 400, dữ liệu cũ trả 409. Giao diện yêu cầu tải lại khi có xung đột. Khách hàng API cũ cần cập nhật theo hợp đồng này, kể cả nội dung JSON trong yêu cầu DELETE.
+
+Migration `AddChecklistItemsRevision` bổ sung số phiên bản cấu trúc, không xóa dữ liệu. Sao lưu database trước khi chạy migration. Kiểm thử SQL Server chỉ chạy khi cấu hình `CONSTRUCTION_TEST_SQL` bằng biến môi trường trỏ tới SQL Server thử nghiệm có quyền tạo database; mỗi lần chạy tạo database tên `ConstructionProject_Test_<guid>` và không tự xóa database đó. EF InMemory không chứng minh hành vi rowversion hoặc migration.
+
+Giới hạn: workflow duyệt checklist vẫn dùng cơ chế cũ, chưa bảo đảm phục hồi sau restart hoặc đồng bộ nguyên tử giữa Elsa và dữ liệu nghiệp vụ. Phần này cần được xử lý và kiểm thử riêng trước khi coi toàn bộ luồng phê duyệt là đáng tin cậy.

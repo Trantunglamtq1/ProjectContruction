@@ -11,7 +11,8 @@ public record SupervisorApproveChecklistCommand(
     Guid Id,
     Guid? SupervisorId,
     string? SupervisorName,
-    string? Comment = null
+    string? Comment = null,
+    byte[]? RowVersion = null
 ) : IRequest<ChecklistDto>;
 
 public class SupervisorApproveChecklistCommandHandler : IRequestHandler<SupervisorApproveChecklistCommand, ChecklistDto>
@@ -43,6 +44,7 @@ public class SupervisorApproveChecklistCommandHandler : IRequestHandler<Supervis
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.Id}.");
         }
 
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, checklist.RowVersion);
         if (checklist.Status != ChecklistStatus.PendingSupervisor)
         {
             throw new InvalidOperationException($"Chỉ có thể phê duyệt Kế hoạch Checklist đang ở trạng thái 'PendingSupervisor'. Trạng thái hiện tại: '{checklist.Status}'.");
@@ -117,6 +119,7 @@ public class SupervisorApproveChecklistCommandHandler : IRequestHandler<Supervis
         return new ChecklistDto
         {
             Id = checklist.Id,
+            RowVersion = checklist.RowVersion,
             ObjectId = checklist.ObjectId,
             ObjectName = checklist.Object?.Name ?? string.Empty,
             DrawingFileId = checklist.Object?.DrawingFileId ?? Guid.Empty,
@@ -138,6 +141,7 @@ public class SupervisorApproveChecklistCommandHandler : IRequestHandler<Supervis
             Items = checklist.Items.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
             {
                 Id = i.Id,
+                RowVersion = i.RowVersion,
                 ChecklistId = i.ChecklistId,
                 Name = i.Name,
                 OrderIndex = i.OrderIndex,

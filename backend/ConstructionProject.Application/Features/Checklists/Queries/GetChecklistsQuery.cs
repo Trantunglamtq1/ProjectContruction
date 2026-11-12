@@ -49,6 +49,7 @@ public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, Lis
             return new ChecklistDto
             {
                 Id = checklist.Id,
+                RowVersion = checklist.RowVersion,
                 ObjectId = checklist.ObjectId,
                 ObjectName = checklist.Object?.Name ?? string.Empty,
                 DrawingFileId = checklist.Object?.DrawingFileId ?? Guid.Empty,
@@ -71,6 +72,7 @@ public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, Lis
                 Items = activeItems.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
                 {
                     Id = i.Id,
+                    RowVersion = i.RowVersion,
                     ChecklistId = i.ChecklistId,
                     Name = i.Name,
                     OrderIndex = i.OrderIndex,
