@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Card, Form, Input, Button, Typography, Checkbox, Alert, Space } from 'antd';
-import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { getDefaultRouteForRole } from '../../components/guards/RouteGuards';
-import { authApi, type LoginDto } from '../../services/authApi';
+import { LockOutlined, SafetyOutlined, UserOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd';
 import axios from 'axios';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { getDefaultRouteForRole } from '../../components/guards/RouteGuards';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, type LoginDto } from '../../services/authApi';
 
 const { Title, Text } = Typography;
 
@@ -16,7 +16,7 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const onFinish = async (values: LoginDto & { remember: boolean }) => {
+  const onFinish = async (values: LoginDto) => {
     setLoading(true);
     setErrorMessage(null);
     try {
@@ -38,9 +38,9 @@ export const LoginPage: React.FC = () => {
         if (error.response) {
           const status = error.response.status;
           if (status === 502 || status === 504) {
-            setErrorMessage('Lỗi kết nối máy chủ (502 Bad Gateway). Dịch vụ Backend đang khởi động lại hoặc chưa sẵn sàng.');
+            setErrorMessage('Lỗi kết nối máy chủ (502 Bad Gateway). Dịch vụ đang khởi động. Vui lòng thử lại sau.');
           } else if (status >= 500) {
-            setErrorMessage(`Lỗi máy chủ nội bộ (${status}). Vui lòng kiểm tra lại Backend.`);
+            setErrorMessage(`Lỗi máy chủ nội bộ (${status}). Vui lòng thử lại sau.`);
           } else if (error.response.data && typeof error.response.data === 'object') {
             const errorData = error.response.data as Record<string, unknown>;
             const msg = errorData.detail || errorData.message || errorData.title || 'Tên đăng nhập hoặc mật khẩu không chính xác.';
@@ -49,7 +49,7 @@ export const LoginPage: React.FC = () => {
             setErrorMessage('Tên đăng nhập hoặc mật khẩu không chính xác.');
           }
         } else {
-          setErrorMessage('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ Backend.');
+          setErrorMessage('Không thể kết nối đến máy chủ. Vui lòng thử lại hoặc liên hệ quản trị viên.');
         }
       } else {
         setErrorMessage('Đã xảy ra lỗi không xác định.');
@@ -61,20 +61,12 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F5F7FA',
-        padding: '24px 16px',
-      }}
+      className="auth-page"
     >
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <Space direction="horizontal" align="center" style={{ marginBottom: 8 }}>
-          <SafetyOutlined style={{ fontSize: 32, color: '#1677FF' }} />
-          <Title level={2} style={{ margin: 0, color: '#1F2937', fontWeight: 700 }}>
+          <SafetyOutlined style={{ fontSize: 32, color: '#1D4ED8' }} />
+          <Title level={2} style={{ margin: 0, color: '#182230', fontWeight: 700 }}>
             ConstructInspect
           </Title>
         </Space>
@@ -90,13 +82,13 @@ export const LoginPage: React.FC = () => {
           width: '100%',
           maxWidth: 420,
           borderRadius: 8,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+
           border: '1px solid #E4E7ED',
         }}
-        bodyStyle={{ padding: '32px 28px' }}
+        styles={{ body: { padding: '32px 28px' } }}
       >
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Title level={3} style={{ margin: 0, color: '#1F2937', fontWeight: 600 }}>
+          <Title level={3} style={{ margin: 0, color: '#182230', fontWeight: 600 }}>
             Đăng nhập
           </Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
@@ -116,18 +108,19 @@ export const LoginPage: React.FC = () => {
         <Form
           form={form}
           layout="vertical"
-          initialValues={{ remember: true }}
+
           onFinish={onFinish}
           requiredMark={false}
         >
           <Form.Item
             name="username"
             label="Tài khoản"
-            rules={[{ required: true, message: 'Vui lòng nhập tài khoản hoặc username' }]}
+            rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập' }]}
           >
             <Input
-              prefix={<UserOutlined style={{ color: '#8C8C8C' }} />}
-              placeholder="VD: admin hoặc tên đăng nhập"
+              autoComplete="username"
+              prefix={<UserOutlined style={{ color: '#667085' }} />}
+              placeholder="Nhập tên đăng nhập"
               size="large"
             />
           </Form.Item>
@@ -138,17 +131,12 @@ export const LoginPage: React.FC = () => {
             rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
           >
             <Input.Password
-              prefix={<LockOutlined style={{ color: '#8C8C8C' }} />}
+              autoComplete="current-password"
+              prefix={<LockOutlined style={{ color: '#667085' }} />}
               placeholder="Mật khẩu"
               size="large"
             />
           </Form.Item>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <Form.Item name="remember" valuePropName="checked" noStyle>
-              <Checkbox style={{ color: '#595959' }}>Ghi nhớ đăng nhập</Checkbox>
-            </Form.Item>
-          </div>
 
           <Form.Item style={{ marginBottom: 16 }}>
             <Button
@@ -158,7 +146,7 @@ export const LoginPage: React.FC = () => {
               block
               loading={loading}
               style={{
-                backgroundColor: '#1677FF',
+                backgroundColor: '#1D4ED8',
                 height: 42,
                 fontWeight: 600,
               }}
@@ -171,18 +159,13 @@ export const LoginPage: React.FC = () => {
             <Text type="secondary" style={{ fontSize: 13 }}>
               Chưa có tài khoản?{' '}
             </Text>
-            <Link to="/auth/register" style={{ color: '#1677FF', fontWeight: 500 }}>
+            <Link to="/auth/register" style={{ color: '#1D4ED8', fontWeight: 500 }}>
               Đăng ký ngay
             </Link>
           </div>
         </Form>
       </Card>
 
-      <div style={{ marginTop: 24, textAlign: 'center' }}>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          Tài khoản Admin mặc định: <code style={{ fontFamily: 'JetBrains Mono' }}>admin</code> / <code style={{ fontFamily: 'JetBrains Mono' }}>Admin@123</code>
-        </Text>
-      </div>
     </div>
   );
 };

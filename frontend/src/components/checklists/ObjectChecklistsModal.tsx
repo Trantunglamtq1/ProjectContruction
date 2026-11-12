@@ -1,33 +1,33 @@
-import React, { useState } from 'react';
 import {
-  Modal,
-  Space,
-  Typography,
-  Tag,
+  CheckSquareOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  RightOutlined,
+} from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
   Button,
   Card,
-  Progress,
+  Checkbox,
   Empty,
   Form,
   Input,
-  Checkbox,
   message,
-  Alert,
-  Spin,
+  Modal,
   Popconfirm,
+  Progress,
+  Space,
+  Spin,
+  Typography
 } from 'antd';
-import {
-  CheckSquareOutlined,
-  PlusOutlined,
-  RightOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUnsavedChanges } from '../../contexts/UnsavedChangesContext';
 import { checklistApi } from '../../services/checklistApi';
-import { ChecklistSyncTag } from './ChecklistSyncTag';
-import type { ChecklistDto, ChecklistSummaryDto } from '../../types/checklist';
+import type { ChecklistDto, ChecklistStatus, ChecklistSummaryDto } from '../../types/checklist';
+import { StatusBadge } from '../ui/StatusBadge';
 import { ChecklistDetailModal } from './ChecklistDetailModal';
+import { ChecklistSyncTag } from './ChecklistSyncTag';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -52,6 +52,8 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
   const isSubmitter = currentRole === 'Submitter';
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createDirty, setCreateDirty] = useState(false);
+  const confirmDiscard = useUnsavedChanges(open && createDirty);
   const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [createForm] = Form.useForm();
@@ -104,12 +106,13 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
     onSuccess: (data: ChecklistDto) => {
       message.success('Đã khởi tạo bản nháp Checklist thành công!');
       setCreateModalOpen(false);
+      setCreateDirty(false);
       createForm.resetFields();
       refetchSummary();
       refetchList();
       queryClient.invalidateQueries({ queryKey: ['checklists'] });
       queryClient.invalidateQueries({ queryKey: ['checklist-summary-object'] });
-      // Mở ngay chi tiết để Kỹ sư tiếp tục cấu hình schema Form.io
+      // Mở ngay chi tiết để Kỹ sư tiếp tục cấu hình schema biểu mẫu
       setSelectedChecklistId(data.id);
       setDetailModalOpen(true);
     },
@@ -135,36 +138,20 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
     },
   });
 
-  const getStatusTag = (status: string) => {
-    switch (status) {
-      case 'Draft':
-        return <Tag color="default">Bản nháp</Tag>;
-      case 'PendingSupervisor':
-        return <Tag color="processing">Chờ Giám sát duyệt</Tag>;
-      case 'Approved':
-        return <Tag color="cyan">Đã duyệt (Khóa cấu trúc)</Tag>;
-      case 'Rejected':
-        return <Tag color="error">Cần sửa đổi</Tag>;
-      case 'InProgress':
-        return <Tag color="warning">Đang nghiệm thu</Tag>;
-      case 'Completed':
-        return <Tag color="success">Hoàn thành</Tag>;
-      default:
-        return <Tag>{status}</Tag>;
-    }
-  };
+  const getStatusTag = (status: ChecklistStatus) => <StatusBadge domain="checklist" status={status} />;
 
   return (
     <>
       <Modal
-        open={open}
+        open={open && !detailModalOpen && !createModalOpen}
         onCancel={onClose}
-        width={720}
+        width={{ xs: 'calc(100vw - 24px)', md: 760 }}
+        className="detail-modal"
         zIndex={1100}
         footer={null}
         title={
           <Space>
-            <CheckSquareOutlined style={{ fontSize: 20, color: '#1677ff' }} />
+            <CheckSquareOutlined style={{ fontSize: 20, color: '#1D4ED8' }} />
             <div>
               <Title level={5} style={{ margin: 0 }}>
                 Hồ Sơ Checklist Cấu Kiện: {objectCode || summary?.objectCode}
@@ -281,7 +268,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
                           {chk.description}
                         </Paragraph>
                       )}
-                      <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 11, color: '#64748b' }}>
+                      <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 12, color: '#64748b' }}>
                         <span>Người lập: {chk.createdBy}</span>
                         <span>•</span>
                         <span>Số tiêu chí: {chk.itemsCount}</span>
@@ -344,7 +331,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
       {/* Modal: Khởi tạo Checklist mới */}
       <Modal
         open={createModalOpen}
-        onCancel={() => setCreateModalOpen(false)}
+        onCancel={() => confirmDiscard(() => { setCreateDirty(false); setCreateModalOpen(false); })}
         title="Lập Checklist Nghiệm Thu Cấu Kiện"
         okText="Tạo bản nháp (Draft)"
         cancelText="Hủy"
@@ -360,16 +347,10 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
         }}
         confirmLoading={createMutation.isPending}
       >
-        <Alert
-          type="info"
-          showIcon
-          message="Giai đoạn 1: Lập kế hoạch & Thiết kế Form.io"
-          description="Sau khi tạo bản nháp, Kỹ sư sẽ thiết kế cấu trúc biểu mẫu Form.io cho từng tiêu chí trước khi gửi duyệt cho Tư vấn giám sát."
-          style={{ marginBottom: 16 }}
-        />
 
         <Form
           form={createForm}
+          onValuesChange={() => setCreateDirty(true)}
           layout="vertical"
           onFinish={(values) => createMutation.mutate(values)}
         >
@@ -400,7 +381,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
         </Form>
       </Modal>
 
-      {/* Modal: Chi tiết Checklist & Form.io Builder & Workflow Approval */}
+      {/* Modal: Chi tiết Checklist & biểu mẫu Builder & Workflow Approval */}
       {selectedChecklistId && (
         <ChecklistDetailModal
           open={detailModalOpen}

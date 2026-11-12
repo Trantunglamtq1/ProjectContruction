@@ -1,33 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Card,
-  Table,
-  Tag,
-  Space,
-  Typography,
-  Alert,
-  Button,
-  Input,
-  Row,
-  Col,
-  Statistic,
-  Progress,
-  Tabs,
-} from 'antd';
 import {
   CheckSquareOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  CheckCircleOutlined,
-  SafetyCertificateOutlined,
   FileDoneOutlined,
+  ReloadOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { checklistApi } from '../../services/checklistApi';
-import { ChecklistSyncTag } from '../../components/checklists/ChecklistSyncTag';
-import type { ChecklistDto, ChecklistStatus } from '../../types/checklist';
+import {
+  Button,
+  Card,
+  Input,
+  Progress,
+  Space,
+  Table,
+  Tabs,
+  Tag,
+  Typography
+} from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChecklistDetailModal } from '../../components/checklists/ChecklistDetailModal';
+import { ChecklistSyncTag } from '../../components/checklists/ChecklistSyncTag';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { QueryState } from '../../components/ui/QueryState';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { checklistApi } from '../../services/checklistApi';
+import type { ChecklistDto, ChecklistStatus } from '../../types/checklist';
 
 const { Text } = Typography;
 
@@ -52,6 +49,7 @@ export const ApproverChecklistPage: React.FC = () => {
   // Query danh sách Checklist từ backend
   const {
     data: checklists = [],
+    error: listError,
     isLoading,
     refetch,
   } = useQuery<ChecklistDto[]>({
@@ -77,24 +75,7 @@ export const ApproverChecklistPage: React.FC = () => {
     return true;
   });
 
-  const getStatusTag = (status: ChecklistStatus) => {
-    switch (status) {
-      case 'Draft':
-        return <Tag color="default">Bản nháp</Tag>;
-      case 'PendingSupervisor':
-        return <Tag color="processing">Chờ Giám Sát duyệt</Tag>;
-      case 'Approved':
-        return <Tag color="cyan">Đã duyệt cấu trúc</Tag>;
-      case 'Rejected':
-        return <Tag color="error">Cần sửa lại</Tag>;
-      case 'InProgress':
-        return <Tag color="warning">Đang nghiệm thu</Tag>;
-      case 'Completed':
-        return <Tag color="success">Hoàn thành 100%</Tag>;
-      default:
-        return <Tag>{status}</Tag>;
-    }
-  };
+  const getStatusTag = (status: ChecklistStatus) => <StatusBadge domain="checklist" status={status} />;
 
   const columns = [
     {
@@ -109,7 +90,7 @@ export const ApproverChecklistPage: React.FC = () => {
             </Text>
           </Space>
           <Space size={6}>
-            <Tag color="cyan" style={{ fontSize: 11, margin: 0 }}>
+            <Tag style={{ fontSize: 12, margin: 0 }}>
               {record.objectCode}
             </Tag>
             <Text type="secondary" style={{ fontSize: 12 }}>
@@ -132,7 +113,7 @@ export const ApproverChecklistPage: React.FC = () => {
       width: 220,
       render: (_: any, record: ChecklistDto) => (
         <div style={{ minWidth: 150 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
             <span>{record.itemsCompletedCount}/{record.itemsCount} tiêu chí đạt</span>
             <span>{record.progressPercentage}%</span>
           </div>
@@ -158,7 +139,7 @@ export const ApproverChecklistPage: React.FC = () => {
           {record.reviewedBy && (
             <div>
               <Text type="secondary">Giám sát duyệt: </Text>
-              <Text style={{ color: '#52c41a', fontWeight: 600 }}>{record.reviewedBy}</Text>
+              <Text style={{ color: '#166534', fontWeight: 600 }}>{record.reviewedBy}</Text>
             </div>
           )}
         </Space>
@@ -184,67 +165,13 @@ export const ApproverChecklistPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Banner giới thiệu phân hệ Approver */}
-      <Alert
-        message={
-          <Space>
-            <Tag color="green" style={{ fontWeight: 600 }}>
-              CHỦ ĐẦU TƯ / QUẢN LÝ DỰ ÁN (APPROVER WORKSPACE)
-            </Tag>
-            <Text strong>Giám Sát Tiến Độ Nghiệm Thu Theo Checklist Công Trình</Text>
-          </Space>
-        }
-        description="Theo dõi toàn bộ các danh mục kiểm tra kỹ thuật của dự án, tiến độ hoàn thành các tiêu chuẩn thi công và kết quả nghiệm thu giữa Tư vấn giám sát và Kỹ sư nhà thầu."
-        type="success"
-        showIcon
-        action={
-          <Button
-            size="small"
-            icon={<FileDoneOutlined />}
-            onClick={() => navigate('/approver/inspections')}
-          >
-            Đến Hồ sơ Inspection
-          </Button>
-        }
-      />
-
-      {/* Thẻ thống kê KPI */}
-      <Row gutter={16}>
-        <Col span={8}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Tổng số Danh mục Checklist"
-              value={totalCount}
-              prefix={<CheckSquareOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Đang thi công & Nghiệm thu"
-              value={approvedCount}
-              valueStyle={{ color: '#13c2c2' }}
-              prefix={<SafetyCertificateOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Hạng mục Đạt 100% Hoàn Thành"
-              value={completedCount}
-              valueStyle={{ color: '#52c41a' }}
-              prefix={<CheckCircleOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
+    <div className="data-page">
+      <PageHeader title="Kế hoạch kiểm tra" count={`${filteredChecklists.length} kế hoạch`} actions={<Button icon={<FileDoneOutlined />} onClick={() => navigate('/approver/inspections')}>Hồ sơ nghiệm thu</Button>} />
+      {listError && <QueryState error={listError} retry={() => refetch()} entity="kế hoạch kiểm tra" />}
 
       {/* Bảng danh sách Checklist với bộ lọc Tab & Tìm kiếm */}
-      <Card style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <Card className="list-surface">
+        <div className="list-toolbar">
           <Tabs
             activeKey={activeTab}
             onChange={(key) => setActiveTab(key)}
@@ -258,7 +185,7 @@ export const ApproverChecklistPage: React.FC = () => {
           <Space>
             <Input
               placeholder="Tìm kiếm theo tên hoặc cấu kiện..."
-              prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
+              prefix={<SearchOutlined style={{ color: '#667085' }} />}
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               style={{ width: 280 }}
@@ -269,7 +196,7 @@ export const ApproverChecklistPage: React.FC = () => {
           </Space>
         </div>
 
-        <Table
+        <Table locale={{ emptyText: listError ? null : <QueryState filtered={Boolean(searchKeyword || activeTab !== 'ALL')} entity="kế hoạch kiểm tra" /> }}
           dataSource={filteredChecklists}
           scroll={{ x: 1150 }}
           columns={columns}

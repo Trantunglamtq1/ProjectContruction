@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, Table, Button, Space, Input, Typography, Tag, Alert } from 'antd';
 import {
-  FilePdfOutlined,
-  SearchOutlined,
-  ReloadOutlined,
   CompassOutlined,
   DownloadOutlined,
+  FilePdfOutlined,
+  ReloadOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
+import { Button, Card, Input, Space, Table, Tag, Typography } from 'antd';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { QueryState } from '../../components/ui/QueryState';
 import { drawingApi, type DrawingFileDto } from '../../services/drawingApi';
 
 const { Text } = Typography;
@@ -23,6 +25,7 @@ export const ApproverDrawingListPage: React.FC = () => {
 
   const {
     data: drawings = [],
+    error: listError,
     isLoading,
     refetch,
     isRefetching,
@@ -65,14 +68,14 @@ export const ApproverDrawingListPage: React.FC = () => {
       render: (dateStr: string) => new Date(dateStr).toLocaleString('vi-VN'),
     },
     {
-      title: 'Tổng số cấu kiện Object',
+      title: 'Số cấu kiện',
       dataIndex: 'objectCount',
       key: 'objectCount',
       width: 180,
       align: 'center' as const,
       render: (count: number) => (
-        <Tag color="green" style={{ fontWeight: 500 }}>
-          {count} Cấu kiện
+        <Tag style={{ fontWeight: 500 }}>
+          {count} cấu kiện
         </Tag>
       ),
     },
@@ -89,7 +92,7 @@ export const ApproverDrawingListPage: React.FC = () => {
             icon={<CompassOutlined />}
             onClick={() => handleOpenViewport(record)}
           >
-            Mở Viewport
+            Mở bản vẽ
           </Button>
           <Button
             size="small"
@@ -112,24 +115,15 @@ export const ApproverDrawingListPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <Alert
-        message={
-          <Space>
-            <Tag color="green" style={{ fontWeight: 600 }}>APPROVER WORKSPACE</Tag>
-            <Text strong>Không gian làm việc Cấp Phê Duyệt / Chủ Đầu Tư - Bản vẽ</Text>
-          </Space>
-        }
-        description="Tra cứu bản vẽ kỹ thuật phục vụ công tác đối soát hiện trường và đưa ra quyết định phê duyệt các giai đoạn thi công dự án."
-        type="success"
-        showIcon
-      />
+    <div className="data-page">
+      <PageHeader title="Bản vẽ" count={`${drawings.length} bản vẽ`} />
+      {listError && <QueryState error={listError} retry={() => refetch()} entity="bản vẽ" />}
 
-      <Card style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+      <Card className="list-surface">
+        <div className="list-toolbar">
           <Input
             placeholder="Tra cứu bản vẽ theo tên..."
-            prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
+            prefix={<SearchOutlined style={{ color: '#667085' }} />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{ width: 320 }}
@@ -139,13 +133,13 @@ export const ApproverDrawingListPage: React.FC = () => {
           </Button>
         </div>
 
-        <Table
+        <Table locale={{ emptyText: listError ? null : <QueryState filtered={Boolean(searchText)} entity="bản vẽ" /> }} scroll={{ x: 1100 }}
           dataSource={drawings}
           columns={columns}
           rowKey="id"
           loading={isLoading}
           pagination={{ pageSize: 10 }}
-          bordered
+
           size="middle"
         />
       </Card>

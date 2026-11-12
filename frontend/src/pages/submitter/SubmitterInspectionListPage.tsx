@@ -1,55 +1,43 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Input,
-  Select,
-  Typography,
-  Tag,
-  Alert,
-  Row,
-  Col,
-  Statistic,
-  message,
-  Popconfirm,
-  Tooltip,
-} from 'antd';
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  FileDoneOutlined,
   CheckSquareOutlined,
+  CloseCircleOutlined,
+  ReloadOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
-import { inspectionApi } from '../../services/inspectionApi';
+import {
+  Button,
+  Card,
+  Input,
+  message,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography
+} from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { InspectionDetailDrawer } from '../../components/inspections/InspectionDetailDrawer';
+import { InspectionRowActions } from '../../components/ui/InspectionRowActions';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { QueryState } from '../../components/ui/QueryState';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { inspectionStatusOptions } from '../../config/statuses';
+import { useAuth } from '../../contexts/AuthContext';
+import { useInspectionList } from '../../hooks/useInspectionList';
+import { useInspectionSearchParams } from '../../hooks/useInspectionSearchParams';
+import { inspectionApi } from '../../services/inspectionApi';
 import type { InspectionDto, InspectionStatus } from '../../types/inspection';
 
 const { Text } = Typography;
 
 export const SubmitterInspectionListPage: React.FC = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useInspectionSearchParams();
   const urlInspectionId = searchParams.get('inspectionId');
-  const urlSearch = searchParams.get('search');
-
-  const [loading, setLoading] = useState(false);
-  const [inspections, setInspections] = useState<InspectionDto[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [statusCounts, setStatusCounts] = useState<Record<InspectionStatus, number> | null>(null);
-  const latestRequest = useRef(0);
-  const [pageIndex, setPageIndex] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  const [searchText, setSearchText] = useState(urlSearch || '');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const { searchText, setSearchText, statusFilter, setStatusFilter, pageIndex, pageSize, setPagination, clearFilters, loading, inspections, totalCount, listError, loadData } = useInspectionList();
 
   // Modals state
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
@@ -59,41 +47,11 @@ export const SubmitterInspectionListPage: React.FC = () => {
     if (urlInspectionId) {
       setSelectedInspectionId(urlInspectionId);
       setDetailDrawerVisible(true);
+    } else {
+      setSelectedInspectionId(null);
+      setDetailDrawerVisible(false);
     }
   }, [urlInspectionId]);
-
-  useEffect(() => {
-    if (urlSearch && urlSearch !== searchText) {
-      setSearchText(urlSearch);
-      setPageIndex(1);
-    }
-  }, [urlSearch]);
-
-  const loadData = useCallback(async () => {
-    const requestId = ++latestRequest.current;
-    setLoading(true);
-    try {
-      const res = await inspectionApi.getInspections({
-        pageNumber: pageIndex,
-        pageSize: pageSize,
-        status: statusFilter === 'ALL' ? undefined : statusFilter,
-        search: searchText.trim() || undefined,
-      });
-      if (requestId !== latestRequest.current) return;
-      setInspections(res.items || []);
-      setTotalCount(res.totalCount || 0);
-      setStatusCounts(res.statusCounts);
-    } catch {
-      if (requestId === latestRequest.current) message.error('Không thể tải danh sách hồ sơ nghiệm thu.');
-    } finally {
-      if (requestId === latestRequest.current) setLoading(false);
-    }
-  }, [pageIndex, pageSize, statusFilter, searchText]);
-
-  useEffect(() => {
-    loadData();
-    return () => { latestRequest.current += 1; };
-  }, [loadData]);
 
   const handleDelete = async (id: string, rowVersion: string) => {
     try {
@@ -107,30 +65,12 @@ export const SubmitterInspectionListPage: React.FC = () => {
   };
 
   const handleOpenDetail = (id: string) => {
-    setSelectedInspectionId(id);
-    setDetailDrawerVisible(true);
+    setSearchParams(previous => { const next = new URLSearchParams(previous); next.set('inspectionId', id); return next; });
   };
 
-  const renderStatusTag = (status: InspectionStatus) => {
-    switch (status) {
-      case 'Approved':
-        return <Tag color="success" icon={<CheckCircleOutlined />}>Đã duyệt (CĐT)</Tag>;
-      case 'Reviewed':
-        return <Tag color="purple" icon={<CheckCircleOutlined />}>Đạt Cấp 1</Tag>;
-      case 'UnderReview':
-        return <Tag color="processing" icon={<ClockCircleOutlined />}>Đang thẩm tra</Tag>;
-      case 'Submitted':
-        return <Tag color="warning" icon={<ClockCircleOutlined />}>Chờ thẩm tra</Tag>;
-      case 'Rejected':
-        return <Tag color="error" icon={<CloseCircleOutlined />}>Bị từ chối / Cần sửa</Tag>;
-      default:
-        return <Tag color="default" icon={<EditOutlined />}>Bản nháp (Draft)</Tag>;
-    }
-  };
+  const renderStatusTag = (status: InspectionStatus) => <StatusBadge domain="inspection" status={status} />;
 
   // The API counts every matching record before pagination.
-  const countByStatus = (status: InspectionStatus) =>
-    statusCounts?.[status] ?? '—';
 
   const columns = [
     {
@@ -138,18 +78,11 @@ export const SubmitterInspectionListPage: React.FC = () => {
       dataIndex: 'id',
       key: 'id',
       width: 140,
-      render: (id: string, record: InspectionDto) => (
+      render: (id: string) => (
         <div>
-          <Text strong style={{ color: '#1677FF', cursor: 'pointer' }} onClick={() => handleOpenDetail(id)}>
+          <Button type="link" className="record-link" style={{ padding: 0 }} onClick={() => handleOpenDetail(id)}>
             #{id.substring(0, 8).toUpperCase()}
-          </Text>
-          {record.workflowInstanceId && (
-            <div style={{ marginTop: 2 }}>
-              <Tag color="purple" style={{ fontSize: 10, padding: '0 4px', margin: 0, fontFamily: 'monospace' }}>
-                {record.workflowInstanceId}
-              </Tag>
-            </div>
-          )}
+          </Button>
         </div>
       ),
     },
@@ -164,7 +97,7 @@ export const SubmitterInspectionListPage: React.FC = () => {
               {record.checklistItemName || 'Tiêu chuẩn nghiệm thu'}
             </div>
             {record.checklistId ? (
-              <Button
+              <Button aria-label="Mở kế hoạch kiểm tra"
                 type="link"
                 size="small"
                 icon={<CheckSquareOutlined />}
@@ -181,7 +114,7 @@ export const SubmitterInspectionListPage: React.FC = () => {
                 Checklist: <b>{record.checklistName || 'Checklist cấu kiện'}</b>
               </div>
             )}
-            <Text type="secondary" style={{ fontSize: 11 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
               Cấu kiện: {text}
             </Text>
           </Space>
@@ -199,28 +132,10 @@ export const SubmitterInspectionListPage: React.FC = () => {
             <Text ellipsis style={{ maxWidth: 200, display: 'block' }}>
               {text || '—'}
             </Text>
-            <Tag style={{ fontSize: 11 }}>Trang {record.drawingPageNumber}</Tag>
+            <Tag style={{ fontSize: 12 }}>Trang {record.drawingPageNumber}</Tag>
           </div>
         </Tooltip>
       ),
-    },
-    {
-      title: 'Mẫu kiểm tra',
-      dataIndex: 'formSchemaId',
-      key: 'formSchemaId',
-      width: 160,
-      render: (schemaId: string) => {
-        let label = 'Tiêu chuẩn';
-        let color = 'default';
-        if (schemaId?.includes('rebar')) {
-          label = 'Cốt thép';
-          color = 'blue';
-        } else if (schemaId?.includes('concrete')) {
-          label = 'Bê tông';
-          color = 'cyan';
-        }
-        return <Tag color={color}>{label}</Tag>;
-      },
     },
     {
       title: 'Trạng thái',
@@ -231,7 +146,7 @@ export const SubmitterInspectionListPage: React.FC = () => {
       render: (status: InspectionStatus) => renderStatusTag(status),
     },
     {
-      title: 'Ngày tạo/nộp',
+      title: 'Ngày tạo',
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 160,
@@ -242,188 +157,49 @@ export const SubmitterInspectionListPage: React.FC = () => {
       key: 'actions',
       width: 210,
       align: 'center' as const,
-      render: (_: any, record: InspectionDto) => {
-        const isDraft = record.status === 'Draft';
-        const isRejected = record.status === 'Rejected';
-
-        return (
-          <Space size={6}>
-            {isDraft || isRejected ? (
-              <Button
-                size="small"
-                type="primary"
-                ghost={isDraft}
-                danger={isRejected}
-                icon={<EditOutlined />}
-                onClick={() => handleOpenDetail(record.id)}
-              >
-                {isRejected ? 'Sửa lại' : 'Sửa / Nộp'}
-              </Button>
-            ) : (
-              <Button
-                size="small"
-                onClick={() => handleOpenDetail(record.id)}
-              >
-                Xem
-              </Button>
-            )}
-
-            {record.checklistId && (
-              <Button
-                size="small"
-                type="dashed"
-                icon={<CheckSquareOutlined />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/submitter/checklists?checklistId=${record.checklistId}`);
-                }}
-              >
-                Checklist
-              </Button>
-            )}
-
-            {isDraft && (
-              <Popconfirm
-                title="Xóa hồ sơ kiểm tra?"
-                description="Bản nháp này sẽ bị xóa hoàn toàn khỏi hệ thống."
-                onConfirm={() => handleDelete(record.id, record.rowVersion)}
-                okText="Xóa"
-                cancelText="Hủy"
-                okButtonProps={{ danger: true }}
-              >
-                <Button size="small" danger icon={<DeleteOutlined />} />
-              </Popconfirm>
-            )}
-          </Space>
-        );
-      },
+      render: (_: unknown, record: InspectionDto) => <InspectionRowActions record={record} onOpen={() => handleOpenDetail(record.id)} checklistPath="/submitter/checklists" onDelete={record.status === 'Draft' && record.submittedById === user?.id && record.workflowSyncStatus === 'Synchronized' ? () => handleDelete(record.id, record.rowVersion) : undefined} />,
     },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Banner giới thiệu */}
-      <Alert
-        message={
-          <Space>
-            <Tag color="blue" style={{ fontWeight: 600 }}>
-              SUBMITTER WORKSPACE
-            </Tag>
-            <Text strong>Quản lý Hồ sơ Nghiệm thu (Form Inspection)</Text>
-          </Space>
-        }
-        description="Theo dõi và quản lý các hồ sơ nghiệm thu kỹ thuật. Mỗi hồ sơ nghiệm thu bắt buộc phải thuộc về một tiêu chí trong Kế hoạch Checklist của cấu kiện (khoanh vùng trên bản vẽ CAD) và được khởi tạo trực tiếp từ bản vẽ."
-        type="info"
-        showIcon
-        action={
-          <Button
-            size="small"
-            type="primary"
-            icon={<CheckSquareOutlined />}
-            onClick={() => navigate('/submitter/checklists')}
-          >
-            Đến Quản lý Checklist
-          </Button>
-        }
-      />
+    <div className="data-page">
 
-      {/* Thẻ thống kê tổng quan */}
-      <Text type="secondary">Thống kê trên toàn bộ kết quả theo bộ lọc hiện tại.</Text>
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={8} md={4}>
-          <Card size="small" style={{ borderRadius: 8, borderLeft: '4px solid #1677FF' }}>
-            <Statistic title="Tổng hồ sơ" value={totalCount} prefix={<FileDoneOutlined />} />
-          </Card>
-        </Col>
-        <Col xs={12} sm={8} md={4}>
-          <Card size="small" style={{ borderRadius: 8, borderLeft: '4px solid #8C8C8C' }}>
-            <Statistic
-              title="Bản nháp"
-              value={countByStatus('Draft')}
-              valueStyle={{ color: '#595959' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={8} md={4}>
-          <Card size="small" style={{ borderRadius: 8, borderLeft: '4px solid #FAAD14' }}>
-            <Statistic
-              title="Chờ thẩm tra"
-              value={countByStatus('Submitted')}
-              valueStyle={{ color: '#FAAD14' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={8} md={4}>
-          <Card size="small" style={{ borderRadius: 8, borderLeft: '4px solid #722ED1' }}>
-            <Statistic
-              title="Đạt Cấp 1"
-              value={countByStatus('Reviewed')}
-              valueStyle={{ color: '#722ED1' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={8} md={4}>
-          <Card size="small" style={{ borderRadius: 8, borderLeft: '4px solid #52C41A' }}>
-            <Statistic
-              title="Đã duyệt (CĐT)"
-              value={countByStatus('Approved')}
-              valueStyle={{ color: '#52C41A' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={8} md={4}>
-          <Card size="small" style={{ borderRadius: 8, borderLeft: '4px solid #FF4D4F' }}>
-            <Statistic
-              title="Bị từ chối"
-              value={countByStatus('Rejected')}
-              valueStyle={{ color: '#FF4D4F' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <PageHeader title="Hồ sơ nghiệm thu" count={`${totalCount} hồ sơ`} actions={<Button icon={<CheckSquareOutlined />} onClick={() => navigate('/submitter/checklists')}>Kế hoạch kiểm tra</Button>} />
+      {listError && <QueryState error={listError} retry={loadData} entity="hồ sơ" />}
 
       {/* Bảng dữ liệu chính */}
-      <Card style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+      <Card className="list-surface">
+        <div className="list-toolbar">
           <Space size={12}>
             <Input
               placeholder="Tìm theo mã hoặc tên cấu kiện..."
-              prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
+              prefix={<SearchOutlined style={{ color: '#667085' }} />}
               value={searchText}
               onChange={(e) => {
                 setSearchText(e.target.value);
-                setPageIndex(1);
               }}
               style={{ width: 260 }}
-              allowClear
+              allowClear={{ clearIcon: <CloseCircleOutlined aria-label="Xóa tìm kiếm" /> }}
             />
             <Select
               value={statusFilter}
               onChange={(val) => {
                 setStatusFilter(val);
-                setPageIndex(1);
               }}
               style={{ width: 180 }}
-              options={[
-                { value: 'ALL', label: 'Tất cả trạng thái' },
-                { value: 'Draft', label: 'Bản nháp (Draft)' },
-                { value: 'Submitted', label: 'Chờ thẩm tra' },
-                { value: 'UnderReview', label: 'Đang thẩm tra' },
-                { value: 'Reviewed', label: 'Đạt Cấp 1' },
-                { value: 'Approved', label: 'Đã phê duyệt' },
-                { value: 'Rejected', label: 'Bị từ chối / Cần sửa' },
-              ]}
+              options={[{ value: 'ALL', label: 'Tất cả trạng thái' }, ...inspectionStatusOptions]}
             />
           </Space>
 
           <Space size={8}>
+            {(searchText || statusFilter !== 'ALL') && <Button onClick={clearFilters}>Xóa bộ lọc</Button>}
             <Button icon={<ReloadOutlined />} onClick={loadData} loading={loading}>
               Làm mới
             </Button>
           </Space>
         </div>
 
-        <Table
+        <Table locale={{ emptyText: listError ? null : <QueryState filtered={Boolean(searchText || statusFilter !== 'ALL')} entity="hồ sơ" /> }} scroll={{ x: 1100 }}
           dataSource={inspections}
           columns={columns}
           rowKey="id"
@@ -434,15 +210,13 @@ export const SubmitterInspectionListPage: React.FC = () => {
             total: totalCount,
             showSizeChanger: true,
             onChange: (page, size) => {
-              setPageIndex(page);
-              setPageSize(size);
+              setPagination(page, size);
             },
           }}
-          bordered
+
           size="middle"
         />
       </Card>
-
 
       {/* Drawer xem chi tiết, điền form động và xem lịch sử */}
       <InspectionDetailDrawer
@@ -452,8 +226,7 @@ export const SubmitterInspectionListPage: React.FC = () => {
           setDetailDrawerVisible(false);
           setSelectedInspectionId(null);
           if (searchParams.get('inspectionId')) {
-            searchParams.delete('inspectionId');
-            setSearchParams(searchParams, { replace: true });
+            setSearchParams(previous => { const next = new URLSearchParams(previous); next.delete('inspectionId'); return next; }, { replace: true });
           }
         }}
         onUpdated={loadData}

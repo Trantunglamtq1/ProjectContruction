@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { Popover, Badge, Button, List, Typography, Space, Empty } from 'antd';
 import {
   BellOutlined,
   CheckCircleOutlined,
+  CheckOutlined,
   CloseCircleOutlined,
+  DeleteOutlined,
   InfoCircleOutlined,
   WarningOutlined,
-  CheckOutlined,
-  DeleteOutlined,
 } from '@ant-design/icons';
+import { Badge, Button, Empty, List, Popover, Space, Typography } from 'antd';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRealtimeNotifications } from '../../contexts/NotificationContext';
 import type { RealtimeNotification } from '../../types/notification';
@@ -42,7 +42,7 @@ export const NotificationBell: React.FC = () => {
   };
 
   const popoverContent = (
-    <div style={{ width: 340 }}>
+    <div style={{ width: 'min(340px, calc(100vw - 48px))' }}>
       <div
         style={{
           display: 'flex',
@@ -97,6 +97,10 @@ export const NotificationBell: React.FC = () => {
           style={{ maxHeight: 360, overflowY: 'auto' }}
           renderItem={(item) => (
             <List.Item
+              role="button"
+              tabIndex={0}
+              aria-label={`${item.isRead ? '' : 'Chưa đọc: '}${item.title}`}
+              onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleItemClick(item); } }}
               onClick={() => handleItemClick(item)}
               style={{
                 padding: '10px 8px',
@@ -121,7 +125,7 @@ export const NotificationBell: React.FC = () => {
                     <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
                       {item.content}
                     </Text>
-                    <Text type="secondary" style={{ fontSize: 10, color: '#8C8C8C', marginTop: 4, display: 'block' }}>
+                    <Text type="secondary" style={{ fontSize: 12, color: '#475467', marginTop: 4, display: 'block' }}>
                       {new Date(item.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}{' '}
                       - {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                     </Text>
@@ -146,6 +150,7 @@ export const NotificationBell: React.FC = () => {
       <Badge count={unreadCount} overflowCount={99} offset={[-2, 6]}>
         <Button
           type="text"
+          aria-label={`Thông báo${unreadCount ? `, ${unreadCount} chưa đọc` : ''}`}
           shape="circle"
           icon={<BellOutlined style={{ fontSize: 18, color: '#4B5563' }} />}
           style={{ width: 36, height: 36 }}

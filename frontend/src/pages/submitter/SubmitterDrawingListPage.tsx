@@ -1,30 +1,31 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  Card,
-  Table,
-  Upload,
-  Button,
-  Space,
-  Input,
-  Typography,
-  Tag,
-  message,
-  Alert,
-  Popconfirm,
-} from 'antd';
-import {
-  InboxOutlined,
-  FilePdfOutlined,
-  SearchOutlined,
-  ReloadOutlined,
+  CloseCircleOutlined,
   CompassOutlined,
   DeleteOutlined,
   DownloadOutlined,
+  FilePdfOutlined,
+  InboxOutlined,
+  ReloadOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { drawingApi, type DrawingFileDto } from '../../services/drawingApi';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Button,
+  Card,
+  Input, Modal, Popconfirm,
+  Space,
+  Table,
+  Tag,
+  Typography,
+  Upload,
+  message
+} from 'antd';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { QueryState } from '../../components/ui/QueryState';
 import { useAuth } from '../../contexts/AuthContext';
+import { drawingApi, type DrawingFileDto } from '../../services/drawingApi';
 
 const { Text } = Typography;
 const { Dragger } = Upload;
@@ -34,6 +35,7 @@ export const SubmitterDrawingListPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchText, setSearchText] = useState('');
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const handleOpenViewport = (drawing: DrawingFileDto) => {
     navigate(`/submitter/drawings/${drawing.id}/viewport`);
@@ -42,6 +44,7 @@ export const SubmitterDrawingListPage: React.FC = () => {
   // Fetch drawings query
   const {
     data: drawings = [],
+    error: listError,
     isLoading,
     refetch,
     isRefetching,
@@ -54,7 +57,8 @@ export const SubmitterDrawingListPage: React.FC = () => {
   const uploadMutation = useMutation({
     mutationFn: (file: File) => drawingApi.uploadDrawing(file, user?.fullName || user?.username),
     onSuccess: (data) => {
-      message.success(`Upload bản vẽ "${data.fileName}" thành công!`);
+      setUploadOpen(false);
+      message.success(`Tải bản vẽ "${data.fileName}" thành công!`);
       queryClient.invalidateQueries({ queryKey: ['submitter-drawings'] });
     },
     onError: (error: any) => {
@@ -139,14 +143,14 @@ export const SubmitterDrawingListPage: React.FC = () => {
       },
     },
     {
-      title: 'Số Object đã tạo',
+      title: 'Số cấu kiện',
       dataIndex: 'objectCount',
       key: 'objectCount',
       width: 150,
       align: 'center' as const,
       render: (count: number) => (
-        <Tag color={count > 0 ? 'cyan' : 'default'} style={{ fontSize: 13, padding: '2px 10px' }}>
-          {count} Object
+        <Tag style={{ fontSize: 13, padding: '2px 10px' }}>
+          {count} cấu kiện
         </Tag>
       ),
     },
@@ -163,7 +167,7 @@ export const SubmitterDrawingListPage: React.FC = () => {
             icon={<CompassOutlined />}
             onClick={() => handleOpenViewport(record)}
           >
-            Mở Viewport
+            Mở bản vẽ
           </Button>
           <Button
             size="small"
@@ -211,30 +215,22 @@ export const SubmitterDrawingListPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="data-page">
       {/* Role Banner */}
-      <Alert
-        message={
-          <Space>
-            <Tag color="blue" style={{ fontWeight: 600 }}>SUBMITTER WORKSPACE</Tag>
-            <Text strong>Không gian làm việc Kỹ sư hiện trường</Text>
-          </Space>
-        }
-        description="Tại giao diện này, bạn có thể tải lên các bản vẽ thiết kế/thi công định dạng PDF, mở Viewport để khoanh vùng marker tạo Object và khởi tạo hồ sơ nghiệm thu."
-        type="info"
-        showIcon
-      />
+      <PageHeader title="Bản vẽ" count={`${drawings.length} bản vẽ`} actions={<Button type="primary" icon={<FilePdfOutlined />} onClick={() => setUploadOpen(true)}>Tải bản vẽ</Button>} />
+      {listError && <QueryState error={listError} retry={() => refetch()} entity="bản vẽ" />}
 
       {/* Upload Box */}
-      <Card
+      <Modal title="Tải bản vẽ" open={uploadOpen} onCancel={() => !uploadMutation.isPending && setUploadOpen(false)} footer={null} width={{ xs: 'calc(100vw - 24px)', md: 600 }}><Card
         title={
           <Space>
-            <FilePdfOutlined style={{ color: '#1677FF' }} />
+            <FilePdfOutlined style={{ color: '#1D4ED8' }} />
             <span>Tải lên bản vẽ công trình mới (Chỉ nhận PDF, tối đa 100MB)</span>
           </Space>
         }
-        style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+        className="list-surface"
       >
+        {uploadMutation.isError && <QueryState error={uploadMutation.error} entity="bản vẽ tải lên" />}
         <Dragger
           name="file"
           accept=".pdf,application/pdf"
@@ -245,26 +241,26 @@ export const SubmitterDrawingListPage: React.FC = () => {
           style={{ padding: '20px 0', background: '#FAFCFF', border: '1px dashed #91CAFF', borderRadius: 8 }}
         >
           <p className="ant-upload-drag-icon">
-            <InboxOutlined style={{ fontSize: 48, color: '#1677FF' }} />
+            <InboxOutlined style={{ fontSize: 48, color: '#1D4ED8' }} />
           </p>
           <p className="ant-upload-text" style={{ fontSize: 16, fontWeight: 500, color: '#1F2937' }}>
             Nhấp hoặc kéo thả file PDF bản vẽ vào đây để tải lên
           </p>
-          <p className="ant-upload-hint" style={{ color: '#8C8C8C' }}>
-            Hệ thống hỗ trợ bản vẽ kiến trúc, kết cấu, MEP định dạng PDF phục vụ Viewport khoanh vùng Object.
+          <p className="ant-upload-hint" style={{ color: '#667085' }}>
+            Định dạng PDF, tối đa 100 MB.
           </p>
         </Dragger>
-      </Card>
+      </Card></Modal>
 
       {/* Search and Table */}
-      <Card style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+      <Card className="list-surface">
+        <div className="list-toolbar">
           <Input
             placeholder="Tìm kiếm bản vẽ theo tên..."
-            prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
+            prefix={<SearchOutlined style={{ color: '#667085' }} />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            allowClear
+            allowClear={{ clearIcon: <CloseCircleOutlined aria-label="Xóa tìm kiếm" /> }}
             style={{ width: 320 }}
           />
           <Button icon={<ReloadOutlined spin={isRefetching} />} onClick={() => refetch()}>
@@ -272,13 +268,13 @@ export const SubmitterDrawingListPage: React.FC = () => {
           </Button>
         </div>
 
-        <Table
+        <Table locale={{ emptyText: listError ? null : <QueryState filtered={Boolean(searchText)} entity="bản vẽ" /> }} scroll={{ x: 1100 }}
           dataSource={drawings}
           columns={columns}
           rowKey="id"
           loading={isLoading}
           pagination={{ pageSize: 10, showTotal: (total) => `Tổng cộng ${total} bản vẽ` }}
-          bordered
+
           size="middle"
         />
       </Card>

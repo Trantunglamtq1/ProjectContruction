@@ -1,7 +1,6 @@
-import { Tag } from 'antd';
 import type { ChecklistDto } from '../../types/checklist';
+import { StatusBadge } from '../ui/StatusBadge';
 
 export function ChecklistSyncTag({ status }: { status: ChecklistDto['workflowSyncStatus'] }) {
-  if (status === 'Synchronized') return null;
-  return <Tag color="warning">{status === 'Pending' ? 'Đang đồng bộ' : status === 'Retrying' ? 'Lỗi đồng bộ, đang thử lại' : 'Cần khôi phục'}</Tag>;
+  return <StatusBadge domain="sync" status={status} />;
 }

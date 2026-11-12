@@ -1,32 +1,38 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider, App as AntdApp, message } from 'antd';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { App as AntdApp, ConfigProvider, message } from 'antd';
+import viVN from 'antd/es/locale/vi_VN';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import React from 'react';
+import { createBrowserRouter, createRoutesFromElements, Navigate, Outlet, Route, RouterProvider } from 'react-router-dom';
+import { AuthGuard, PublicOnlyGuard, RoleGuard } from './components/guards/RouteGuards';
+import { MasterLayout } from './components/layout/MasterLayout';
+import { themeConfig } from './config/theme';
+import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { UnsavedChangesProvider } from './contexts/UnsavedChangesContext';
+import { UserManagementPage } from './pages/admin/UserManagementPage';
+import { ApproverChecklistPage } from './pages/approver/ApproverChecklistPage';
+import { ApproverDrawingListPage } from './pages/approver/ApproverDrawingListPage';
+import { ApproverInspectionListPage } from './pages/approver/ApproverInspectionListPage';
+import { LoginPage } from './pages/auth/LoginPage';
+import { PendingRolePage } from './pages/auth/PendingRolePage';
+import { RegisterPage } from './pages/auth/RegisterPage';
+import { DrawingViewportPage } from './pages/drawings/DrawingViewportPage';
+import { ReviewerChecklistPage } from './pages/reviewer/ReviewerChecklistPage';
+import { ReviewerDrawingListPage } from './pages/reviewer/ReviewerDrawingListPage';
+import { ReviewerInspectionListPage } from './pages/reviewer/ReviewerInspectionListPage';
+import { SubmitterChecklistPage } from './pages/submitter/SubmitterChecklistPage';
+import { SubmitterDrawingListPage } from './pages/submitter/SubmitterDrawingListPage';
+import { SubmitterInspectionListPage } from './pages/submitter/SubmitterInspectionListPage';
 
 // Cấu hình thông báo toàn hệ thống: tối đa 1 thông báo hiển thị cùng lúc để tránh spam / rối mắt
 message.config({
   maxCount: 1,
   duration: 2,
 });
-import { themeConfig } from './config/theme';
-import { AuthProvider } from './contexts/AuthContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { AuthGuard, RoleGuard, PublicOnlyGuard } from './components/guards/RouteGuards';
-import { MasterLayout } from './components/layout/MasterLayout';
-import { RegisterPage } from './pages/auth/RegisterPage';
-import { LoginPage } from './pages/auth/LoginPage';
-import { PendingRolePage } from './pages/auth/PendingRolePage';
-import { UserManagementPage } from './pages/admin/UserManagementPage';
-import { SubmitterDrawingListPage } from './pages/submitter/SubmitterDrawingListPage';
-import { SubmitterInspectionListPage } from './pages/submitter/SubmitterInspectionListPage';
-import { SubmitterChecklistPage } from './pages/submitter/SubmitterChecklistPage';
-import { ReviewerDrawingListPage } from './pages/reviewer/ReviewerDrawingListPage';
-import { ReviewerInspectionListPage } from './pages/reviewer/ReviewerInspectionListPage';
-import { ReviewerChecklistPage } from './pages/reviewer/ReviewerChecklistPage';
-import { ApproverDrawingListPage } from './pages/approver/ApproverDrawingListPage';
-import { ApproverInspectionListPage } from './pages/approver/ApproverInspectionListPage';
-import { ApproverChecklistPage } from './pages/approver/ApproverChecklistPage';
-import { DrawingViewportPage } from './pages/drawings/DrawingViewportPage';
+dayjs.locale('vi');
+ConfigProvider.config({ holderRender: children => <ConfigProvider theme={themeConfig} locale={viVN}>{children}</ConfigProvider> });
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,15 +43,7 @@ const queryClient = new QueryClient({
   },
 });
 
-export const App: React.FC = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ConfigProvider theme={themeConfig}>
-        <AntdApp>
-          <AuthProvider>
-            <NotificationProvider>
-              <BrowserRouter>
-              <Routes>
+const router = createBrowserRouter(createRoutesFromElements(<Route element={<UnsavedChangesProvider><Outlet /></UnsavedChangesProvider>}>
                 {/* Public only routes */}
                 <Route
                   path="/auth/register"
@@ -223,8 +221,16 @@ export const App: React.FC = () => {
                     </PublicOnlyGuard>
                   }
                 />
-              </Routes>
-            </BrowserRouter>
+              </Route>));
+
+export const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ConfigProvider theme={themeConfig} locale={viVN}>
+        <AntdApp message={{ maxCount: 1, duration: 2 }}>
+          <AuthProvider>
+            <NotificationProvider>
+              <RouterProvider router={router} />
           </NotificationProvider>
         </AuthProvider>
       </AntdApp>

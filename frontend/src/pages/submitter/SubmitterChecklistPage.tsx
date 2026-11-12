@@ -1,39 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Card,
-  Table,
-  Tag,
-  Space,
-  Typography,
-  Alert,
-  Button,
-  Input,
-  Row,
-  Col,
-  Statistic,
-  Progress,
-  Tabs,
-  Popconfirm,
-  message,
-} from 'antd';
 import {
   CheckSquareOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
-  FieldTimeOutlined,
   DeleteOutlined,
   FileDoneOutlined,
+  ReloadOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { checklistApi } from '../../services/checklistApi';
-import { ChecklistSyncTag } from '../../components/checklists/ChecklistSyncTag';
-import type { ChecklistDto, ChecklistStatus } from '../../types/checklist';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Button,
+  Card,
+  Input,
+  Popconfirm,
+  Progress,
+  Space,
+  Table,
+  Tabs,
+  Tag,
+  Typography,
+  message
+} from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChecklistDetailModal } from '../../components/checklists/ChecklistDetailModal';
+import { ChecklistSyncTag } from '../../components/checklists/ChecklistSyncTag';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { QueryState } from '../../components/ui/QueryState';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { checklistApi } from '../../services/checklistApi';
+import type { ChecklistDto, ChecklistStatus } from '../../types/checklist';
 
 const { Text } = Typography;
 
@@ -73,6 +67,7 @@ export const SubmitterChecklistPage: React.FC = () => {
   // Query danh sách Checklist từ backend
   const {
     data: checklists = [],
+    error: listError,
     isLoading,
     refetch,
   } = useQuery<ChecklistDto[]>({
@@ -108,24 +103,7 @@ export const SubmitterChecklistPage: React.FC = () => {
     return true;
   });
 
-  const getStatusTag = (status: ChecklistStatus) => {
-    switch (status) {
-      case 'Draft':
-        return <Tag color="default">Bản nháp</Tag>;
-      case 'PendingSupervisor':
-        return <Tag color="processing">Chờ Giám Sát duyệt</Tag>;
-      case 'Approved':
-        return <Tag color="cyan">Đã duyệt (Khóa cấu trúc)</Tag>;
-      case 'Rejected':
-        return <Tag color="error">Cần sửa lại</Tag>;
-      case 'InProgress':
-        return <Tag color="warning">Đang nghiệm thu</Tag>;
-      case 'Completed':
-        return <Tag color="success">Hoàn thành 100%</Tag>;
-      default:
-        return <Tag>{status}</Tag>;
-    }
-  };
+  const getStatusTag = (status: ChecklistStatus) => <StatusBadge domain="checklist" status={status} />;
 
   const columns = [
     {
@@ -134,13 +112,13 @@ export const SubmitterChecklistPage: React.FC = () => {
       render: (_: any, record: ChecklistDto) => (
         <Space direction="vertical" size={2}>
           <Space>
-            <CheckSquareOutlined style={{ color: '#1677ff' }} />
+            <CheckSquareOutlined style={{ color: '#1D4ED8' }} />
             <Text strong style={{ fontSize: 14 }}>
               {record.name}
             </Text>
           </Space>
           <Space size={6}>
-            <Tag color="geekblue" style={{ fontSize: 11, margin: 0 }}>
+            <Tag color="geekblue" style={{ fontSize: 12, margin: 0 }}>
               {record.objectCode}
             </Tag>
             <Text type="secondary" style={{ fontSize: 12 }}>
@@ -160,7 +138,7 @@ export const SubmitterChecklistPage: React.FC = () => {
           {getStatusTag(status)}
           <ChecklistSyncTag status={record.workflowSyncStatus} />
           {record.canFillInspection && (
-            <Text type="secondary" style={{ fontSize: 10, color: '#52c41a' }}>
+            <Text type="secondary" style={{ fontSize: 12, color: '#166534' }}>
               ✓ Đã mở khóa điền phiếu
             </Text>
           )}
@@ -173,7 +151,7 @@ export const SubmitterChecklistPage: React.FC = () => {
       width: 200,
       render: (_: any, record: ChecklistDto) => (
         <div style={{ minWidth: 140 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
             <span>{record.itemsCompletedCount}/{record.itemsCount} đạt</span>
             <span>{record.progressPercentage}%</span>
           </div>
@@ -181,7 +159,7 @@ export const SubmitterChecklistPage: React.FC = () => {
             percent={record.progressPercentage}
             size="small"
             status={record.status === 'Completed' ? 'success' : 'normal'}
-            strokeColor={record.status === 'Completed' ? '#52c41a' : '#1677ff'}
+            strokeColor={record.status === 'Completed' ? '#52c41a' : '#1D4ED8'}
           />
         </div>
       ),
@@ -221,7 +199,7 @@ export const SubmitterChecklistPage: React.FC = () => {
             }}
           >
             {record.status === 'Draft' || record.status === 'Rejected'
-              ? 'Thiết kế Form'
+              ? 'Thiết kế biểu mẫu'
               : 'Chi tiết'}
           </Button>
           {record.workflowSyncStatus === 'Synchronized' && (record.status === 'Draft' || record.status === 'Rejected') && (
@@ -233,7 +211,7 @@ export const SubmitterChecklistPage: React.FC = () => {
               okButtonProps={{ danger: true, loading: deleteMutation.isPending }}
               onConfirm={() => deleteMutation.mutate(record)}
             >
-              <Button danger size="small" icon={<DeleteOutlined />} />
+              <Button aria-label="Xóa" danger size="small" icon={<DeleteOutlined />} />
             </Popconfirm>
           )}
         </Space>
@@ -242,93 +220,13 @@ export const SubmitterChecklistPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Banner giới thiệu phân hệ Submitter */}
-      <Alert
-        message={
-          <Space>
-            <Tag color="blue" style={{ fontWeight: 600 }}>
-              KỸ SƯ HIỆN TRƯỜNG (SUBMITTER)
-            </Tag>
-            <Text strong>Quy trình Lập Checklist & Thiết kế Biểu mẫu Form.io</Text>
-          </Space>
-        }
-        description="Giai đoạn 1 (Planning): Thiết lập các tiêu chí kiểm tra cho từng cấu kiện khoanh vùng và thiết kế biểu mẫu Form.io. Gửi Tư vấn giám sát phê duyệt cấu trúc trước khi tiến hành nghiệm thu thi công."
-        type="info"
-        showIcon
-        action={
-          <Button
-            size="small"
-            icon={<FileDoneOutlined />}
-            onClick={() => navigate('/submitter/inspections')}
-          >
-            Đến Hồ sơ Inspection
-          </Button>
-        }
-      />
-
-      {/* Thẻ thống kê KPI */}
-      <Row gutter={16}>
-        <Col span={4}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic title="Tổng Checklist" value={totalCount} prefix={<CheckSquareOutlined />} />
-          </Card>
-        </Col>
-        <Col span={4}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Bản nháp (Draft)"
-              value={draftCount}
-              valueStyle={{ color: '#8c8c8c' }}
-              prefix={<ClockCircleOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={4}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Chờ Giám sát duyệt"
-              value={pendingCount}
-              valueStyle={{ color: '#1890ff' }}
-              prefix={<FieldTimeOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={4}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Cần sửa lại"
-              value={rejectedCount}
-              valueStyle={{ color: '#ff4d4f' }}
-              prefix={<CloseCircleOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={4}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Đã duyệt (Nghiệm thu)"
-              value={approvedCount}
-              valueStyle={{ color: '#13c2c2' }}
-              prefix={<ExclamationCircleOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={4}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Hoàn thành 100%"
-              value={completedCount}
-              valueStyle={{ color: '#52c41a' }}
-              prefix={<CheckCircleOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
+    <div className="data-page">
+      <PageHeader title="Kế hoạch kiểm tra" count={`${filteredChecklists.length} kế hoạch`} actions={<Button icon={<FileDoneOutlined />} onClick={() => navigate('/submitter/inspections')}>Hồ sơ nghiệm thu</Button>} />
+      {listError && <QueryState error={listError} retry={() => refetch()} entity="kế hoạch kiểm tra" />}
 
       {/* Bảng danh sách Checklist với bộ lọc Tab & Tìm kiếm */}
-      <Card style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <Card className="list-surface">
+        <div className="list-toolbar">
           <Tabs
             activeKey={activeTab}
             onChange={(key) => setActiveTab(key)}
@@ -345,7 +243,7 @@ export const SubmitterChecklistPage: React.FC = () => {
           <Space>
             <Input
               placeholder="Tìm kiếm theo tên hoặc cấu kiện..."
-              prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
+              prefix={<SearchOutlined style={{ color: '#667085' }} />}
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               style={{ width: 280 }}
@@ -356,7 +254,7 @@ export const SubmitterChecklistPage: React.FC = () => {
           </Space>
         </div>
 
-        <Table
+        <Table locale={{ emptyText: listError ? null : <QueryState filtered={Boolean(searchKeyword || activeTab !== 'ALL')} entity="kế hoạch kiểm tra" /> }}
           dataSource={filteredChecklists}
           scroll={{ x: 1150 }}
           columns={columns}

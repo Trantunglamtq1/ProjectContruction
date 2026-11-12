@@ -1,37 +1,36 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Modal,
-  Form,
-  Select,
-  Input,
-  Typography,
-  Space,
-  Tag,
-  Alert,
-  Spin,
-  message,
-  Card,
-  Button,
-} from 'antd';
-import {
-  FileTextOutlined,
   AppstoreOutlined,
-  InfoCircleOutlined,
-  ToolOutlined,
   CheckCircleOutlined,
   CheckSquareOutlined,
+  FileTextOutlined,
+  ToolOutlined
 } from '@ant-design/icons';
-import { inspectionApi } from '../../services/inspectionApi';
+import {
+  Alert,
+  Button,
+  Card,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+  message,
+} from 'antd';
+import React, { useEffect, useState } from 'react';
 import { checklistApi } from '../../services/checklistApi';
-import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
-import { InspectionImageGallery } from './InspectionImageGallery';
+import { inspectionApi } from '../../services/inspectionApi';
+import type { ChecklistDto } from '../../types/checklist';
 import type {
-  InspectionDto,
   ConstructionObjectDto,
   FormIoSchema,
   InspectionAttachmentDto,
+  InspectionDto,
 } from '../../types/inspection';
-import type { ChecklistDto } from '../../types/checklist';
+import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
+import { InspectionImageGallery } from './InspectionImageGallery';
 
 const { Text, Title } = Typography;
 
@@ -56,7 +55,7 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [objects, setObjects] = useState<ConstructionObjectDto[]>([]);
-  
+
   // Danh sách Checklist của cấu kiện đã chọn
   const [objectChecklists, setObjectChecklists] = useState<ChecklistDto[]>([]);
   const [loadingChecklists, setLoadingChecklists] = useState(false);
@@ -101,7 +100,7 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
       setObjectChecklists(approvedChks);
 
       if (approvedChks.length > 0) {
-        const chosenChk = preselectedChecklistId 
+        const chosenChk = preselectedChecklistId
           ? approvedChks.find((c) => c.id === preselectedChecklistId) || approvedChks[0]
           : approvedChks[0];
 
@@ -272,14 +271,6 @@ export const CreateInspectionModal: React.FC<CreateInspectionModalProps> = ({
         destroyOnClose
       >
         <Spin spinning={loading || loadingChecklists}>
-          <Alert
-            message="Quy tắc nghiệp vụ cốt lõi"
-            description="Mỗi phiếu nghiệm thu là một tiêu chí (ChecklistItem) nằm trong Kế hoạch Checklist đã được Giám sát phê duyệt. Không được phép tạo phiếu nghiệm thu đứng riêng lẻ."
-            type="info"
-            showIcon
-            icon={<InfoCircleOutlined />}
-            style={{ marginBottom: 20, borderRadius: 6 }}
-          />
 
           <Form form={form} layout="vertical" requiredMark="optional">
             {/* 1. Chọn Cấu kiện (Object) */}

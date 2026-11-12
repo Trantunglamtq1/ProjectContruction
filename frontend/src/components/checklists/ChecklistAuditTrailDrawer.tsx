@@ -1,17 +1,19 @@
-import React from 'react';
-import { Drawer, Timeline, Typography, Tag, Space, Card, Empty } from 'antd';
 import {
-  ClockCircleOutlined,
   CheckCircleOutlined,
+  ClockCircleOutlined,
   CloseCircleOutlined,
   EditOutlined,
-  SendOutlined,
-  LinkOutlined,
   FileDoneOutlined,
+  LinkOutlined,
+  SendOutlined,
 } from '@ant-design/icons';
+import { Card, Drawer, Empty, Space, Tag, Timeline, Typography } from 'antd';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import React from 'react';
+import { checklistAuditActionLabels, roleLabels } from '../../config/statuses';
 import type { ChecklistAuditHistoryDto } from '../../types/checklist';
+import { StatusBadge } from '../ui/StatusBadge';
 
 dayjs.extend(utc);
 
@@ -49,39 +51,7 @@ export const ChecklistAuditTrailDrawer: React.FC<ChecklistAuditTrailDrawerProps>
     }
   };
 
-  const getActionColor = (action: string) => {
-    switch (action) {
-      case 'CreateDraft':
-        return 'blue';
-      case 'SubmitForApproval':
-        return 'gold';
-      case 'SupervisorApprove':
-        return 'green';
-      case 'SupervisorReject':
-        return 'red';
-      case 'SupervisorModify':
-        return 'purple';
-      case 'LinkInspection':
-        return 'cyan';
-      default:
-        return 'default';
-    }
-  };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'Submitter':
-        return 'geekblue';
-      case 'Reviewer':
-        return 'purple';
-      case 'Approver':
-        return 'volcano';
-      case 'Admin':
-        return 'magenta';
-      default:
-        return 'default';
-    }
-  };
 
   // Sắp xếp lịch sử theo thời gian giảm dần (mới nhất trên cùng)
   const sortedHistories = [...(auditHistories || [])].sort((a, b) =>
@@ -94,7 +64,7 @@ export const ChecklistAuditTrailDrawer: React.FC<ChecklistAuditTrailDrawerProps>
         <Space direction="vertical" size={2}>
           <Space>
             <ClockCircleOutlined style={{ color: '#1677ff' }} />
-            <Text strong>Nhật Ký Kiểm Toán (Audit Trail)</Text>
+            <Text strong>Lịch sử kế hoạch</Text>
           </Space>
           {checklistName && (
             <Text type="secondary" style={{ fontSize: 12 }}>
@@ -104,7 +74,8 @@ export const ChecklistAuditTrailDrawer: React.FC<ChecklistAuditTrailDrawerProps>
         </Space>
       }
       placement="right"
-      width={480}
+      size="min(100vw, 520px)"
+      className="detail-overlay"
       zIndex={1400}
       onClose={onClose}
       open={open}
@@ -128,26 +99,26 @@ export const ChecklistAuditTrailDrawer: React.FC<ChecklistAuditTrailDrawerProps>
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <Tag color={getActionColor(item.action)} style={{ fontWeight: 600 }}>
-                    {item.action}
+                  <Tag style={{ fontWeight: 600 }}>
+                    {checklistAuditActionLabels[item.action] || item.action}
                   </Tag>
-                  <Text type="secondary" style={{ fontSize: 11 }}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
                     {dayjs.utc(item.createdAt).local().format('DD/MM/YYYY HH:mm:ss')}
                   </Text>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                   <Text strong style={{ fontSize: 13 }}>{item.actorName}</Text>
-                  <Tag color={getRoleColor(item.actorRole)} style={{ fontSize: 10, margin: 0 }}>
-                    {item.actorRole}
+                  <Tag style={{ fontSize: 12, margin: 0 }}>
+                    {roleLabels[item.actorRole] || item.actorRole}
                   </Tag>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontSize: 12 }}>
                   <Text type="secondary">Trạng thái:</Text>
-                  <Tag color="default" style={{ margin: 0 }}>{item.fromStatus}</Tag>
+                  <StatusBadge domain="checklist" status={item.fromStatus} />
                   <Text type="secondary">→</Text>
-                  <Tag color="processing" style={{ margin: 0 }}>{item.toStatus}</Tag>
+                  <StatusBadge domain="checklist" status={item.toStatus} />
                 </div>
 
                 {item.comment && (

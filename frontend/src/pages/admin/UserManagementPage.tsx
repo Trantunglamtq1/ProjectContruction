@@ -1,42 +1,41 @@
-import React, { useState } from 'react';
 import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  EditOutlined,
+  ReloadOutlined,
+  SafetyCertificateOutlined,
+  SearchOutlined,
+  StopOutlined,
+  UserAddOutlined,
+  UserOutlined
+} from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Badge,
+  Button,
   Card,
+  Form,
+  Input,
+  message,
+  Modal,
+  Popconfirm,
+  Radio,
+  Select,
+  Space,
   Table,
   Tag,
-  Button,
-  Space,
-  Input,
-  Select,
-  Modal,
-  Form,
-  Radio,
-  Popconfirm,
-  message,
-  Typography,
-  Badge,
   Tooltip,
-  Row,
-  Col,
-  Statistic,
+  Typography
 } from 'antd';
-import {
-  UserOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  EditOutlined,
-  UserAddOutlined,
-  StopOutlined,
-  CheckCircleOutlined,
-  SafetyCertificateOutlined,
-  TeamOutlined,
-  ClockCircleOutlined,
-} from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userApi } from '../../services/userApi';
+import React, { useState } from 'react';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { QueryState } from '../../components/ui/QueryState';
+import { roleLabels } from '../../config/statuses';
 import { useAuth } from '../../contexts/AuthContext';
+import { userApi } from '../../services/userApi';
 import type { UserDto } from '../../types/auth';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export const UserManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -55,6 +54,7 @@ export const UserManagementPage: React.FC = () => {
   // Queries
   const {
     data: users = [],
+    error: listError,
     isLoading: isLoadingUsers,
     refetch: refetchUsers,
     isRefetching,
@@ -174,15 +174,15 @@ export const UserManagementPage: React.FC = () => {
   const renderRoleTag = (roleName: string | null) => {
     switch (roleName) {
       case 'Admin':
-        return <Tag color="magenta" icon={<SafetyCertificateOutlined />}>Admin</Tag>;
+        return <Tag icon={<SafetyCertificateOutlined />}>{roleLabels.Admin}</Tag>;
       case 'Submitter':
-        return <Tag color="blue">Submitter</Tag>;
+        return <Tag>{roleLabels.Submitter}</Tag>;
       case 'Reviewer':
-        return <Tag color="orange">Reviewer</Tag>;
+        return <Tag>{roleLabels.Reviewer}</Tag>;
       case 'Approver':
-        return <Tag color="green">Approver</Tag>;
+        return <Tag>{roleLabels.Approver}</Tag>;
       default:
-        return <Tag color="default">Chưa gán Role</Tag>;
+        return <Tag color="default">Chưa gán vai trò</Tag>;
     }
   };
 
@@ -238,7 +238,7 @@ export const UserManagementPage: React.FC = () => {
         <Badge
           status={isActive ? 'success' : 'error'}
           text={
-            <span style={{ color: isActive ? '#52C41A' : '#FF4D4F', fontWeight: 500 }}>
+            <span style={{ color: isActive ? '#166534' : '#B42318', fontWeight: 500 }}>
               {isActive ? 'Hoạt động' : 'Đã khóa'}
             </span>
           }
@@ -277,7 +277,13 @@ export const UserManagementPage: React.FC = () => {
                   : 'Gán vai trò nghiệp vụ'
               }
             >
-              <Button
+              <Button aria-label={
+                isSelf
+                  ? 'Không thể tự đổi vai trò của chính mình để tránh mất quyền quản trị'
+                  : hasRole
+                  ? 'Đổi vai trò người dùng'
+                  : 'Gán vai trò nghiệp vụ'
+              }
                 size="small"
                 type="primary"
                 ghost={hasRole}
@@ -285,7 +291,7 @@ export const UserManagementPage: React.FC = () => {
                 disabled={isSelf}
                 onClick={() => handleOpenRoleModal(record)}
               >
-                {hasRole ? 'Đổi Role' : 'Gán Role'}
+                {hasRole ? 'Đổi vai trò' : 'Gán vai trò'}
               </Button>
             </Tooltip>
 
@@ -316,7 +322,7 @@ export const UserManagementPage: React.FC = () => {
                   size="small"
                   danger={record.isActive}
                   type={record.isActive ? 'default' : 'primary'}
-                  style={!record.isActive ? { backgroundColor: '#52C41A', borderColor: '#52C41A' } : undefined}
+
                   icon={record.isActive ? <StopOutlined /> : <CheckCircleOutlined />}
                   disabled={isSelf}
                   loading={updateStatusMutation.isPending && updateStatusMutation.variables?.userId === record.id}
@@ -332,84 +338,24 @@ export const UserManagementPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '4px 0' }}>
+    <div className="data-page">
       {/* Page Header */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <SafetyCertificateOutlined style={{ fontSize: 24, color: '#1677FF' }} />
-          <Title level={3} style={{ margin: 0 }}>
-            Quản trị người dùng & Gán quyền (Admin)
-          </Title>
-        </div>
-        <Text type="secondary">
-          Quản lý tài khoản, gán và thay đổi vai trò (Submitter / Reviewer / Approver), vô hiệu hóa hoặc kích hoạt tài khoản trong hệ thống.
-        </Text>
-      </div>
+      <PageHeader title="Người dùng" count={`${filteredUsers.length} người dùng`} />
+      {listError && <QueryState error={listError} retry={() => refetchUsers()} entity="người dùng" />}
 
       {/* KPI Statistic Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={12} sm={6}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Tổng người dùng"
-              value={users.length}
-              prefix={<TeamOutlined style={{ color: '#1677FF' }} />}
-              valueStyle={{ fontWeight: 600, color: '#1F2937' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Đang hoạt động"
-              value={users.filter((u) => u.isActive).length}
-              prefix={<CheckCircleOutlined style={{ color: '#52C41A' }} />}
-              valueStyle={{ fontWeight: 600, color: '#52C41A' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card
-            size="small"
-            style={{
-              borderRadius: 8,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              cursor: 'pointer',
-              border: roleFilter === 'UNASSIGNED' ? '1px solid #FAAD14' : undefined,
-            }}
-            onClick={() => setRoleFilter(roleFilter === 'UNASSIGNED' ? 'ALL' : 'UNASSIGNED')}
-          >
-            <Statistic
-              title="Chờ phân quyền"
-              value={users.filter((u) => !u.roleId).length}
-              prefix={<ClockCircleOutlined style={{ color: '#FAAD14' }} />}
-              valueStyle={{ fontWeight: 600, color: '#FAAD14' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card size="small" style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <Statistic
-              title="Quản trị viên"
-              value={users.filter((u) => u.roleName === 'Admin').length}
-              prefix={<SafetyCertificateOutlined style={{ color: '#722ED1' }} />}
-              valueStyle={{ fontWeight: 600, color: '#722ED1' }}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       {/* Filter Card */}
-      <Card style={{ marginBottom: 16, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <Card className="list-surface">
         <Space wrap size={[16, 12]} style={{ width: '100%', justifyContent: 'space-between' }}>
           <Space wrap size={12}>
             {/* Search Input */}
             <Input
               placeholder="Tìm theo tên đăng nhập, họ tên, email..."
-              prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
+              prefix={<SearchOutlined style={{ color: '#667085' }} />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              allowClear
+              allowClear={{ clearIcon: <CloseCircleOutlined aria-label="Xóa tìm kiếm" /> }}
               style={{ width: 280 }}
             />
 
@@ -420,11 +366,11 @@ export const UserManagementPage: React.FC = () => {
               style={{ width: 170 }}
               options={[
                 { value: 'ALL', label: 'Tất cả vai trò' },
-                { value: 'Admin', label: 'Admin' },
-                { value: 'Submitter', label: 'Submitter' },
-                { value: 'Reviewer', label: 'Reviewer' },
-                { value: 'Approver', label: 'Approver' },
-                { value: 'UNASSIGNED', label: 'Chưa gán Role' },
+                { value: 'Admin', label: roleLabels.Admin },
+                { value: 'Submitter', label: roleLabels.Submitter },
+                { value: 'Reviewer', label: roleLabels.Reviewer },
+                { value: 'Approver', label: roleLabels.Approver },
+                { value: 'UNASSIGNED', label: 'Chưa gán vai trò' },
               ]}
             />
 
@@ -451,8 +397,8 @@ export const UserManagementPage: React.FC = () => {
       </Card>
 
       {/* Users Table */}
-      <Card style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <Table
+      <Card className="list-surface">
+        <Table locale={{ emptyText: listError ? null : <QueryState filtered={Boolean(searchText || roleFilter !== 'ALL' || statusFilter !== 'ALL')} entity="người dùng" /> }} scroll={{ x: 1100 }}
           dataSource={filteredUsers}
           columns={columns}
           rowKey="id"
@@ -462,7 +408,7 @@ export const UserManagementPage: React.FC = () => {
             showSizeChanger: true,
             showTotal: (total) => `Tổng cộng ${total} người dùng`,
           }}
-          bordered
+
           size="middle"
         />
       </Card>
@@ -471,7 +417,7 @@ export const UserManagementPage: React.FC = () => {
       <Modal
         title={
           <Space>
-            <UserOutlined style={{ color: '#1677FF' }} />
+            <UserOutlined style={{ color: '#1D4ED8' }} />
             <span>
               {selectedUser?.roleId ? 'Đổi vai trò người dùng' : 'Gán vai trò người dùng'}:{' '}
               <Text strong>{selectedUser?.fullName || selectedUser?.username}</Text>
@@ -497,7 +443,7 @@ export const UserManagementPage: React.FC = () => {
         </div>
 
         <Form form={roleForm} layout="vertical">
-          <Form.Item name="roleId" label="Vai trò (Role)" rules={[{ required: false }]}>
+          <Form.Item name="roleId" label="Vai trò" rules={[{ required: false }]}>
             <Radio.Group style={{ width: '100%' }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 {roles.map((r) => {
@@ -511,21 +457,17 @@ export const UserManagementPage: React.FC = () => {
                         cursor: 'pointer',
                         borderRadius: 6,
                         backgroundColor: isSelected ? '#E6F4FF' : '#FAFAFA',
-                        borderColor: isSelected ? '#1677FF' : '#E4E7ED',
+                        borderColor: isSelected ? '#1D4ED8' : '#E4E7ED',
                         borderWidth: isSelected ? 2 : 1,
                         transition: 'all 0.2s',
                       }}
                     >
                       <Radio value={r.id}>
                         <Space>
-                          <Text strong style={{ color: isSelected ? '#1677FF' : '#1F2937' }}>{r.name}</Text>
-                          {r.name === 'Admin' && <Tag color="magenta">Toàn quyền hệ thống</Tag>}
-                          {r.name === 'Submitter' && <Tag color="blue">Kỹ sư hiện trường</Tag>}
-                          {r.name === 'Reviewer' && <Tag color="orange">Tư vấn giám sát</Tag>}
-                          {r.name === 'Approver' && <Tag color="green">Chủ đầu tư</Tag>}
+                          <Text strong style={{ color: isSelected ? '#1D4ED8' : '#1F2937' }}>{roleLabels[r.name] || r.name}</Text>
                         </Space>
                         {r.description && (
-                          <div style={{ marginTop: 4, color: '#8C8C8C', fontSize: 13, paddingLeft: 24 }}>
+                          <div style={{ marginTop: 4, color: '#667085', fontSize: 13, paddingLeft: 24 }}>
                             {r.description}
                           </div>
                         )}
@@ -557,7 +499,7 @@ export const UserManagementPage: React.FC = () => {
                           </Text>
                         </Space>
                         <div style={{ marginTop: 4, color: '#CF1322', fontSize: 13, paddingLeft: 24 }}>
-                          Người dùng sẽ quay về màn hình chờ gán quyền (Pending Role) và không truy cập được dữ liệu nghiệp vụ.
+                          Người dùng sẽ quay về màn hình chờ gán quyền và không truy cập được dữ liệu nghiệp vụ.
                         </div>
                       </Radio>
                     </Card>

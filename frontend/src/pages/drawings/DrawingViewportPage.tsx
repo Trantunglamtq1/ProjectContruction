@@ -1,38 +1,39 @@
-import React, { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Space,
-  Typography,
-  Tag,
-  Button,
-  Input,
-  Segmented,
-  Tooltip,
-  Popconfirm,
-  message,
-  Spin,
-  Alert,
-} from 'antd';
-import {
-  ArrowLeftOutlined,
-  SearchOutlined,
-  AppstoreOutlined,
   AimOutlined,
+  AppstoreOutlined,
+  ArrowLeftOutlined,
+  CheckSquareOutlined,
+  CloseCircleOutlined,
   DeleteOutlined,
   InfoCircleOutlined,
-  CheckSquareOutlined,
   RightOutlined,
+  SearchOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Alert,
+  Button,
+  Input,
+  message,
+  Popconfirm,
+  Segmented,
+  Space,
+  Spin,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import React, { useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ObjectChecklistsModal } from '../../components/checklists/ObjectChecklistsModal';
+import { parseMarkerCoords } from '../../components/viewport/DrawingViewportModal';
+import { SmartDrawingViewport } from '../../components/viewport/SmartDrawingViewport';
+import { pointsToSmoothSvgPath } from '../../components/viewport/cv/curveFitting';
+import type { Point, SavedObjectData } from '../../components/viewport/cv/types';
 import { useAuth } from '../../contexts/AuthContext';
 import { drawingApi } from '../../services/drawingApi';
 import { objectApi, type CreateObjectPayload } from '../../services/objectApi';
-import { SmartDrawingViewport } from '../../components/viewport/SmartDrawingViewport';
-import { ObjectChecklistsModal } from '../../components/checklists/ObjectChecklistsModal';
-import { parseMarkerCoords } from '../../components/viewport/DrawingViewportModal';
-import type { Point, SavedObjectData } from '../../components/viewport/cv/types';
-import { pointsToSmoothSvgPath } from '../../components/viewport/cv/curveFitting';
 
 const { Text } = Typography;
 
@@ -46,7 +47,7 @@ export const DrawingViewportPage: React.FC = () => {
   const isSubmitter = currentRole === 'Submitter';
 
   // State sidebar danh sách cấu kiện & tìm kiếm/lọc
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => window.innerWidth >= 1024);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -319,12 +320,7 @@ export const DrawingViewportPage: React.FC = () => {
                   backgroundColor: 'rgba(255, 255, 255, 0.15)',
                 }}
               />
-              <Tag
-                color={isSubmitter ? 'blue' : currentRole === 'Reviewer' ? 'orange' : 'green'}
-                style={{ margin: 0, fontWeight: 600, fontSize: 11 }}
-              >
-                {currentRole ? `${currentRole.toUpperCase()} WORKSPACE` : 'VIEWPORT'}
-              </Tag>
+              <Text style={{ color: '#CBD5E1', fontSize: 12 }}>{isSubmitter ? 'Đánh dấu cấu kiện' : 'Chỉ xem'}</Text>
             </div>
           }
           headerRight={
@@ -337,7 +333,8 @@ export const DrawingViewportPage: React.FC = () => {
                   margin: '0 4px',
                 }}
               />
-              <Button
+              <Button aria-label={isSidebarOpen ? 'Ẩn danh sách cấu kiện' : 'Mở danh sách cấu kiện'}
+                aria-expanded={isSidebarOpen}
                 size="small"
                 type={isSidebarOpen ? 'primary' : 'default'}
                 ghost={isSidebarOpen}
@@ -354,7 +351,7 @@ export const DrawingViewportPage: React.FC = () => {
 
       {/* SIDEBAR DANH SÁCH CẤU KIỆN (BÊN PHẢI) */}
       {isSidebarOpen && (
-        <div
+        <div className="drawing-object-pane"
           style={{
             width: 360,
             height: '100%',
@@ -385,7 +382,7 @@ export const DrawingViewportPage: React.FC = () => {
             >
               <Space size={8}>
                 <AppstoreOutlined style={{ color: '#38bdf8', fontSize: 16 }} />
-                <Text strong style={{ color: '#f8fafc', fontSize: 14 }}>
+                <Button className="drawing-pane-close" size="small" onClick={() => setIsSidebarOpen(false)} aria-label="Đóng danh sách cấu kiện">Đóng</Button><Text strong style={{ color: '#f8fafc', fontSize: 14 }}>
                   Danh sách cấu kiện
                 </Text>
               </Space>
@@ -400,7 +397,7 @@ export const DrawingViewportPage: React.FC = () => {
               prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              allowClear
+              allowClear={{ clearIcon: <CloseCircleOutlined aria-label="Xóa tìm kiếm" /> }}
               style={{
                 backgroundColor: '#1e293b',
                 borderColor: '#475569',
@@ -506,13 +503,13 @@ export const DrawingViewportPage: React.FC = () => {
                         marginTop: 8,
                       }}
                     >
-                      <span style={{ color: '#94a3b8', fontSize: 11 }}>
-                        Trang {obj.pageNumber} • {originalObj?.inspectionCount ?? 0} Form •{' '}
+                      <span style={{ color: '#94a3b8', fontSize: 12 }}>
+                        Trang {obj.pageNumber} · {originalObj?.inspectionCount ?? 0} Form •{' '}
                         {originalObj?.checklistCount ?? 0} Checklist
                       </span>
                       <Space size={4}>
-                        <Tooltip title="Checklist & Biểu mẫu Form.io">
-                          <Button
+                        <Tooltip title="Kế hoạch kiểm tra">
+                          <Button aria-label="Kế hoạch kiểm tra"
                             size="small"
                             type="text"
                             icon={<CheckSquareOutlined style={{ color: '#10b981' }} />}
@@ -528,7 +525,7 @@ export const DrawingViewportPage: React.FC = () => {
                           />
                         </Tooltip>
                         <Tooltip title="Định vị & Phóng to trên bản vẽ">
-                          <Button
+                          <Button aria-label="Định vị & Phóng to trên bản vẽ"
                             size="small"
                             type="text"
                             icon={<AimOutlined style={{ color: '#38bdf8' }} />}
@@ -550,7 +547,7 @@ export const DrawingViewportPage: React.FC = () => {
                               handleDeleteCvObject(obj.id);
                             }}
                           >
-                            <Button
+                            <Button aria-label="Xóa"
                               size="small"
                               type="text"
                               danger

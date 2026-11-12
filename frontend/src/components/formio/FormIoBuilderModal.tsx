@@ -1,63 +1,64 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import {
-  Modal,
-  Row,
-  Col,
-  Card,
+  AimOutlined,
+  AppstoreOutlined,
+  BorderOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  CheckSquareOutlined,
+  ClearOutlined,
+  CodeOutlined,
+  CopyOutlined,
+  DeleteOutlined,
+  DesktopOutlined,
+  DownSquareOutlined,
+  EditOutlined,
+  FileTextOutlined,
+  FontSizeOutlined,
+  NumberOutlined,
+  RedoOutlined,
+  ToolOutlined,
+  UndoOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons';
+import {
   Button,
-  Space,
-  Typography,
-  Tag,
+  Card,
+  Checkbox,
+  Col,
+  Divider,
   Form,
   Input,
   InputNumber,
-  Checkbox,
-  Tabs,
-  Popconfirm,
-  Divider,
   message,
-  Alert,
+  Modal,
+  Popconfirm,
+  Row,
   Segmented,
+  Space,
+  Tabs,
+  Tag,
   Tooltip,
+  Typography
 } from 'antd';
-import {
-  DeleteOutlined,
-  EditOutlined,
-  DesktopOutlined,
-  CodeOutlined,
-  ToolOutlined,
-  CheckCircleOutlined,
-  FontSizeOutlined,
-  NumberOutlined,
-  DownSquareOutlined,
-  CalendarOutlined,
-  CheckSquareOutlined,
-  UnorderedListOutlined,
-  CopyOutlined,
-  FileTextOutlined,
-  BorderOutlined,
-  AppstoreOutlined,
-  ClearOutlined,
-  AimOutlined,
-  UndoOutlined,
-  RedoOutlined,
-} from '@ant-design/icons';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useUnsavedChanges } from '../../contexts/UnsavedChangesContext';
+import type { FormIoComponent, FormIoSchema } from '../../types/inspection';
+import { FormGeometryScope } from '../ui/FormGeometryScope';
 import { DynamicFormIoRenderer } from './DynamicFormIoRenderer';
 import { FORM_TEMPLATES, type FormTemplateOption } from './formTemplates';
-import { calculateButtonFitSize } from './formioLayout';
 import {
-  canRedo as historyCanRedo,
-  canUndo as historyCanUndo,
   cloneComponents,
   createHistory,
+  canRedo as historyCanRedo,
+  canUndo as historyCanUndo,
   pushSnapshot,
   redo,
   undo,
   type HistorySnapshot,
   type HistoryState,
 } from './formioHistory';
-import type { FormIoComponent, FormIoSchema } from '../../types/inspection';
+import { calculateButtonFitSize } from './formioLayout';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -571,6 +572,8 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
   onCancel,
   onSave,
 }) => {
+  const [initialSnapshot, setInitialSnapshot] = useState('');
+  const editorRef = useRef<HTMLDivElement>(null);
   const [components, setComponents] = useState<FormIoComponent[]>([]);
   const [selectedCompIndex, setSelectedCompIndex] = useState<number | null>(null);
   const [formTitle, setFormTitle] = useState<string>('Biểu mẫu tùy chỉnh');
@@ -580,6 +583,14 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
   const [activeTab, setActiveTab] = useState<'designer' | 'preview' | 'json'>('designer');
   const [previewData, setPreviewData] = useState<Record<string, any>>({});
   const isInitializedRef = useRef(false);
+  const confirmDiscard = useUnsavedChanges(Boolean(visible && initialSnapshot && JSON.stringify({ components, formTitle }) !== initialSnapshot));
+  const requestClose = useCallback(() => confirmDiscard(onCancel), [confirmDiscard, onCancel]);
+  useEffect(() => {
+    if (!visible) return;
+    const previous = document.activeElement as HTMLElement | null;
+    editorRef.current?.focus();
+    return () => previous?.focus();
+  }, [visible]);
 
   // Canvas mở rộng theo không gian còn trống (full-screen page)
   const [canvasWidth, setCanvasWidth] = useState<number>(CANVAS_W);
@@ -760,7 +771,9 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
     const onKeyDown = (e: KeyboardEvent) => {
       // Escape đóng trang thiết kế (trừ khi đang mở modal chọn mẫu)
       if (e.key === 'Escape') {
-        if (!templateModalOpen) onCancel();
+        e.preventDefault();
+        e.stopPropagation();
+        if (!templateModalOpen) requestClose();
         return;
       }
       if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
@@ -786,7 +799,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [visible, handleUndo, handleRedo, templateModalOpen, onCancel]);
+  }, [visible, handleUndo, handleRedo, templateModalOpen, requestClose]);
 
   /** Thông báo dùng chung 1 key để không bị xếp chồng khi bấm nhiều lần */
   const notify = useCallback(
@@ -825,6 +838,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
         componentsRef.current = normalized;
         const nextTitle = initialSchema.title || 'Biểu mẫu tùy chỉnh';
         setFormTitle(nextTitle);
+        setInitialSnapshot(JSON.stringify({ components: normalized, formTitle: nextTitle }));
         setSelectedCompIndex(0);
         historyRef.current = createHistory();
         pushHistory({ components: normalized, selectedCompIndex: 0, formTitle: nextTitle });
@@ -835,6 +849,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
         componentsRef.current = cloned;
         const nextTitle = defaultTpl.schema.title || 'Biên bản nghiệm thu';
         setFormTitle(nextTitle);
+        setInitialSnapshot(JSON.stringify({ components: cloned, formTitle: nextTitle }));
         setSelectedCompIndex(0);
         historyRef.current = createHistory();
         pushHistory({ components: cloned, selectedCompIndex: 0, formTitle: nextTitle });
@@ -1279,6 +1294,16 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
       {visible &&
         createPortal(
           <div
+            ref={editorRef} role="dialog" aria-modal="true" aria-label="Thiết kế biểu mẫu" tabIndex={-1}
+            onKeyDownCapture={(event) => {
+              if (event.key === 'Escape' && !templateModalOpen) { event.preventDefault(); event.stopPropagation(); requestClose(); }
+              if (event.key === 'Tab') {
+                const controls = [...(editorRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]') || [])].filter(el => el.offsetParent !== null);
+                const first = controls[0], last = controls[controls.length - 1];
+                if (event.shiftKey && (document.activeElement === first || document.activeElement === editorRef.current)) { event.preventDefault(); last?.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+              }
+            }}
             style={{
               position: 'fixed',
               inset: 0,
@@ -1298,6 +1323,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
 
               .formio-builder-toolbox { width: 190px; }
               .formio-builder-props { width: 300px; }
+              @media (max-width: 767px) { .formio-builder-toolbox { width: 150px; flex-shrink: 0; } .formio-builder-props { width: 240px; flex-shrink: 0; } }
               /* Giữ chỗ thanh cuộn để bề rộng canvas không đổi khi cuộn dọc */
               .formio-builder-canvas { scrollbar-gutter: stable; }
               @media (max-width: 1500px) {
@@ -1339,13 +1365,10 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      Visual WinForms Form Designer
+                      Thiết kế biểu mẫu
                     </span>
                     <Tag color="blue" style={{ marginInlineEnd: 0 }}>Toàn màn hình</Tag>
                   </div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    Kéo thả tự do • Kéo cạnh/góc để đổi kích thước • Nút tự bo gọn theo text
-                  </Text>
                 </div>
               </div>
               <Space size={8} wrap style={{ flexShrink: 0, maxWidth: '100%' }}>
@@ -1391,7 +1414,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                   </Button>
                 </Popconfirm>
                 <Divider type="vertical" style={{ height: 28, margin: 0 }} />
-                <Button onClick={onCancel}>Hủy</Button>
+                <Button onClick={requestClose}>Đóng</Button>
                 <Button type="primary" onClick={handleSaveAll}>
                   Áp dụng Biểu mẫu này
                 </Button>
@@ -1418,7 +1441,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
               label: (
                 <Space>
                   <ToolOutlined />
-                  <span style={{ fontWeight: 600 }}>1. Canvas Thiết Kế WinForms</span>
+                  <span style={{ fontWeight: 600 }}>Thiết kế</span>
                   <Tag color="blue">{components.length} phần tử</Tag>
                 </Space>
               ),
@@ -1453,6 +1476,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                       <Text strong style={{ fontSize: 13, whiteSpace: 'nowrap' }}>Tên Biểu mẫu:</Text>
                       <Input
                         size="small"
+                        aria-label="Tên biểu mẫu"
                         value={formTitle}
                         onChange={(e) => setFormTitle(e.target.value)}
                         style={{ flex: 1, minWidth: 140, fontWeight: 600 }}
@@ -1527,21 +1551,6 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                           </Button>
                         ))}
                       </div>
-                      <div
-                        style={{
-                          marginTop: 'auto',
-                          paddingTop: 8,
-                          borderTop: '1px solid #E2E8F0',
-                          fontSize: 11,
-                          color: '#64748B',
-                          lineHeight: 1.35,
-                        }}
-                      >
-                        <b>Hướng dẫn WinForms:</b>
-                        <br />• Kéo tự do trên lưới.
-                        <br />• Kéo cạnh/góc đổi kích thước.
-                        <br />• Bấm <b>Bo gọn text</b> để nút ôm khít chữ.
-                      </div>
                     </div>
 
                     {/* KHỐI 2: CANVAS */}
@@ -1559,7 +1568,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                       }}
                       onClick={() => setSelectedCompIndex(null)}
                     >
-                      <div
+                      <FormGeometryScope><div
                         style={{
                           position: 'relative',
                           margin: '0 auto',
@@ -1586,7 +1595,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                           >
                             <AimOutlined style={{ fontSize: 48, marginBottom: 12, color: '#CBD5E1' }} />
                             <div style={{ fontSize: 16, fontWeight: 600, color: '#475569' }}>
-                              Canvas WinForms Trống
+                              Chưa có trường dữ liệu
                             </div>
                             <div style={{ fontSize: 13, marginTop: 4 }}>
                               Bấm linh kiện từ Toolbox bên trái hoặc chọn Form mẫu có sẵn.
@@ -1609,7 +1618,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                             />
                           ))
                         )}
-                      </div>
+                      </div></FormGeometryScope>
                     </div>
 
                     {/* KHỐI 3: PROPERTIES PANEL */}
@@ -1656,7 +1665,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                               padding: '4px 8px',
                               borderRadius: 4,
                               marginBottom: 8,
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: 600,
                             }}
                           >
@@ -1700,21 +1709,21 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                               }}
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                <span style={{ fontSize: 11, fontWeight: 600, color: '#1E40AF' }}>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: '#1E40AF' }}>
                                   Bo gọn theo chữ:
                                 </span>
                                 <Button
                                   size="small"
                                   type="primary"
                                   onClick={() => handleFitToText(selectedCompIndex!)}
-                                  style={{ height: 22, fontSize: 11, padding: '0 8px' }}
+                                  style={{ height: 22, fontSize: 12, padding: '0 8px' }}
                                 >
                                   Bo gọn ngay
                                 </Button>
                               </div>
                               <Form.Item name="autoFit" valuePropName="checked" style={{ marginBottom: 0 }}>
                                 <Checkbox>
-                                  <span style={{ fontSize: 11, color: '#1E3A8A' }}>
+                                  <span style={{ fontSize: 12, color: '#1E3A8A' }}>
                                     Tự động ôm khít khi đổi chữ / cỡ chữ
                                   </span>
                                 </Checkbox>
@@ -1732,7 +1741,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
                               padding: '4px 8px',
                               borderRadius: 4,
                               marginBottom: 8,
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: 600,
                             }}
                           >
@@ -1864,7 +1873,7 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
               label: (
                 <Space>
                   <CodeOutlined />
-                  <span style={{ fontWeight: 600 }}>3. JSON Schema</span>
+                  <span style={{ fontWeight: 600 }}>Cấu trúc nâng cao</span>
                 </Space>
               ),
               children: (
@@ -1916,27 +1925,20 @@ export const FormIoBuilderModal: React.FC<FormIoBuilderModalProps> = ({
           <Space align="center">
             <AppstoreOutlined style={{ color: '#1677FF', fontSize: 20 }} />
             <Title level={4} style={{ margin: 0, fontSize: 16 }}>
-              Thư Viện Form Mẫu Nghiệm Thu Công Trường (WinForms Layout)
+              Mẫu biểu nghiệm thu
             </Title>
           </Space>
         }
         open={templateModalOpen}
         onCancel={() => setTemplateModalOpen(false)}
         footer={null}
-        width={780}
+        width={{ xs: 'calc(100vw - 24px)', md: 780 }}
         zIndex={1400}
         centered
       >
-        <Alert
-          message="Chọn Form mẫu hoặc bắt đầu với Canvas trống."
-          description="Các mẫu được thiết kế sẵn tọa độ WinForms. Bạn có thể tự do kéo di chuyển, bo gọn nút hoặc co giãn các ô text."
-          type="info"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
         <Row gutter={[16, 16]}>
           {FORM_TEMPLATES.map((tpl) => (
-            <Col span={12} key={tpl.id}>
+            <Col xs={24} sm={12} key={tpl.id}>
               <Card
                 hoverable
                 onClick={() => handleSelectTemplate(tpl)}

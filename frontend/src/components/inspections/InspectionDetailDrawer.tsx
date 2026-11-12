@@ -1,46 +1,45 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Drawer,
-  Tabs,
-  Space,
-  Typography,
-  Tag,
-  Button,
-  Alert,
-  Spin,
-  Timeline,
-  Descriptions,
-  message,
-  Card,
-  Popconfirm,
-} from 'antd';
-import {
+  CheckSquareOutlined,
   FileTextOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
+  HistoryOutlined,
+  PictureOutlined,
   SaveOutlined,
   SendOutlined,
-  HistoryOutlined,
-  EditOutlined,
-  ToolOutlined,
-  BranchesOutlined,
-  PictureOutlined,
-  CheckSquareOutlined,
+  ToolOutlined
 } from '@ant-design/icons';
+import {
+  Alert,
+  Button,
+  Card,
+  Descriptions,
+  Drawer,
+  message,
+  Popconfirm,
+  Space,
+  Spin,
+  Tabs,
+  Tag,
+  Timeline,
+  Typography,
+} from 'antd';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { roleLabels } from '../../config/statuses';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUnsavedChanges } from '../../contexts/UnsavedChangesContext';
 import { inspectionApi } from '../../services/inspectionApi';
+import type {
+  FormIoSchema,
+  InspectionAttachmentDto,
+  InspectionAuditHistoryDto,
+  InspectionDto,
+  InspectionStatus,
+} from '../../types/inspection';
 import { DynamicFormIoRenderer } from '../formio/DynamicFormIoRenderer';
 import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
+import { QueryState } from '../ui/QueryState';
+import { StatusBadge } from '../ui/StatusBadge';
 import { InspectionImageGallery } from './InspectionImageGallery';
-import type {
-  InspectionDto,
-  FormIoSchema,
-  InspectionAuditHistoryDto,
-  InspectionStatus,
-  InspectionAttachmentDto,
-} from '../../types/inspection';
 
 const { Text } = Typography;
 
@@ -79,6 +78,10 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
   const [attachments, setAttachments] = useState<InspectionAttachmentDto[]>([]);
   const [history, setHistory] = useState<InspectionAuditHistoryDto[]>([]);
   const [activeTab, setActiveTab] = useState<string>('form');
+  const [expanded, setExpanded] = useState(false);
+  const [savedData, setSavedData] = useState('{}');
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [hasConflict, setHasConflict] = useState(false);
 
   useEffect(() => {
     if (visible && inspectionId) {
@@ -102,6 +105,7 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
 
   const loadInspectionDetails = async (id: string) => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await inspectionApi.getInspectionById(id);
       setInspection(data);
@@ -116,6 +120,8 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
         }
       }
       setFormData(parsedData);
+      setSavedData(JSON.stringify(parsedData));
+      setHasConflict(false);
 
       const atts: InspectionAttachmentDto[] = Array.isArray(parsedData.attachments)
         ? parsedData.attachments
@@ -125,6 +131,13 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
       // 1. Kiểm tra nếu có schema tùy biến được lưu trong formDataJson
       if (parsedData._customSchema && parsedData._customSchema.components?.length > 0) {
         setSchema(parsedData._customSchema);
+      } else if (data.formSchemaJson && data.formSchemaJson !== '{}') {
+        try {
+          const linkedSchema: FormIoSchema = JSON.parse(data.formSchemaJson);
+          setSchema(linkedSchema.components?.length ? linkedSchema : getDefaultFallbackSchema());
+        } catch {
+          setSchema(getDefaultFallbackSchema());
+        }
       } else {
         // 2. Tải schema từ backend API
         try {
@@ -143,8 +156,8 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
       // Tải lịch sử
       const historyData = await inspectionApi.getInspectionHistory(id).catch(() => []);
       setHistory(historyData);
-    } catch {
-      message.error('Không thể tải chi tiết hồ sơ kiểm tra.');
+    } catch (error) {
+      setLoadError(error);
     } finally {
       setLoading(false);
     }
@@ -204,8 +217,11 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
   const isEditable =
     isSubmitterRole &&
     inspection &&
+    inspection.submittedById === user?.id &&
     inspection.workflowSyncStatus === 'Synchronized' &&
     (inspection.status === 'Draft' || inspection.status === 'Rejected');
+  const confirmDiscard = useUnsavedChanges(Boolean(visible && isEditable && JSON.stringify(formData) !== savedData));
+  const requestClose = () => confirmDiscard(onClose);
 
   const handleSaveDraft = async () => {
     if (!inspection) return;
@@ -216,9 +232,12 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
         rowVersion: inspection.rowVersion,
       });
       setInspection(updated);
+      setSavedData(JSON.stringify(formData));
+      setHasConflict(false);
       message.success('Đã lưu nội dung bản nháp thành công!');
       onUpdated();
     } catch (error: any) {
+      if (error.response?.status === 409) setHasConflict(true);
       const msg = error.response?.data?.message || 'Có lỗi khi lưu bản nháp.';
       message.error(msg);
     } finally {
@@ -235,11 +254,13 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
         rowVersion: inspection.rowVersion,
       });
       setInspection(updated);
+      setSavedData(JSON.stringify(formData));
       message.info('Đã ghi nhận hồ sơ; quy trình đang được đồng bộ. Vui lòng tải lại để xem kết quả.');
       onUpdated();
       const newHistory = await inspectionApi.getInspectionHistory(inspection.id).catch(() => []);
       setHistory(newHistory);
     } catch (error: any) {
+      if (error.response?.status === 409) setHasConflict(true);
       const msg = error.response?.data?.message || 'Có lỗi khi nộp hồ sơ.';
       message.error(msg);
     } finally {
@@ -261,10 +282,12 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
           rowVersion: inspection.rowVersion,
         });
         setInspection(updated);
+        setSavedData(JSON.stringify(updatedData));
         message.success('Đã lưu cấu hình biểu mẫu tùy biến vào hồ sơ!');
         onUpdated();
       } catch (error: any) {
         if (error.response?.status === 409) {
+          setHasConflict(true);
           message.error(error.response.data?.message || 'Dữ liệu đã thay đổi. Vui lòng tải lại hồ sơ.');
         } else {
           message.warning('Đã áp dụng biểu mẫu mới trên giao diện. Nhấn Lưu nháp để đồng bộ.');
@@ -273,68 +296,51 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
     }
   };
 
-  const renderStatusTag = (status?: InspectionStatus) => {
-    switch (status) {
-      case 'Approved':
-        return <Tag color="success" icon={<CheckCircleOutlined />}>ĐÃ PHÊ DUYỆT (CẤP 2 CĐT)</Tag>;
-      case 'Reviewed':
-        return <Tag color="purple" icon={<CheckCircleOutlined />}>ĐẠT THẨM TRA (CẤP 1)</Tag>;
-      case 'UnderReview':
-        return <Tag color="processing" icon={<ClockCircleOutlined />}>ĐANG THẨM TRA</Tag>;
-      case 'Submitted':
-        return <Tag color="warning" icon={<ClockCircleOutlined />}>CHỜ THẨM TRA</Tag>;
-      case 'Rejected':
-        return <Tag color="error" icon={<CloseCircleOutlined />}>BỊ TỪ CHỐI / CẦN SỬA</Tag>;
-      default:
-        return <Tag color="default" icon={<EditOutlined />}>BẢN NHÁP (DRAFT)</Tag>;
-    }
-  };
+  const renderStatusTag = (status?: InspectionStatus) => <StatusBadge domain="inspection" status={status} />;
 
   return (
     <Drawer
       title={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <Space wrap>
-            <FileTextOutlined style={{ color: '#1677FF', fontSize: 20 }} />
+            <FileTextOutlined style={{ color: '#1D4ED8', fontSize: 20 }} />
             <Text strong style={{ fontSize: 16 }}>
               {formData.inspectionTitle || inspection?.objectName || 'Chi tiết Hồ sơ Nghiệm thu'}
             </Text>
-            {inspection?.workflowInstanceId && (
-              <Tag color="purple" icon={<BranchesOutlined />} style={{ fontFamily: 'monospace', fontWeight: 600 }}>
-                {inspection.workflowInstanceId}
-              </Tag>
-            )}
+
           </Space>
           <div style={{ marginRight: 24 }}>{renderStatusTag(inspection?.status)}</div>
         </div>
       }
       open={visible}
-      onClose={onClose}
-      width={880}
-      destroyOnClose
+      onClose={requestClose}
+      size={expanded ? '100vw' : 'min(100vw, 1040px)'}
+      className="detail-overlay"
+      destroyOnHidden
       extra={
-        <Button
+        <Space wrap>
+        <Button size="small" onClick={() => setExpanded(!expanded)}>{expanded ? 'Thu gọn' : 'Mở rộng'}</Button>
+        <Button aria-label="Mở kế hoạch kiểm tra"
           type="primary"
           ghost
           size="small"
           icon={<CheckSquareOutlined />}
-          onClick={() => {
+          onClick={() => confirmDiscard(() => {
             onClose();
             const target = inspection?.checklistId
               ? `${roleBase}/checklists?checklistId=${inspection.checklistId}`
               : `${roleBase}/checklists`;
             navigate(target);
-          }}
+          })}
         >
           {inspection?.checklistId ? 'Mở Kế hoạch Checklist' : 'Quản lý Checklist'}
         </Button>
+        </Space>
       }
       footer={
         isEditable ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text type="secondary">
-              Hồ sơ đang ở chế độ chỉnh sửa. Nhấn <b>Nộp hồ sơ</b> để gửi sang Tư vấn giám sát.
-            </Text>
+          <div className="detail-actions">
+            <Button onClick={requestClose}>Đóng</Button>
             <Space size={12}>
               <Button icon={<SaveOutlined />} onClick={handleSaveDraft} loading={saving}>
                 Lưu nháp
@@ -354,14 +360,17 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
           </div>
         ) : (
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button onClick={onClose}>Đóng</Button>
+            <Button onClick={requestClose}>Đóng</Button>
           </div>
         )
       }
     >
       <Spin spinning={loading}>
+        {loadError ? <QueryState error={loadError} retry={() => inspectionId && loadInspectionDetails(inspectionId)} entity="hồ sơ" /> : null}
         {inspection && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {hasConflict && <Alert type="warning" showIcon title="Hồ sơ đã thay đổi" description="Nội dung đang sửa được giữ lại. Chỉ tải lại khi bạn sẵn sàng bỏ thay đổi chưa lưu."
+              action={<Button onClick={() => confirmDiscard(() => { void loadInspectionDetails(inspection.id); })}>Tải lại hồ sơ</Button>} />}
             {inspection.workflowSyncStatus && inspection.workflowSyncStatus !== 'Synchronized' && (
               <Alert
                 type="warning"
@@ -397,7 +406,7 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
             {/* Thông tin cấu kiện & Bản vẽ */}
             <Card size="small" style={{ borderRadius: 8, backgroundColor: '#F9FAFB' }}>
               <Descriptions size="small" column={{ xs: 1, sm: 2, md: 3 }} bordered={false}>
-                <Descriptions.Item label={<Text type="secondary">Cấu kiện (Object)</Text>}>
+                <Descriptions.Item label={<Text type="secondary">Cấu kiện</Text>}>
                   <Text strong>{inspection.objectName}</Text>
                 </Descriptions.Item>
                 <Descriptions.Item label={<Text type="secondary">Bản vẽ CAD</Text>}>
@@ -417,15 +426,15 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
                 <Descriptions.Item label={<Text type="secondary">Kế hoạch Checklist</Text>}>
                   {inspection.checklistId ? (
                     <Space size={6} wrap>
-                      <Button
+                      <Button aria-label="Mở kế hoạch kiểm tra"
                         type="link"
                         size="small"
                         icon={<CheckSquareOutlined />}
                         style={{ padding: 0, height: 'auto', fontWeight: 600 }}
-                        onClick={() => {
+                        onClick={() => confirmDiscard(() => {
                           onClose();
                           navigate(`${roleBase}/checklists?checklistId=${inspection.checklistId}`);
-                        }}
+                        })}
                       >
                         {inspection.checklistName || `Mã #${inspection.checklistId.substring(0, 8).toUpperCase()}`}
                       </Button>
@@ -437,68 +446,22 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
                       size="small"
                       icon={<CheckSquareOutlined />}
                       style={{ padding: 0, height: 'auto' }}
-                      onClick={() => {
+                      onClick={() => confirmDiscard(() => {
                         onClose();
                         navigate(`${roleBase}/checklists`);
-                      }}
+                      })}
                     >
                       Đến danh sách Checklist
                     </Button>
                   )}
                 </Descriptions.Item>
-                {inspection.workflowInstanceId && (
-                  <Descriptions.Item label={<Text type="secondary">Elsa Workflow ID</Text>}>
-                    <Tag color="purple" icon={<BranchesOutlined />} style={{ fontFamily: 'monospace', fontWeight: 600 }}>
-                      {inspection.workflowInstanceId}
-                    </Tag>
-                  </Descriptions.Item>
-                )}
+
               </Descriptions>
             </Card>
 
             {/* Thanh điều hướng trực tiếp sang Kế hoạch Checklist */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '10px 14px',
-                background: '#F0F5FF',
-                border: '1px solid #ADC6FF',
-                borderRadius: 8,
-              }}
-            >
-              <Space>
-                <CheckSquareOutlined style={{ color: '#1677FF', fontSize: 16 }} />
-                <div>
-                  <Text strong style={{ color: '#1D39C4', fontSize: 13 }}>
-                    {inspection.checklistId
-                      ? `Hồ sơ này thuộc Checklist: ${inspection.checklistName || inspection.objectName}`
-                      : 'Hồ sơ thuộc quy trình nghiệm thu Checklist'}
-                  </Text>
-                  {inspection.checklistItemName && (
-                    <div style={{ fontSize: 12, color: '#595959' }}>
-                      Tiêu chí nghiệm thu liên kết: <b>{inspection.checklistItemName}</b>
-                    </div>
-                  )}
-                </div>
-              </Space>
-              <Button
-                type="primary"
-                size="small"
-                icon={<CheckSquareOutlined />}
-                onClick={() => {
-                  onClose();
-                  const target = inspection.checklistId
-                    ? `${roleBase}/checklists?checklistId=${inspection.checklistId}`
-                    : `${roleBase}/checklists`;
-                  navigate(target);
-                }}
-              >
-                Chuyển sang Checklist &rarr;
-              </Button>
-            </div>
 
+            <details className="technical-details"><summary>Thông tin kỹ thuật</summary><Text copyable>{inspection.id}</Text>{inspection.workflowInstanceId && <div>Mã quy trình: {inspection.workflowInstanceId}</div>}</details>
             {/* Tabs: Nội dung Biểu mẫu vs Lịch sử thẩm tra */}
             <Tabs
               activeKey={activeTab}
@@ -516,35 +479,7 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
                     <div style={{ paddingTop: 4 }}>
                       {/* Toolbar bổ sung Form Builder cho Submitter */}
                       {isEditable && (
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '10px 14px',
-                            backgroundColor: '#F0F7FF',
-                            borderRadius: 8,
-                            marginBottom: 16,
-                            border: '1px solid #BAE0FF',
-                          }}
-                        >
-                          <div>
-                            <Text strong style={{ color: '#0050B3' }}>
-                              Cần bổ sung hoặc đổi tên các chỉ tiêu (độ sụt, cốt thép, số liệu...)?
-                            </Text>
-                            <div style={{ fontSize: 12, color: '#595959' }}>
-                              Dùng Form Builder để thêm/bớt trường và tùy biến nhãn động không cần sửa code.
-                            </div>
-                          </div>
-                          <Button
-                            type="primary"
-                            icon={<ToolOutlined />}
-                            onClick={() => setBuilderVisible(true)}
-                            style={{ backgroundColor: '#1677FF', fontWeight: 600 }}
-                          >
-                            Tùy biến biểu mẫu (Form Builder)
-                          </Button>
-                        </div>
+                        <div className="detail-actions" style={{ marginBottom: 16 }}><Button icon={<ToolOutlined />} onClick={() => setBuilderVisible(true)}>Thiết kế biểu mẫu</Button></div>
                       )}
 
                       <DynamicFormIoRenderer
@@ -604,9 +539,9 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
                             const isApprove = h.action.toLowerCase().includes('approve');
                             const isSubmit = h.action.toLowerCase().includes('submit');
 
-                            let dotColor = '#1677FF';
+                            let dotColor = '#1D4ED8';
                             if (isReject) dotColor = '#FF4D4F';
-                            else if (isApprove) dotColor = '#52C41A';
+                            else if (isApprove) dotColor = '#166534';
                             else if (isSubmit) dotColor = '#FAAD14';
 
                             return {
@@ -624,10 +559,10 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
                                   <div style={{ marginTop: 2 }}>
                                     <Text type="secondary">Thực hiện bởi: </Text>
                                     <Text strong>{h.actorName || 'Hệ thống'}</Text>
-                                    {h.actorRole && <Tag color="blue" style={{ marginLeft: 6 }}>{h.actorRole}</Tag>}
+                                    {h.actorRole && <Tag style={{ marginLeft: 6 }}>{roleLabels[h.actorRole] || h.actorRole}</Tag>}
                                   </div>
                                   <div style={{ marginTop: 4 }}>
-                                    <Tag>{h.fromStatus}</Tag> ➔ <Tag color="processing">{h.toStatus}</Tag>
+                                    <StatusBadge status={h.fromStatus} /> → <StatusBadge status={h.toStatus} />
                                   </div>
                                   {h.comment && (
                                     <div

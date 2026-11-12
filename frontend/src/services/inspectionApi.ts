@@ -1,13 +1,13 @@
-import apiClient from './apiClient';
 import type {
-  InspectionDto,
-  InspectionListResult,
-  InspectionAuditHistoryDto,
-  FormSchemaItemDto,
   ConstructionObjectDto,
   FormIoSchema,
+  FormSchemaItemDto,
   InspectionAttachmentDto,
+  InspectionAuditHistoryDto,
+  InspectionDto,
+  InspectionListResult,
 } from '../types/inspection';
+import apiClient from './apiClient';
 
 export interface GetInspectionsParams {
   pageNumber?: number;
@@ -22,9 +22,10 @@ export interface GetInspectionsParams {
 
 export const inspectionApi = {
   // Lấy danh sách Inspection có lọc, tìm kiếm và phân trang
-  getInspections: async (params?: GetInspectionsParams): Promise<InspectionListResult> => {
+  getInspections: async (params?: GetInspectionsParams, signal?: AbortSignal): Promise<InspectionListResult> => {
     const response = await apiClient.get<InspectionListResult>('/inspections', {
       params,
+      signal,
     });
     return response.data;
   },

@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
-import {
-  Upload,
-  Typography,
-  Space,
-  Button,
-  Popconfirm,
-  Image,
-  message,
-  Spin,
-  Empty,
-  Tag,
-} from 'antd';
 import {
   CloudUploadOutlined,
   DeleteOutlined,
   FilePdfOutlined,
-  PictureOutlined,
   LoadingOutlined,
+  PictureOutlined,
 } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
-import type { InspectionAttachmentDto } from '../../types/inspection';
+import {
+  Button,
+  Empty,
+  Image,
+  message,
+  Popconfirm,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+  Upload,
+} from 'antd';
+import React, { useState } from 'react';
 import { inspectionApi } from '../../services/inspectionApi';
+import type { InspectionAttachmentDto } from '../../types/inspection';
 
 const { Text } = Typography;
 const { Dragger } = Upload;
@@ -157,7 +157,7 @@ export const InspectionImageGallery: React.FC<InspectionImageGalleryProps> = ({
                 <div style={{ padding: '24px 0', textAlign: 'center' }}>
                   <Spin indicator={<LoadingOutlined style={{ fontSize: 28 }} spin />} />
                   <div style={{ marginTop: 8, fontSize: 12, color: '#1677FF' }}>
-                    Đang tải lên MinIO...
+                    Đang tải tệp lên…
                   </div>
                 </div>
               ) : (
@@ -166,7 +166,7 @@ export const InspectionImageGallery: React.FC<InspectionImageGalleryProps> = ({
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#1677FF' }}>
                     Thêm ảnh hiện trường
                   </div>
-                  <div style={{ fontSize: 11, color: '#8C8C8C', marginTop: 2 }}>
+                  <div style={{ fontSize: 12, color: '#475467', marginTop: 2 }}>
                     Kéo thả hoặc bấm chọn
                   </div>
                 </div>
@@ -232,7 +232,7 @@ export const InspectionImageGallery: React.FC<InspectionImageGalleryProps> = ({
                       }}
                     >
                       <FilePdfOutlined style={{ fontSize: 36, marginBottom: 4 }} />
-                      <Text style={{ fontSize: 11, color: '#595959' }}>Xem PDF</Text>
+                      <Text style={{ fontSize: 12, color: '#475467' }}>Xem PDF</Text>
                     </a>
                   )}
 
@@ -279,7 +279,7 @@ export const InspectionImageGallery: React.FC<InspectionImageGalleryProps> = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    fontSize: 10,
+                    fontSize: 12,
                   }}
                 >
                   <span

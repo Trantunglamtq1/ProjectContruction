@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Result, Button, Card, Typography, message, Space } from 'antd';
-import { ClockCircleOutlined, ReloadOutlined, LogoutOutlined, SafetyOutlined } from '@ant-design/icons';
-import { useAuth } from '../../contexts/AuthContext';
+import { ClockCircleOutlined, LogoutOutlined, ReloadOutlined, SafetyOutlined } from '@ant-design/icons';
+import { Button, Card, message, Result, Space, Typography } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { getDefaultRouteForRole } from '../../components/guards/RouteGuards';
+import { roleLabels } from '../../config/statuses';
+import { useAuth } from '../../contexts/AuthContext';
 import type { UserRole } from '../../types/auth';
 
 const { Title, Text, Paragraph } = Typography;
@@ -19,7 +20,7 @@ export const PendingRolePage: React.FC = () => {
         const rawRole = updatedUser?.roleName;
         const role = Array.isArray(rawRole) ? rawRole[0] : rawRole;
         if (role) {
-          message.success(`Tài khoản đã được phê duyệt vai trò: ${role}`);
+          message.success(`Tài khoản đã được phê duyệt vai trò: ${roleLabels[role] || role}`);
           const target = getDefaultRouteForRole(role as UserRole);
           window.location.href = target;
         }
@@ -38,7 +39,7 @@ export const PendingRolePage: React.FC = () => {
       const rawRole = updatedUser?.roleName;
       const role = Array.isArray(rawRole) ? rawRole[0] : rawRole;
       if (role) {
-        message.success(`Tài khoản đã được gán vai trò: ${role}`);
+        message.success(`Tài khoản đã được gán vai trò: ${roleLabels[role] || role}`);
         const target = getDefaultRouteForRole(role as UserRole);
         window.location.href = target;
       } else {
@@ -58,20 +59,12 @@ export const PendingRolePage: React.FC = () => {
 
   return (
     <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F5F7FA',
-        padding: '24px 16px',
-      }}
+      className="auth-page"
     >
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <Space direction="horizontal" align="center" style={{ marginBottom: 8 }}>
-          <SafetyOutlined style={{ fontSize: 32, color: '#1677FF' }} />
-          <Title level={2} style={{ margin: 0, color: '#1F2937', fontWeight: 700 }}>
+          <SafetyOutlined style={{ fontSize: 32, color: '#1D4ED8' }} />
+          <Title level={2} style={{ margin: 0, color: '#182230', fontWeight: 700 }}>
             ConstructInspect
           </Title>
         </Space>
@@ -82,26 +75,26 @@ export const PendingRolePage: React.FC = () => {
           width: '100%',
           maxWidth: 520,
           borderRadius: 8,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+
           border: '1px solid #E4E7ED',
           textAlign: 'center',
         }}
-        bodyStyle={{ padding: '36px 32px' }}
+        styles={{ body: { padding: '36px 32px' } }}
       >
         <Result
           icon={<ClockCircleOutlined style={{ color: '#FAAD14', fontSize: 64 }} />}
           title={
-            <span style={{ fontSize: 20, fontWeight: 600, color: '#1F2937' }}>
+            <span style={{ fontSize: 20, fontWeight: 600, color: '#182230' }}>
               Tài khoản đang chờ phê duyệt
             </span>
           }
           subTitle={
             <div style={{ marginTop: 8 }}>
               <Paragraph style={{ color: '#595959', fontSize: 14, marginBottom: 8 }}>
-                Chào mừng <strong style={{ color: '#1F2937' }}>{user?.fullName || user?.username}</strong>!
+                Chào mừng <strong style={{ color: '#182230' }}>{user?.fullName || user?.username}</strong>!
               </Paragraph>
-              <Paragraph style={{ color: '#8C8C8C', fontSize: 13, marginBottom: 0 }}>
-                Tài khoản của bạn đã được đăng ký thành công nhưng đang chờ Quản trị viên (Admin) phân quyền vai trò (Submitter / Reviewer / Approver).
+              <Paragraph style={{ color: '#667085', fontSize: 13, marginBottom: 0 }}>
+                Tài khoản đã được xác thực và đang chờ quản trị viên cấp quyền sử dụng.
               </Paragraph>
             </div>
           }
@@ -115,7 +108,7 @@ export const PendingRolePage: React.FC = () => {
               style={{
                 borderRadius: 4,
                 borderColor: '#D9D9D9',
-                color: '#1F2937',
+                color: '#182230',
               }}
             >
               Tải lại trang kiểm tra
@@ -127,7 +120,7 @@ export const PendingRolePage: React.FC = () => {
               onClick={handleLogout}
               size="large"
               style={{
-                color: '#8C8C8C',
+                color: '#667085',
               }}
             >
               Đăng xuất

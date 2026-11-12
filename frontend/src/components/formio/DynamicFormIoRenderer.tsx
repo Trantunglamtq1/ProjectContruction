@@ -1,23 +1,24 @@
-import React, { useEffect, useRef } from 'react';
+import type { FormInstance } from 'antd';
 import {
+  Card,
+  Checkbox,
+  Col,
+  DatePicker,
   Form,
   Input,
   InputNumber,
-  Select,
   Radio,
-  Checkbox,
-  DatePicker,
-  Card,
   Row,
-  Col,
-  Typography,
+  Select,
   Space,
   Tag,
+  Typography,
   message,
 } from 'antd';
-import type { FormInstance } from 'antd';
 import dayjs from 'dayjs';
+import React, { useEffect, useRef } from 'react';
 import type { FormIoComponent, FormIoSchema } from '../../types/inspection';
+import { FormGeometryScope } from '../ui/FormGeometryScope';
 
 const { Text } = Typography;
 
@@ -79,7 +80,7 @@ export function preventComponentCollisions(components: FormIoComponent[]): FormI
   return items;
 }
 
-export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
+const DynamicFormIoRendererContent: React.FC<DynamicFormIoRendererProps> = ({
   schema,
   initialData = {},
   readonly = false,
@@ -296,7 +297,7 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
             {initialData[comp.key] || <Text type="secondary">—</Text>}
           </div>
         ) : (
-          <Input
+          <Input aria-label={comp.label}
             placeholder={comp.placeholder || `Nhập ${comp.label}`}
             prefix={comp.prefix}
             suffix={comp.suffix}
@@ -312,7 +313,7 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
             {initialData[comp.key] || <Text type="secondary">—</Text>}
           </div>
         ) : (
-          <Input.TextArea
+          <Input.TextArea aria-label={comp.label}
             rows={comp.rows || 3}
             placeholder={comp.placeholder || `Nhập ${comp.label}`}
             disabled={readonly}
@@ -337,7 +338,7 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
             )}
           </div>
         ) : (
-          <InputNumber
+          <InputNumber aria-label={comp.label}
             style={{ width: '100%', ...(controlH ? { height: controlH } : {}) }}
             placeholder={comp.placeholder || `Nhập số`}
             min={comp.validate?.min}
@@ -362,7 +363,7 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
             )}
           </div>
         ) : (
-          <Select
+          <Select aria-label={comp.label}
             placeholder={comp.placeholder || `Chọn ${comp.label}`}
             options={options}
             disabled={readonly}
@@ -386,7 +387,7 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
             )}
           </div>
         ) : (
-          <Radio.Group style={{ width: '100%' }} disabled={readonly}>
+          <Radio.Group aria-label={comp.label} style={{ width: '100%' }} disabled={readonly}>
             <Space direction="horizontal" size={[16, 6]} wrap style={{ width: '100%' }}>
               {radioValues.map((v) => (
                 <Radio key={v.value} value={v.value} style={{ fontSize: 13, lineHeight: '20px' }}>
@@ -403,7 +404,7 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
         inputElement = readonly ? (
           <div>{initialData[comp.key] ? <Tag color="success">Có</Tag> : <Tag color="default">Không</Tag>}</div>
         ) : (
-          <Checkbox disabled={readonly}>{comp.label}</Checkbox>
+          <Checkbox aria-label={comp.label} disabled={readonly}>{comp.label}</Checkbox>
         );
         break;
 
@@ -414,7 +415,7 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
             {initialData[comp.key] ? dayjs(initialData[comp.key]).format('DD/MM/YYYY HH:mm') : <Text type="secondary">—</Text>}
           </div>
         ) : (
-          <DatePicker
+          <DatePicker aria-label={comp.label}
             showTime={comp.type === 'datetime'}
             format={comp.type === 'datetime' ? 'DD/MM/YYYY HH:mm' : 'DD/MM/YYYY'}
             style={{ width: '100%', ...(controlH ? { height: controlH } : {}) }}
@@ -427,7 +428,7 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
         inputElement = readonly ? (
           <div>{String(initialData[comp.key] || '—')}</div>
         ) : (
-          <Input placeholder={comp.placeholder || comp.label} disabled={readonly} style={controlStyle} />
+          <Input aria-label={comp.label} placeholder={comp.placeholder || comp.label} disabled={readonly} style={controlStyle} />
         );
         break;
     }
@@ -558,12 +559,13 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
         layout="vertical"
         requiredMark={!readonly}
         onValuesChange={handleValuesChange}
-        style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}
+        style={{ width: '100%', overflowX: 'auto' }}
       >
         <div
           style={{
             position: 'relative',
             width: Math.max(maxX + 30, 820),
+            flexShrink: 0,
             minHeight: maxY + 40,
             backgroundColor: '#FFFFFF',
             borderRadius: 8,
@@ -624,3 +626,5 @@ export const DynamicFormIoRenderer: React.FC<DynamicFormIoRendererProps> = ({
     </Form>
   );
 };
+
+export const DynamicFormIoRenderer = (props: DynamicFormIoRendererProps) => <FormGeometryScope><DynamicFormIoRendererContent {...props} /></FormGeometryScope>;

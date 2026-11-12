@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Card, Form, Input, Button, Typography, message, Space, Alert } from 'antd';
-import { UserOutlined, MailOutlined, LockOutlined, IdcardOutlined, SafetyOutlined, CheckCircleOutlined, RedoOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
-import { authApi, type RegisterDto } from '../../services/authApi';
-import { useAuth } from '../../contexts/AuthContext';
-import { getDefaultRouteForRole } from '../../components/guards/RouteGuards';
+import { CheckCircleOutlined, IdcardOutlined, LockOutlined, MailOutlined, RedoOutlined, SafetyOutlined, UserOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, message, Space, Typography } from 'antd';
 import axios from 'axios';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { getDefaultRouteForRole } from '../../components/guards/RouteGuards';
+import { useAuth } from '../../contexts/AuthContext';
+import { authApi, type RegisterDto } from '../../services/authApi';
 
 const { Title, Text } = Typography;
 
@@ -101,20 +101,12 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F5F7FA',
-        padding: '24px 16px',
-      }}
+      className="auth-page"
     >
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <Space direction="horizontal" align="center" style={{ marginBottom: 8 }}>
-          <SafetyOutlined style={{ fontSize: 32, color: '#1677FF' }} />
-          <Title level={2} style={{ margin: 0, color: '#1F2937', fontWeight: 700 }}>
+          <SafetyOutlined style={{ fontSize: 32, color: '#1D4ED8' }} />
+          <Title level={2} style={{ margin: 0, color: '#182230', fontWeight: 700 }}>
             ConstructInspect
           </Title>
         </Space>
@@ -130,15 +122,15 @@ export const RegisterPage: React.FC = () => {
           width: '100%',
           maxWidth: 460,
           borderRadius: 8,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+
           border: '1px solid #E4E7ED',
         }}
-        bodyStyle={{ padding: '32px 28px' }}
+        styles={{ body: { padding: '32px 28px' } }}
       >
         {step === 'register' ? (
           <>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <Title level={3} style={{ margin: 0, color: '#1F2937', fontWeight: 600 }}>
+              <Title level={3} style={{ margin: 0, color: '#182230', fontWeight: 600 }}>
                 Đăng ký tài khoản
               </Title>
               <Text type="secondary" style={{ fontSize: 13 }}>
@@ -158,7 +150,7 @@ export const RegisterPage: React.FC = () => {
                 label="Họ và tên"
                 rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
               >
-                <Input prefix={<IdcardOutlined style={{ color: '#8C8C8C' }} />} placeholder="VD: Nguyễn Văn A" size="large" />
+                <Input prefix={<IdcardOutlined style={{ color: '#667085' }} />} placeholder="VD: Nguyễn Văn A" size="large" />
               </Form.Item>
 
               <Form.Item
@@ -170,7 +162,7 @@ export const RegisterPage: React.FC = () => {
                   { pattern: /^[a-zA-Z0-9_]+$/, message: 'Chỉ chứa chữ cái, số và dấu gạch dưới' },
                 ]}
               >
-                <Input prefix={<UserOutlined style={{ color: '#8C8C8C' }} />} placeholder="VD: nguyenvana" size="large" />
+                <Input prefix={<UserOutlined style={{ color: '#667085' }} />} placeholder="VD: nguyenvana" size="large" />
               </Form.Item>
 
               <Form.Item
@@ -181,7 +173,7 @@ export const RegisterPage: React.FC = () => {
                   { type: 'email', message: 'Địa chỉ email không đúng định dạng' },
                 ]}
               >
-                <Input prefix={<MailOutlined style={{ color: '#8C8C8C' }} />} placeholder="VD: an.nguyen@gmail.com" size="large" />
+                <Input prefix={<MailOutlined style={{ color: '#667085' }} />} placeholder="VD: an.nguyen@gmail.com" size="large" />
               </Form.Item>
 
               <Form.Item
@@ -192,7 +184,7 @@ export const RegisterPage: React.FC = () => {
                   { min: 6, message: 'Mật khẩu phải chứa ít nhất 6 ký tự' },
                 ]}
               >
-                <Input.Password prefix={<LockOutlined style={{ color: '#8C8C8C' }} />} placeholder="Nhập ít nhất 6 ký tự" size="large" />
+                <Input.Password prefix={<LockOutlined style={{ color: '#667085' }} />} placeholder="Nhập ít nhất 6 ký tự" size="large" />
               </Form.Item>
 
               <Form.Item
@@ -211,7 +203,7 @@ export const RegisterPage: React.FC = () => {
                   }),
                 ]}
               >
-                <Input.Password prefix={<LockOutlined style={{ color: '#8C8C8C' }} />} placeholder="Nhập lại mật khẩu" size="large" />
+                <Input.Password prefix={<LockOutlined style={{ color: '#667085' }} />} placeholder="Nhập lại mật khẩu" size="large" />
               </Form.Item>
 
               <Form.Item style={{ marginBottom: 16 }}>
@@ -222,7 +214,7 @@ export const RegisterPage: React.FC = () => {
                   block
                   loading={loading}
                   style={{
-                    backgroundColor: '#1677FF',
+                    backgroundColor: '#1D4ED8',
                     height: 42,
                     fontWeight: 600,
                   }}
@@ -235,7 +227,7 @@ export const RegisterPage: React.FC = () => {
                 <Text type="secondary" style={{ fontSize: 13 }}>
                   Đã có tài khoản?{' '}
                 </Text>
-                <Link to="/auth/login" style={{ color: '#1677FF', fontWeight: 500 }}>
+                <Link to="/auth/login" style={{ color: '#1D4ED8', fontWeight: 500 }}>
                   Đăng nhập ngay
                 </Link>
               </div>
@@ -245,24 +237,18 @@ export const RegisterPage: React.FC = () => {
           <>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
               <CheckCircleOutlined style={{ fontSize: 48, color: '#52C41A', marginBottom: 12 }} />
-              <Title level={3} style={{ margin: 0, color: '#1F2937', fontWeight: 600 }}>
+              <Title level={3} style={{ margin: 0, color: '#182230', fontWeight: 600 }}>
                 Xác thực Email
               </Title>
               <Text type="secondary" style={{ fontSize: 13, marginTop: 4, display: 'block' }}>
                 Mã xác thực OTP 6 số đã được gửi tới email:
               </Text>
-              <Text strong style={{ color: '#1677FF', fontSize: 14 }}>
+              <Text strong style={{ color: '#1D4ED8', fontSize: 14 }}>
                 {registeredInfo?.email}
               </Text>
             </div>
 
-            <Alert
-              type="info"
-              showIcon
-              message="Kiểm tra hòm thư của bạn"
-              description="Vui lòng kiểm tra hộp thư đến (hoặc hòm thư Spam/Rác) để lấy mã xác thực gồm 6 chữ số."
-              style={{ marginBottom: 20 }}
-            />
+            <Text type="secondary">Kiểm tra hộp thư đến hoặc thư rác để lấy mã xác thực.</Text>
 
             <Form
               form={otpForm}
@@ -294,7 +280,7 @@ export const RegisterPage: React.FC = () => {
                   block
                   loading={otpLoading}
                   style={{
-                    backgroundColor: '#1677FF',
+                    backgroundColor: '#1D4ED8',
                     height: 42,
                     fontWeight: 600,
                   }}
@@ -314,7 +300,7 @@ export const RegisterPage: React.FC = () => {
                   Gửi lại mã OTP
                 </Button>
 
-                <Link to="/auth/login" style={{ fontSize: 13, color: '#8C8C8C' }}>
+                <Link to="/auth/login" style={{ fontSize: 13, color: '#667085' }}>
                   Quay lại Đăng nhập
                 </Link>
               </div>

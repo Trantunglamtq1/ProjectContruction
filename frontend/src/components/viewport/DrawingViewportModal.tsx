@@ -1,36 +1,36 @@
-import React, { useState, useMemo } from 'react';
 import {
-  Modal,
-  Space,
-  Typography,
-  Tag,
-  Button,
-  Input,
-  Segmented,
-  Tooltip,
-  Popconfirm,
-  message,
-} from 'antd';
-import {
-  FilePdfOutlined,
+  AimOutlined,
+  AppstoreOutlined,
   CheckCircleOutlined,
-  UnorderedListOutlined,
+  CheckSquareOutlined,
+  DeleteOutlined,
+  FilePdfOutlined,
+  InfoCircleOutlined,
   RightOutlined,
   SearchOutlined,
-  AppstoreOutlined,
-  AimOutlined,
-  DeleteOutlined,
-  InfoCircleOutlined,
-  CheckSquareOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Button,
+  Input,
+  Modal,
+  Popconfirm,
+  Segmented,
+  Space,
+  Tag,
+  Tooltip,
+  Typography,
+  message,
+} from 'antd';
+import React, { useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { objectApi, type CreateObjectPayload } from '../../services/objectApi';
 import type { DrawingFileDto } from '../../services/drawingApi';
-import { SmartDrawingViewport } from './SmartDrawingViewport';
+import { objectApi, type CreateObjectPayload } from '../../services/objectApi';
 import { ObjectChecklistsModal } from '../checklists/ObjectChecklistsModal';
-import type { Point, SavedObjectData } from './cv/types';
 import { pointsToSmoothSvgPath } from './cv/curveFitting';
+import type { Point, SavedObjectData } from './cv/types';
+import { SmartDrawingViewport } from './SmartDrawingViewport';
 
 const { Text } = Typography;
 
@@ -277,9 +277,7 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
                 Bản vẽ Kỹ thuật: {drawing?.fileName}
               </Text>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
-                <Tag color={isSubmitter ? 'blue' : user?.role === 'Reviewer' ? 'orange' : 'green'}>
-                  {user?.role ? `${user.role.toUpperCase()} WORKSPACE` : 'VIEWPORT'}
-                </Tag>
+                <Text style={{ color: '#CBD5E1', fontSize: 12 }}>Không gian bản vẽ</Text>
                 <Tag color="cyan">
                   <CheckCircleOutlined /> {objects.length} Cấu kiện đã khoanh vùng
                 </Tag>
@@ -287,7 +285,7 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
             </div>
           </Space>
 
-          <Button
+          <Button aria-label="Trang sau"
             type={isSidebarOpen ? 'primary' : 'default'}
             ghost={isSidebarOpen}
             icon={isSidebarOpen ? <RightOutlined /> : <UnorderedListOutlined />}
@@ -488,8 +486,8 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
                           {originalObj?.checklistCount ?? 0} Checklist
                         </span>
                         <Space size={4}>
-                          <Tooltip title="Checklist & Biểu mẫu Form.io">
-                            <Button
+                          <Tooltip title="Kế hoạch kiểm tra">
+                            <Button aria-label="Kế hoạch kiểm tra"
                               size="small"
                               type="text"
                               icon={<CheckSquareOutlined style={{ color: '#10b981' }} />}
@@ -505,7 +503,7 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
                             />
                           </Tooltip>
                           <Tooltip title="Định vị & Phóng to trên bản vẽ">
-                            <Button
+                            <Button aria-label="Định vị & Phóng to trên bản vẽ"
                               size="small"
                               type="text"
                               icon={<AimOutlined style={{ color: '#38bdf8' }} />}
@@ -527,7 +525,7 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
                                 handleDeleteCvObject(obj.id);
                               }}
                             >
-                              <Button
+                              <Button aria-label="Xóa"
                                 size="small"
                                 type="text"
                                 danger

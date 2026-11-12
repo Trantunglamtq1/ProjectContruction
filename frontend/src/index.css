@@ -1,21 +1,82 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; color: #182230; background: #F6F7F9; -webkit-font-smoothing: antialiased; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px solid #1D4ED8; outline-offset: 3px; }
+code, pre { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+#root, .app-shell { min-height: 100dvh; }
+.app-header { height: 56px; line-height: normal; padding: 0 20px; background: #FFF; border-bottom: 1px solid #E4E7EC; display: flex; justify-content: space-between; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.app-header-left, .app-header-actions { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.app-brand { color: #182230; display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 16px; white-space: nowrap; }
+.brand-mark { display: grid; place-items: center; width: 28px; height: 28px; background: #1D4ED8; color: #FFF; border-radius: 4px; font-size: 12px; letter-spacing: .5px; }
+.app-context { color: #475467; font-size: 12px; margin-left: 16px; padding-left: 20px; border-left: 1px solid #E4E7EC; white-space: nowrap; }
+.account-trigger { display: inline-flex; align-items: center; gap: 8px; height: 38px; }
+.account-name { max-width: 170px; overflow: hidden; text-overflow: ellipsis; }
+.app-body { min-height: calc(100dvh - 56px); flex-direction: row; }
+.app-sidebar { border-right: 1px solid #E4E7EC; padding-top: 20px; }
+.app-sidebar .ant-menu, .navigation-drawer .ant-menu { border-inline-end: none !important; }
+.app-content { padding: 28px 32px; min-width: 0; width: 0; flex: 1; }
+.drawing-content { height: calc(100dvh - 56px); padding: 0; overflow: hidden; background: #0F172A; }
+.data-page { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.page-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 0; }
+.page-heading-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; min-width: 0; }
+.page-heading h1 { margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.5px; }
+.page-count { font-size: 13px; color: #475467; }
+.page-heading-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.list-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; min-width: 0; }
+.list-toolbar > .ant-space { flex-wrap: wrap; gap: 12px; max-width: 100%; }
+.list-toolbar .ant-tabs { max-width: 100%; min-width: 0; flex: 1 1 400px; }
+.list-surface { border: 1px solid #E4E7EC; box-shadow: none; min-width: 0; }
+.list-surface .ant-table-wrapper { min-width: 0; max-width: 100%; }
+.list-surface .ant-table-cell { vertical-align: middle; }
+.status-badge { display: inline-flex; align-items: center; gap: 6px; line-height: 22px; padding-inline: 8px; margin: 0; font-size: 12px; font-weight: 500; white-space: normal; border: 1px solid transparent; }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.status-neutral { color: #344054; background: #F2F4F7; }
+.status-blue { color: #1D4ED8; background: #EFF4FF; }
+.status-amber { color: #92400E; background: #FFFBEB; }
+.status-green { color: #166534; background: #F0FDF4; }
+.status-red { color: #B42318; background: #FEF3F2; }
+.record-link { font-family: ui-monospace, monospace; font-size: 13px; font-weight: 600; }
+.form-geometry-scope { font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5; min-width: 0; width: 100%; }
+.detail-overlay .ant-drawer-body, .detail-modal .ant-modal-body { min-width: 0; }
+.detail-modal .ant-modal-body { max-height: calc(100dvh - 200px); overflow: auto; }
+.detail-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; }
+.technical-details { border-top: 1px solid #EAECF0; padding-top: 12px; color: #475467; font-size: 12px; overflow-wrap: anywhere; }
+.technical-details summary { cursor: pointer; margin-bottom: 8px; }
+.drawing-object-pane { min-width: 280px; max-width: min(520px, 45vw); resize: horizontal; overflow: auto; }
+.drawing-pane-close { display: none; }
+.auth-page { min-height: 100dvh; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F6F7F9; }
+.auth-card { width: 100%; max-width: 440px; }
+@media (max-width: 1100px) { .app-context { display: none; } .app-content { padding: 24px; } .drawing-content { padding: 0; } }
+@media (max-width: 767px) {
+  .app-header { padding: 0 12px; gap: 8px; }
+  .app-header-left, .app-header-actions { gap: 4px; }
+  .app-brand { font-size: 14px; gap: 8px; }
+  .brand-mark { width: 24px; height: 24px; font-size: 10px; }
+  .account-name { display: none; }
+  .app-content { padding: 20px 16px; }
+  .drawing-content { padding: 0; }
+  .page-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .page-heading h1 { font-size: 22px; line-height: 30px; }
+  .page-heading-actions { width: 100%; }
+  .list-toolbar { align-items: stretch; }
+  .list-toolbar > .ant-space { width: 100%; }
+  .list-toolbar .ant-input-affix-wrapper, .list-toolbar .ant-input, .list-toolbar .ant-select { max-width: 100%; }
+  .list-surface > .ant-card-body { padding: 16px; }
+  .detail-overlay .ant-drawer-header { padding: 16px; }
+  .detail-overlay .ant-drawer-header-title { min-width: 0; }
+  .detail-overlay .ant-drawer-extra { margin-inline-start: 8px; }
+  .detail-overlay .ant-drawer-body { padding: 16px; }
+  .detail-overlay .ant-drawer-footer > div { flex-wrap: wrap; gap: 12px; }
+  .detail-overlay .ant-descriptions { min-width: 0; }
+  .detail-modal .ant-modal-body { max-height: calc(100dvh - 180px); }
+  .detail-modal .ant-modal-footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+  .drawing-object-pane { position: absolute; inset: 0 0 0 auto; width: min(360px, 100%) !important; max-width: 100%; resize: none; box-shadow: -8px 0 24px #0004; }
+  .drawing-pane-close { display: inline-flex; }
+  .auth-page { padding: 24px 16px; }
 }
-
-body {
-  font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: #1F2937;
-  background-color: #F5F7FA;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-code, pre {
-  font-family: 'JetBrains Mono', monospace;
-}
-
-#root {
-  min-height: 100vh;
+@media (pointer: coarse) {
+  .app-header .ant-btn, .list-toolbar .ant-btn, .page-heading-actions .ant-btn, .detail-actions .ant-btn, .detail-overlay .ant-drawer-footer .ant-btn, .list-surface .ant-table .ant-btn { min-height: 44px; min-width: 44px; }
+  .app-header .ant-btn.ant-btn-icon-only { min-width: 44px; }
+  .list-toolbar .ant-input-clear-icon:not(.ant-input-clear-icon-hidden) { min-width: 44px; min-height: 44px; }
+  .navigation-drawer .ant-menu-item { height: 44px; line-height: 44px; }
 }

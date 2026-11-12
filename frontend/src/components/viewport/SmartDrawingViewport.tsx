@@ -1,30 +1,30 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
-  Button,
-  Space,
-  Typography,
-  Tag,
-  Input,
-  Form,
-  Modal,
-  Tooltip,
-  message,
-  Spin,
-  Alert,
-  Badge,
-} from 'antd';
-import {
-  ZoomInOutlined,
-  ZoomOutOutlined,
   ArrowsAltOutlined,
-  UndoOutlined,
-  CloseOutlined,
   CheckOutlined,
+  CloseOutlined,
+  DeleteOutlined,
   LeftOutlined,
   RightOutlined,
-  DeleteOutlined,
+  UndoOutlined,
+  ZoomInOutlined,
+  ZoomOutOutlined,
 } from '@ant-design/icons';
+import {
+  Alert,
+  Badge,
+  Button,
+  Form,
+  Input,
+  message,
+  Modal,
+  Space,
+  Spin,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
 import * as pdfjsLib from 'pdfjs-dist';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../../services/apiClient';
 
 // Cấu hình Polyfill cho các môi trường duyệt web hiện đại (TC39 Uint8Array proposal & Promise.withResolvers)
@@ -65,11 +65,11 @@ if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
 }
 
-import type { Point, PointRole, SavedObjectData } from './cv/types';
 import {
   buildAutoArcSvgPath,
   snapToRightAngle,
 } from './cv/autoArc';
+import type { Point, PointRole, SavedObjectData } from './cv/types';
 
 const { Text } = Typography;
 
@@ -110,6 +110,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
   // 1. PDF Document, Image & Page States
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(initialPageNumber);
+  const pageObjects = useMemo(() => existingObjects.filter(object => object.pageNumber === currentPage), [existingObjects, currentPage]);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [isLoadingPdf, setIsLoadingPdf] = useState<boolean>(true);
   const [isSharpening, setIsSharpening] = useState<boolean>(false);
@@ -211,6 +212,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
     if (activeSelectedId && existingObjects.length > 0 && containerRef.current) {
       const obj = existingObjects.find((o) => o.id === activeSelectedId);
       if (obj && obj.boundingBox) {
+        setCurrentPage(obj.pageNumber);
         const rect = containerRef.current.getBoundingClientRect();
         const objCenterX = obj.boundingBox.x + obj.boundingBox.width / 2;
         const objCenterY = obj.boundingBox.y + obj.boundingBox.height / 2;
@@ -1017,7 +1019,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           backdropFilter: 'blur(8px)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           zIndex: 10,
-          overflow: 'hidden',
+          overflowX: 'auto',
           whiteSpace: 'nowrap',
           gap: 10,
         }}
@@ -1028,8 +1030,8 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
             alignItems: 'center',
             gap: 8,
             minWidth: 0,
-            flex: 1,
-            overflow: 'hidden',
+            flex: '0 0 auto',
+            overflow: 'visible',
             whiteSpace: 'nowrap',
           }}
         >
@@ -1056,18 +1058,18 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
               <Button
                 size="small"
-                icon={<LeftOutlined />}
+                aria-label="Trang trước" icon={<LeftOutlined />}
                 disabled={currentPage <= 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); setInternalSelectedId(null); onSelectObject?.(null); }}
               />
               <Tag color="cyan" style={{ margin: 0 }}>
                 {currentPage} / {totalPages}
               </Tag>
               <Button
                 size="small"
-                icon={<RightOutlined />}
+                aria-label="Trang sau" icon={<RightOutlined />}
                 disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); setInternalSelectedId(null); onSelectObject?.(null); }}
               />
             </div>
           ) : (
@@ -1083,24 +1085,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           )}
 
           {!readOnly && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 1, overflow: 'hidden' }}>
-              <Tag color="#10b981" style={{ fontWeight: 600, margin: 0, flexShrink: 0 }}>
-                Click: Đỉnh thẳng
-              </Tag>
-              <Tag color="#38bdf8" style={{ fontWeight: 600, margin: 0, flexShrink: 0 }}>
-                Shift+Click: Đỉnh cung
-              </Tag>
-              {committedVertices.length >= 3 && (
-                <Tag color="gold" style={{ fontWeight: 700, margin: 0, flexShrink: 0 }}>
-                  Click P₀ khép hình
-                </Tag>
-              )}
-              {isShiftPressed && (
-                <Tag color="#f59e0b" style={{ fontWeight: 600, margin: 0, flexShrink: 0 }}>
-                  Shift
-                </Tag>
-              )}
-            </div>
+            <Tooltip title="Nhấp để đặt đỉnh; Shift + nhấp để tạo cung; nhấp điểm đầu để khép hình."><Button size="small" aria-label="Trợ giúp khoanh vùng">Trợ giúp</Button></Tooltip>
           )}
         </div>
 
@@ -1145,7 +1130,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           <Tooltip title="Thu nhỏ">
             <Button
               size="small"
-              icon={<ZoomOutOutlined />}
+              aria-label="Thu nhỏ" icon={<ZoomOutOutlined />}
               onClick={() => setZoom((z) => Math.max(0.2, z * 0.85))}
             />
           </Tooltip>
@@ -1157,7 +1142,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           <Tooltip title="Phóng to">
             <Button
               size="small"
-              icon={<ZoomInOutlined />}
+              aria-label="Phóng to" icon={<ZoomInOutlined />}
               onClick={() => setZoom((z) => Math.min(10.0, z * 1.15))}
             />
           </Tooltip>
@@ -1168,7 +1153,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
               icon={<ArrowsAltOutlined />}
               onClick={() => fitViewToContainer(sheetSize.width, sheetSize.height)}
             >
-              Fit
+              Vừa khung
             </Button>
           </Tooltip>
 
@@ -1226,7 +1211,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           >
             <Spin size="large" />
             <Text style={{ color: '#94a3b8', marginTop: 12 }}>
-              Đang dựng bản vẽ siêu nét...
+              Đang tải bản vẽ…
             </Text>
           </div>
         )}
@@ -1286,7 +1271,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
             onDoubleClick={handleSheetDoubleClick}
           >
             {/* 3.1. Render các Object đã lưu từ trước */}
-            {existingObjects.map((obj) => {
+            {pageObjects.map((obj) => {
               const isSelected = obj.id === activeSelectedId;
               return (
                 <g
@@ -1526,30 +1511,12 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           fontSize: 12,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
-          {!readOnly ? (
-            <>
-              <span><span style={{ color: '#10b981', fontWeight: 600 }}>Click:</span> Đỉnh thẳng</span>
-              <span style={{ color: '#334155' }}>•</span>
-              <span><span style={{ color: '#38bdf8', fontWeight: 600 }}>Shift+Click:</span> Đỉnh cong</span>
-              <span style={{ color: '#334155' }}>•</span>
-              <span><span style={{ color: '#facc15', fontWeight: 600 }}>P₀/Enter:</span> Khép hình</span>
-              <span style={{ color: '#334155' }}>•</span>
-              <span><span style={{ color: '#cbd5e1', fontWeight: 600 }}>Backspace:</span> Lùi điểm</span>
-              <span style={{ color: '#334155' }}>•</span>
-              <span><span style={{ color: '#f87171', fontWeight: 600 }}>Esc:</span> Hủy</span>
-            </>
-          ) : (
-            <span><span style={{ color: '#38bdf8', fontWeight: 600 }}>Chế độ giám sát:</span> Bấm vào cấu kiện trên bản vẽ hoặc danh sách để tra cứu thông tin & Checklist</span>
-          )}
-        </div>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <span>Trang: <b>{currentPage} / {totalPages}</b></span>
           <span style={{ color: '#334155' }}>•</span>
           <span>Thu phóng: <b>{Math.round(zoom * 100)}%</b></span>
           <span style={{ color: '#334155' }}>•</span>
-          <span>Cấu kiện: <b style={{ color: '#38bdf8' }}>{existingObjects.length}</b></span>
+          <span>Cấu kiện: <b style={{ color: '#38bdf8' }}>{pageObjects.length}</b></span>
           {footerContent}
         </div>
       </div>
@@ -1598,16 +1565,9 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           </div>
         )}
       >
-        <Alert
-          message="Biên dạng đã được tự động ôm sát các cạnh cấu kiện."
-          description="Vui lòng nhập Mã và Tên cấu kiện. Trạng thái nghiệm thu ban đầu luôn là 'Chờ nghiệm thu'."
-          type="info"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
         <Form form={form} layout="vertical">
           <Form.Item
-            label="Mã Cấu kiện (ObjectCode)"
+            label="Mã cấu kiện"
             name="code"
             rules={[{ required: true, message: 'Vui lòng nhập mã cấu kiện' }]}
           >
@@ -1615,7 +1575,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
           </Form.Item>
 
           <Form.Item
-            label="Tên Cấu kiện (ObjectName)"
+            label="Tên cấu kiện"
             name="name"
             rules={[{ required: true, message: 'Vui lòng nhập tên cấu kiện' }]}
           >

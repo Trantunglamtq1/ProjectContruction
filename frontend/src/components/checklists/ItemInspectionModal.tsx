@@ -1,44 +1,43 @@
-import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Modal,
-  Button,
-  Space,
-  Typography,
-  Tag,
-  Alert,
-  Spin,
-  Form,
-  Input,
-  Card,
-  message,
-} from 'antd';
-import {
-  FileTextOutlined,
+  AppstoreOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  CloseCircleOutlined,
+  FileTextOutlined,
+  PictureOutlined,
   SaveOutlined,
   SendOutlined,
-  ToolOutlined,
-  PictureOutlined,
-  InfoCircleOutlined,
-  AppstoreOutlined,
+  ToolOutlined
 } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Alert,
+  Button,
+  Card,
+  Form,
+  Input,
+  message,
+  Modal,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+} from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useUnsavedChanges } from '../../contexts/UnsavedChangesContext';
 import { inspectionApi } from '../../services/inspectionApi';
 import type { ChecklistDto, ChecklistItemDto } from '../../types/checklist';
 import type {
   FormIoSchema,
+  InspectionAttachmentDto,
   InspectionDto,
   InspectionStatus,
-  InspectionAttachmentDto,
 } from '../../types/inspection';
 import { DynamicFormIoRenderer } from '../formio/DynamicFormIoRenderer';
 import { FormIoBuilderModal } from '../formio/FormIoBuilderModal';
 import { InspectionImageGallery } from '../inspections/InspectionImageGallery';
-import { useAuth } from '../../contexts/AuthContext';
-
-
+import { QueryState } from '../ui/QueryState';
+import { StatusBadge } from '../ui/StatusBadge';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -70,11 +69,17 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
   const [customSchema, setCustomSchema] = useState<FormIoSchema | null>(null);
   const [builderModalOpen, setBuilderModalOpen] = useState(false);
   const [submittingAction, setSubmittingAction] = useState<'draft' | 'submit' | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [hasConflict, setHasConflict] = useState(false);
+  const [editingVersion, setEditingVersion] = useState('');
+  const confirmDiscard = useUnsavedChanges(open && dirty);
 
   // Lấy chi tiết phiếu nghiệm thu nếu item đã có linkedInspectionId
   const {
     data: inspection,
     isLoading: loadingInspection,
+    error: loadError,
+    refetch: reloadInspection,
   } = useQuery<InspectionDto>({
     queryKey: ['inspection-detail', item?.linkedInspectionId],
     queryFn: () => inspectionApi.getInspectionById(item!.linkedInspectionId!),
@@ -163,7 +168,11 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
 
   // Cập nhật dữ liệu form và attachments khi mở modal
   useEffect(() => {
+    if (!open) { setDirty(false); setHasConflict(false); return; }
+    if (dirty) return;
     if (open && item) {
+      setEditingVersion(inspection?.rowVersion || '');
+      setCustomSchema(null);
       if (inspection?.formDataJson) {
         try {
           const parsed = JSON.parse(inspection.formDataJson);
@@ -195,39 +204,22 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
         setCustomSchema(null);
       }
     }
-  }, [open, inspection, item, checklist, form]);
+  }, [open, inspection, item, checklist, form, dirty]);
 
   // Quyền chỉnh sửa: Submitter khi chưa có phiếu, hoặc khi phiếu ở trạng thái Draft / Rejected
   const canEdit = useMemo(() => {
     if (!item) return false;
     if (!item.linkedInspectionId) return isSubmitter;
     if (!inspection) return false;
-    return (inspection.status === 'Draft' || inspection.status === 'Rejected') && isSubmitter && inspection.workflowSyncStatus === 'Synchronized';
-  }, [item, inspection, isSubmitter]);
-
+    return (inspection.status === 'Draft' || inspection.status === 'Rejected') && isSubmitter && inspection.submittedById === user?.id && inspection.workflowSyncStatus === 'Synchronized';
+  }, [item, inspection, isSubmitter, user?.id]);
 
   // Trạng thái badge
-  const renderStatusTag = (status?: InspectionStatus) => {
-    switch (status) {
-      case 'Draft':
-        return <Tag color="default" icon={<ClockCircleOutlined />}>Bản nháp (Draft)</Tag>;
-      case 'Submitted':
-        return <Tag color="processing" icon={<ClockCircleOutlined />}>Đã nộp (Chờ Giám sát)</Tag>;
-      case 'UnderReview':
-        return <Tag color="warning" icon={<ClockCircleOutlined />}>Đang thẩm tra</Tag>;
-      case 'Reviewed':
-        return <Tag color="blue" icon={<ClockCircleOutlined />}>Đã thẩm tra (Chờ Duyệt)</Tag>;
-      case 'Approved':
-        return <Tag color="success" icon={<CheckCircleOutlined />}>Đã phê duyệt (Approved)</Tag>;
-      case 'Rejected':
-        return <Tag color="error" icon={<CloseCircleOutlined />}>Bị từ chối (Rejected)</Tag>;
-      default:
-        return <Tag color="default">Chưa khởi tạo</Tag>;
-    }
-  };
+  const renderStatusTag = (status?: InspectionStatus) => <StatusBadge domain="inspection" status={status} />;
 
   // Lưu tùy biến schema từ builder
   const handleSaveCustomSchema = (newSchema: FormIoSchema) => {
+    setDirty(true);
     setCustomSchema(newSchema);
     setBuilderModalOpen(false);
     message.success(`Đã cập nhật biểu mẫu đo đạc với ${newSchema.components.length} chỉ tiêu!`);
@@ -275,7 +267,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
         }
         const updatedInspection = await inspectionApi.updateInspectionDraft(item.linkedInspectionId, {
           formDataJson: jsonString,
-          rowVersion: inspection.rowVersion,
+          rowVersion: editingVersion || inspection.rowVersion,
         });
         queryClient.setQueryData(['inspection-detail', item.linkedInspectionId], updatedInspection);
 
@@ -297,8 +289,10 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ['inspections'] });
 
       onSuccess();
+      setDirty(false);
       onClose();
     } catch (err: any) {
+      if (err.response?.status === 409) setHasConflict(true);
       if (err.errorFields) {
         message.warning('Vui lòng điền đủ các thông tin bắt buộc trên biểu mẫu.');
         return;
@@ -315,21 +309,23 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
   return (
     <>
       <Modal
-        open={open}
-        onCancel={onClose}
-        width={850}
+        open={open && !builderModalOpen}
+        onCancel={() => confirmDiscard(onClose)}
+        width={{ xs: 'calc(100vw - 24px)', md: 960 }}
+        className="detail-modal"
+        style={{ top: 20 }}
         zIndex={1300}
-        destroyOnClose
+        destroyOnHidden
         title={
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 24, flexWrap: 'wrap', gap: 8 }}>
             <Space align="center">
-              <FileTextOutlined style={{ fontSize: 20, color: '#1677ff' }} />
+              <FileTextOutlined style={{ fontSize: 20, color: '#1D4ED8' }} />
               <div>
                 <Title level={4} style={{ margin: 0, fontSize: 16 }}>
                   Hồ sơ Nghiệm thu: {item.name}
                 </Title>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  Checklist: <b>{checklist.name}</b> • Cấu kiện: <b>{checklist.objectCode || checklist.objectName}</b>
+                  Kế hoạch: <b>{checklist.name}</b> • Cấu kiện: <b>{checklist.objectCode || checklist.objectName}</b>
                 </Text>
               </div>
             </Space>
@@ -337,7 +333,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
           </div>
         }
         footer={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="detail-actions">
             <div>
               {inspection?.status === 'Approved' && (
                 <Tag color="success">
@@ -355,8 +351,8 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
                 </Tag>
               )}
             </div>
-            <Space>
-              <Button onClick={onClose}>Đóng</Button>
+            <Space wrap>
+              <Button onClick={() => confirmDiscard(onClose)}>Đóng</Button>
 
               {/* Nút hành động Submitter */}
               {canEdit && (
@@ -372,7 +368,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
                     type="primary"
                     icon={<SendOutlined />}
                     loading={submittingAction === 'submit'}
-                    style={{ backgroundColor: '#1677ff' }}
+                    style={{ backgroundColor: '#1D4ED8' }}
                     onClick={() => handleSaveOrSubmit(true)}
                   >
                     Gửi nghiệm thu (Submit)
@@ -384,6 +380,9 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
         }
       >
         <div style={{ maxHeight: 'calc(80vh - 150px)', overflowY: 'auto', paddingRight: 8 }}>
+          {loadError && <QueryState error={loadError} retry={() => reloadInspection()} entity="hồ sơ" />}
+          {hasConflict && <Alert type="warning" showIcon title="Hồ sơ đã thay đổi" description="Nội dung đang sửa được giữ lại. Tải lại sẽ bỏ các thay đổi chưa lưu."
+            action={<Button onClick={() => confirmDiscard(() => { setDirty(false); setHasConflict(false); void reloadInspection(); })}>Tải lại hồ sơ</Button>} />}
           {/* Banner cảnh báo nếu bị từ chối */}
           {inspection?.status === 'Rejected' && inspection.rejectReason && (
             <Alert
@@ -405,26 +404,13 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
           )}
 
           {/* Ngữ cảnh Checklist */}
-          <Alert
-            message="Quy trình nghiệm thu 2 giai đoạn"
-            description={
-              <span>
-                Hồ sơ nghiệm thu gắn liền với tiêu chí <b>{item.orderIndex}. {item.name}</b>{' '}
-                {item.isRequired && <Tag color="volcano" style={{ fontSize: 10 }}>Bắt buộc</Tag>} thuộc Checklist của cấu kiện. Bạn có thể lưu nháp nhiều lần trước khi nộp chính thức gửi Giám sát thẩm tra.
-              </span>
-            }
-            type="info"
-            showIcon
-            icon={<InfoCircleOutlined />}
-            style={{ marginBottom: 16, borderRadius: 8 }}
-          />
 
           {loadingInspection ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
               <Spin tip="Đang tải dữ liệu hồ sơ nghiệm thu..." />
             </div>
           ) : (
-            <Form form={form} name="item-inspection" component="div" layout="vertical">
+            <Form form={form} name="item-inspection" component="div" layout="vertical" onValuesChange={() => setDirty(true)}>
               {/* 1. Tiêu đề hồ sơ nghiệm thu */}
               <Form.Item
                 name="inspectionTitle"
@@ -435,17 +421,17 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
                   size="middle"
                   disabled={!canEdit}
                   placeholder="VD: Nghiệm thu cốt thép đài móng - Cột C12"
-                  prefix={<AppstoreOutlined style={{ color: '#BFBFBF' }} />}
+                  prefix={<AppstoreOutlined style={{ color: '#667085' }} />}
                 />
               </Form.Item>
 
-              {/* 2. Biểu mẫu thông số kỹ thuật Form.io */}
+              {/* 2. Biểu mẫu thông số kỹ thuật biểu mẫu */}
               <Card
                 size="small"
                 title={
                   <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
                     <Space>
-                      <CheckCircleOutlined style={{ color: '#1677ff' }} />
+                      <CheckCircleOutlined style={{ color: '#1D4ED8' }} />
                       <Text strong>2. Biểu mẫu thông số kiểm tra kỹ thuật ({activeSchema.components.length} chỉ tiêu)</Text>
                       {customSchema && <Tag color="success">Đã tùy biến</Tag>}
                     </Space>
@@ -474,7 +460,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
                   initialData={formData}
                   readonly={!canEdit}
                   form={form}
-                  onChange={(vals) => setFormData((prev) => ({ ...prev, ...vals }))}
+                  onChange={(vals) => { setDirty(true); setFormData((prev) => ({ ...prev, ...vals })); }}
                 />
               </Card>
 
@@ -483,7 +469,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
                 size="small"
                 title={
                   <Space>
-                    <PictureOutlined style={{ color: '#52c41a' }} />
+                    <PictureOutlined style={{ color: '#166534' }} />
                     <Text strong>3. Ảnh chụp & Tài liệu minh chứng hiện trường ({attachments.length} tệp)</Text>
                   </Space>
                 }
@@ -496,7 +482,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
               >
                 <InspectionImageGallery
                   attachments={attachments}
-                  onChange={setAttachments}
+                  onChange={(values) => { setDirty(true); setAttachments(values); }}
                   readonly={!canEdit}
                 />
               </Card>
@@ -512,7 +498,6 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
         onCancel={() => setBuilderModalOpen(false)}
         onSave={handleSaveCustomSchema}
       />
-
 
     </>
   );
