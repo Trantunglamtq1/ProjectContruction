@@ -40,6 +40,7 @@ public class SupervisorModifyChecklistCommandHandler : IRequestHandler<Superviso
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.Id}.");
         }
 
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, checklist.Id, cancellationToken);
         if (checklist.Status != ChecklistStatus.PendingSupervisor)
         {
             throw new InvalidOperationException($"Chỉ có thể can thiệp chỉnh sửa kế hoạch khi Checklist đang ở trạng thái chờ thẩm duyệt 'PendingSupervisor'. Trạng thái hiện tại: '{checklist.Status}'.");

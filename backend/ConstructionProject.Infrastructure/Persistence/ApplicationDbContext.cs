@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Checklist> Checklists => Set<Checklist>();
     public DbSet<ChecklistItem> ChecklistItems => Set<ChecklistItem>();
     public DbSet<ChecklistAuditHistory> ChecklistAuditHistories => Set<ChecklistAuditHistory>();
+    public DbSet<ChecklistWorkflowOperation> ChecklistWorkflowOperations => Set<ChecklistWorkflowOperation>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Notification> Notifications => Set<Notification>();

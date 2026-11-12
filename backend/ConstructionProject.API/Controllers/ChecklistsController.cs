@@ -65,7 +65,7 @@ public class ChecklistsController : ControllerBase
         );
 
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return Accepted(result);
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ public class ChecklistsController : ControllerBase
         );
 
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return Accepted(result);
     }
 
     /// <summary>
@@ -120,7 +120,7 @@ public class ChecklistsController : ControllerBase
         );
 
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return Accepted(result);
     }
 
     /// <summary>

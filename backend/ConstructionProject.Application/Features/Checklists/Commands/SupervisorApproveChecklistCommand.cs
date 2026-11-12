@@ -17,16 +17,13 @@ public record SupervisorApproveChecklistCommand(
 public class SupervisorApproveChecklistCommandHandler : IRequestHandler<SupervisorApproveChecklistCommand, ChecklistDto>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IChecklistWorkflowService _workflowService;
     private readonly INotificationService _notificationService;
 
     public SupervisorApproveChecklistCommandHandler(
         IApplicationDbContext context, 
-        IChecklistWorkflowService workflowService,
         INotificationService notificationService)
     {
         _context = context;
-        _workflowService = workflowService;
         _notificationService = notificationService;
     }
 
@@ -43,6 +40,7 @@ public class SupervisorApproveChecklistCommandHandler : IRequestHandler<Supervis
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.Id}.");
         }
 
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, checklist.Id, cancellationToken);
         if (checklist.Status != ChecklistStatus.PendingSupervisor)
         {
             throw new InvalidOperationException($"Chỉ có thể phê duyệt Kế hoạch Checklist đang ở trạng thái 'PendingSupervisor'. Trạng thái hiện tại: '{checklist.Status}'.");
@@ -54,16 +52,7 @@ public class SupervisorApproveChecklistCommandHandler : IRequestHandler<Supervis
         checklist.ReviewedBy = !string.IsNullOrWhiteSpace(request.SupervisorName) ? request.SupervisorName : "Supervisor";
         checklist.ReviewedAt = DateTime.UtcNow;
 
-        // Resume Elsa Workflow #1
-        if (!string.IsNullOrWhiteSpace(checklist.WorkflowInstanceId))
-        {
-            await _workflowService.ResumeSupervisorDecisionAsync(
-                checklist.WorkflowInstanceId,
-                isApproved: true,
-                checklist.ReviewedBy,
-                request.Comment,
-                cancellationToken);
-        }
+        ChecklistWorkflowQueue.EnqueueDecision(_context, checklist, "Approve", checklist.ReviewedBy, request.Comment);
 
         // Ghi Audit Log (FR-10) trực tiếp qua DbSet
         _context.ChecklistAuditHistories.Add(new ChecklistAuditHistory
@@ -88,7 +77,7 @@ public class SupervisorApproveChecklistCommandHandler : IRequestHandler<Supervis
             await _notificationService.SendNotificationToUserAsync(checklist.CreatedById.Value.ToString(), new NotificationMessage
             {
                 Title = "Kế hoạch Checklist đã được phê duyệt",
-                Content = $"Giám sát {checklist.ReviewedBy} đã phê duyệt kế hoạch Checklist '{checklist.Name}'. Bạn có thể bắt đầu nghiệm thu hiện trường.",
+                Content = $"Đã ghi nhận phê duyệt Checklist '{checklist.Name}' của giám sát {checklist.ReviewedBy}; quy trình đang được đồng bộ.",
                 Type = "success",
                 ReferenceId = checklist.Id.ToString(),
                 ReferenceType = "Checklist",
@@ -125,6 +114,7 @@ public class SupervisorApproveChecklistCommandHandler : IRequestHandler<Supervis
             Name = checklist.Name,
             Description = checklist.Description,
             Status = checklist.Status.ToString(),
+            WorkflowSyncStatus = "Pending",
             WorkflowInstanceId = checklist.WorkflowInstanceId,
             CreatedById = checklist.CreatedById,
             CreatedBy = checklist.CreatedBy,

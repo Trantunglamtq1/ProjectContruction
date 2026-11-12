@@ -198,6 +198,64 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.ToTable("ChecklistItems", (string)null);
                 });
 
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.ChecklistWorkflowOperation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ActorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("ChecklistId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InstanceId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("NextAttemptAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PreviousInstanceId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChecklistId")
+                        .IsUnique()
+                        .HasFilter("[CompletedAt] IS NULL");
+
+                    b.HasIndex("CompletedAt", "NextAttemptAt");
+
+                    b.ToTable("ChecklistWorkflowOperations", (string)null);
+                });
+
             modelBuilder.Entity("ConstructionProject.Domain.Entities.ConstructionObject", b =>
                 {
                     b.Property<Guid>("Id")
@@ -664,6 +722,17 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Navigation("LinkedInspection");
                 });
 
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.ChecklistWorkflowOperation", b =>
+                {
+                    b.HasOne("ConstructionProject.Domain.Entities.Checklist", "Checklist")
+                        .WithMany("WorkflowOperations")
+                        .HasForeignKey("ChecklistId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Checklist");
+                });
+
             modelBuilder.Entity("ConstructionProject.Domain.Entities.ConstructionObject", b =>
                 {
                     b.HasOne("ConstructionProject.Domain.Entities.User", "Creator")
@@ -764,6 +833,8 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Navigation("AuditHistories");
 
                     b.Navigation("Items");
+
+                    b.Navigation("WorkflowOperations");
                 });
 
             modelBuilder.Entity("ConstructionProject.Domain.Entities.ConstructionObject", b =>

@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 
 namespace ConstructionProject.API.Middlewares;
 
@@ -37,6 +39,12 @@ public class ExceptionHandlingMiddleware
 
         switch (exception)
         {
+            case DbUpdateException { InnerException: SqlException sql } when
+                (sql.Number is 2601 or 2627) && sql.Message.Contains("IX_ChecklistWorkflowOperations_ChecklistId", StringComparison.Ordinal):
+            case DbUpdateConcurrencyException:
+                statusCode = HttpStatusCode.Conflict;
+                response = new { status = (int)statusCode, message = "Checklist đã thay đổi hoặc đang được xử lý. Vui lòng tải lại." };
+                break;
             case ValidationException validationException:
                 statusCode = HttpStatusCode.BadRequest;
                 response = new

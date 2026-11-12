@@ -40,6 +40,7 @@ public class DeleteChecklistItemCommandHandler : IRequestHandler<DeleteChecklist
         }
 
         var checklist = item.Checklist;
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, item.ChecklistId, cancellationToken);
         if (checklist != null)
         {
             if (checklist.Status == ChecklistStatus.Approved || checklist.Status == ChecklistStatus.InProgress || checklist.Status == ChecklistStatus.Completed)

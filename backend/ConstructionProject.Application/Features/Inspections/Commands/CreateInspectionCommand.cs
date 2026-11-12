@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ConstructionProject.Application.Common.Interfaces;
+using ConstructionProject.Application.Features.Checklists.Commands;
 using ConstructionProject.Application.DTOs;
 using ConstructionProject.Domain.Entities;
 using ConstructionProject.Domain.Enums;
@@ -79,6 +80,7 @@ public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCo
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.ChecklistId}. Form Inspection không thể đứng riêng lẻ mà bắt buộc phải thuộc về 1 Checklist.");
         }
 
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, checklist.Id, cancellationToken);
         // 2. Kiểm tra điều kiện trạng thái: Chỉ mở khóa điền phiếu nghiệm thu khi Kế hoạch Checklist đã được Giám sát Approved
         if (checklist.Status != ChecklistStatus.Approved && checklist.Status != ChecklistStatus.InProgress)
         {

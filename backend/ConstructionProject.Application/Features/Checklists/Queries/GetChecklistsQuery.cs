@@ -23,6 +23,7 @@ public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, Lis
     public async Task<List<ChecklistDto>> Handle(GetChecklistsQuery request, CancellationToken cancellationToken)
     {
         var query = _context.Checklists
+            .Include(c => c.WorkflowOperations)
             .Include(c => c.Object)
                 .ThenInclude(o => o!.DrawingFile)
             .Include(c => c.Items)
@@ -57,6 +58,7 @@ public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, Lis
                 Name = checklist.Name,
                 Description = checklist.Description,
                 Status = checklist.Status.ToString(),
+                WorkflowSyncStatus = ChecklistWorkflowSync.GetStatus(checklist),
                 WorkflowInstanceId = checklist.WorkflowInstanceId,
                 RejectReason = checklist.RejectReason,
                 CreatedById = checklist.CreatedById,

@@ -47,4 +47,5 @@ public class Checklist
     public User? Reviewer { get; set; }
     public ICollection<ChecklistItem> Items { get; set; } = new List<ChecklistItem>();
     public ICollection<ChecklistAuditHistory> AuditHistories { get; set; } = new List<ChecklistAuditHistory>();
+    public ICollection<ChecklistWorkflowOperation> WorkflowOperations { get; set; } = new List<ChecklistWorkflowOperation>();
 }

@@ -27,6 +27,7 @@ import {
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { checklistApi } from '../../services/checklistApi';
+import { ChecklistSyncTag } from '../../components/checklists/ChecklistSyncTag';
 import type { ChecklistDto, ChecklistStatus } from '../../types/checklist';
 import { ChecklistDetailModal } from '../../components/checklists/ChecklistDetailModal';
 
@@ -131,7 +132,7 @@ export const ReviewerChecklistPage: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       width: 170,
-      render: (status: ChecklistStatus) => getStatusTag(status),
+      render: (status: ChecklistStatus, record: ChecklistDto) => <Space direction="vertical" size={2}>{getStatusTag(status)}<ChecklistSyncTag status={record.workflowSyncStatus} /></Space>,
     },
     {
       title: 'Tiêu chuẩn & Mẫu Form',

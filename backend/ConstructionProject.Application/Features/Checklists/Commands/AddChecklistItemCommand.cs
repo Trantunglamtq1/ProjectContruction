@@ -49,6 +49,7 @@ public class AddChecklistItemCommandHandler : IRequestHandler<AddChecklistItemCo
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.ChecklistId}.");
         }
 
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, checklist.Id, cancellationToken);
         // Kiểm tra State Locking (NFR-1)
         if (checklist.Status == ChecklistStatus.Approved || checklist.Status == ChecklistStatus.InProgress || checklist.Status == ChecklistStatus.Completed)
         {

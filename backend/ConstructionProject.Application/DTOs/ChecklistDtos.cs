@@ -2,6 +2,7 @@ namespace ConstructionProject.Application.DTOs;
 
 public class ChecklistDto
 {
+    public string WorkflowSyncStatus { get; set; } = "Synchronized";
     public Guid Id { get; set; }
     public Guid ObjectId { get; set; }
     public string ObjectName { get; set; } = string.Empty;
@@ -26,7 +27,7 @@ public class ChecklistDto
     public DateTime? ReviewedAt { get; set; }
 
     // Chỉ mở khóa tạo phiếu nghiệm thu hiện trường khi kế hoạch đã được Giám sát Approved
-    public bool CanFillInspection => Status == "Approved" || Status == "InProgress";
+    public bool CanFillInspection => WorkflowSyncStatus == "Synchronized" && (Status == "Approved" || Status == "InProgress");
 
     public int ItemsCount { get; set; }
     public int RequiredItemsCount { get; set; }

@@ -12,6 +12,7 @@ public interface IApplicationDbContext
     DbSet<Checklist> Checklists { get; }
     DbSet<ChecklistItem> ChecklistItems { get; }
     DbSet<ChecklistAuditHistory> ChecklistAuditHistories { get; }
+    DbSet<ChecklistWorkflowOperation> ChecklistWorkflowOperations { get; }
     DbSet<User> Users { get; }
     DbSet<Role> Roles { get; }
     DbSet<Notification> Notifications { get; }

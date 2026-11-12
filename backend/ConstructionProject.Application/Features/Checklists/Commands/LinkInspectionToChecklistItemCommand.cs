@@ -37,6 +37,7 @@ public class LinkInspectionToChecklistItemCommandHandler : IRequestHandler<LinkI
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.ChecklistId}.");
         }
 
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, checklist.Id, cancellationToken);
         // RÀNG BUỘC KHÓA NGHIỆP VỤ (NFR-1):
         // Khi Checklist chưa được Giám sát duyệt -> Khóa hoàn toàn chức năng lập/gán phiếu nghiệm thu
         if (checklist.Status != ChecklistStatus.Approved && checklist.Status != ChecklistStatus.InProgress)

@@ -75,7 +75,7 @@ Truy cập Swagger UI trực tiếp trên trình duyệt:
 
 ### 4. Chạy kiểm thử tự động
 
-Dự án có 3 tầng kiểm thử, tất cả đều chạy được **offline, không cần Docker/SQL Server**:
+Dự án có unit test và integration test InMemory không cần SQL Server. Kiểm thử workflow, migration và cạnh tranh dùng SQL Server và chỉ chạy khi cấu hình `CONSTRUCTION_TEST_SQL` như bên dưới.
 
 #### Backend — Unit tests (xUnit + Moq + FluentAssertions + EF InMemory)
 
@@ -131,3 +131,11 @@ Yêu cầu API đang chạy ở `http://localhost:5092`:
 ```bash
 python tests/test_auth_jwt.py
 ```
+
+### Đồng bộ workflow checklist
+
+Checklist được lưu trạng thái nghiệp vụ và lịch sử cùng lệnh đồng bộ Elsa trong database nghiệp vụ. API nộp, duyệt hoặc từ chối trả HTTP 202 khi lệnh đã được ghi nhận; `workflowSyncStatus` cho biết `Pending`, `Retrying`, `Synchronized` hoặc `NeedsRecovery`. Không mở khóa thao tác phụ thuộc trong lúc đồng bộ chưa hoàn tất. Worker dùng SQL Server và thử lại; nếu lỗi kéo dài, quản trị viên cần kiểm tra operation và trạng thái Elsa trước khi can thiệp.
+
+Migration `AddChecklistWorkflowOperations` tạo hàng đợi, xếp khôi phục các checklist cũ đang chờ và giữ ID workflow trước đó. Sao lưu trước khi áp dụng; không hỗ trợ rollback tự động vì có thể làm mất dữ liệu đối soát. Elsa 3.2 sử dụng SQL Server cho runtime và management. Chưa bảo đảm gửi lại thông báo SignalR khi lỗi.
+
+Kiểm thử SQL Server cần cấu hình `CONSTRUCTION_TEST_SQL` trong môi trường cho server thử nghiệm có quyền tạo database. Mỗi test tạo database riêng `ConstructionProject_Test_<guid>` và không tự xóa database đó; EF InMemory không chứng minh persistence hay migration. Trước phát hành phải tích hợp với các nhánh inspection và checklist concurrency, giải quyết migration/DI trùng và kiểm thử lại toàn bộ; không coi các nhánh riêng lẻ là kết quả tích hợp.

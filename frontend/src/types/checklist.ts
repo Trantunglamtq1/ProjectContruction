@@ -34,6 +34,7 @@ export interface ChecklistAuditHistoryDto {
 }
 
 export interface ChecklistDto {
+  workflowSyncStatus: 'Pending' | 'Retrying' | 'Synchronized' | 'NeedsRecovery';
   id: string;
   objectId: string;
   objectName: string;

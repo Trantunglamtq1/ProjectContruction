@@ -95,6 +95,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
     queryKey: ['checklist', checklistId],
     queryFn: () => checklistApi.getChecklistById(checklistId!),
     enabled: open && !!checklistId,
+    refetchInterval: query => query.state.data?.workflowSyncStatus === 'Pending' || query.state.data?.workflowSyncStatus === 'Retrying' ? 3000 : false,
   });
 
   // Mutation: Thêm tiêu chí
@@ -154,7 +155,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
   const submitMutation = useMutation({
     mutationFn: () => checklistApi.submitForApproval(checklistId!),
     onSuccess: () => {
-      message.success('Đã gửi kế hoạch Checklist cho Tư vấn giám sát phê duyệt!');
+      message.info('Đã ghi nhận kế hoạch; quy trình đang được đồng bộ.');
       refetch();
       queryClient.invalidateQueries({ queryKey: ['checklists'] });
       onRefresh?.();
@@ -168,7 +169,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
   const approveMutation = useMutation({
     mutationFn: () => checklistApi.supervisorApprove(checklistId!),
     onSuccess: () => {
-      message.success('Đã phê duyệt kế hoạch Checklist! Cấu trúc đã được khóa cứng.');
+      message.info('Đã ghi nhận phê duyệt; quy trình đang được đồng bộ.');
       refetch();
       queryClient.invalidateQueries({ queryKey: ['checklists'] });
       onRefresh?.();
@@ -182,7 +183,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
   const rejectMutation = useMutation({
     mutationFn: (reason: string) => checklistApi.supervisorReject(checklistId!, { reason }),
     onSuccess: () => {
-      message.warning('Đã từ chối kế hoạch Checklist và gửi phản hồi cho Kỹ sư!');
+      message.info('Đã ghi nhận từ chối; quy trình đang được đồng bộ.');
       setRejectModalOpen(false);
       rejectForm.resetFields();
       refetch();
@@ -267,9 +268,10 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
 
   if (!checklist) return null;
 
+  const workflowReady = checklist.workflowSyncStatus === 'Synchronized';
   const canEditStructure =
-    (checklist.status === 'Draft' || checklist.status === 'Rejected') && isSubmitter;
-  const canSupervisorModify = checklist.status === 'PendingSupervisor' && isReviewer;
+    workflowReady && (checklist.status === 'Draft' || checklist.status === 'Rejected') && isSubmitter;
+  const canSupervisorModify = workflowReady && checklist.status === 'PendingSupervisor' && isReviewer;
   const canModifyItem = canEditStructure || canSupervisorModify;
 
   // Xử lý mở modal sửa tiêu chí
@@ -371,6 +373,10 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {!workflowReady && <Alert type="warning" showIcon
+            message={checklist.workflowSyncStatus === 'Pending' ? 'Quy trình checklist đang được đồng bộ' : checklist.workflowSyncStatus === 'Retrying' ? 'Đồng bộ gặp lỗi, hệ thống đang thử lại' : 'Quy trình cần được khôi phục'}
+            description="Nếu tình trạng kéo dài, vui lòng liên hệ quản trị viên."
+            action={<Button size="small" onClick={() => refetch()}>Tải lại</Button>} />}
           {/* Thông tin Cấu kiện & Tiến độ */}
           <Card size="small" style={{ backgroundColor: '#f8fafc', borderRadius: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -819,7 +825,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
               )}
 
               {/* Hành động của Giám sát (Reviewer) khi PendingSupervisor */}
-              {checklist.status === 'PendingSupervisor' && isReviewer && (
+              {workflowReady && checklist.status === 'PendingSupervisor' && isReviewer && (
                 <>
                   <Button
                     danger

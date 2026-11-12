@@ -49,6 +49,7 @@ public class UpdateChecklistItemCommandHandler : IRequestHandler<UpdateChecklist
         }
 
         var checklist = item.Checklist;
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, item.ChecklistId, cancellationToken);
         if (checklist != null)
         {
             // Kiểm tra State Locking (NFR-1)

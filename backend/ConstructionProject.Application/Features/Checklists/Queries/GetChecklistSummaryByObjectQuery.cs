@@ -41,6 +41,7 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
         }
 
         var checklists = await _context.Checklists
+            .Include(c => c.WorkflowOperations)
             .Include(c => c.Items)
                 .ThenInclude(i => i.LinkedInspection)
             .Include(c => c.AuditHistories)
@@ -64,6 +65,7 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
                 Name = c.Name,
                 Description = c.Description,
                 Status = c.Status.ToString(),
+                WorkflowSyncStatus = ChecklistWorkflowSync.GetStatus(c),
                 WorkflowInstanceId = c.WorkflowInstanceId,
                 RejectReason = c.RejectReason,
                 CreatedById = c.CreatedById,
