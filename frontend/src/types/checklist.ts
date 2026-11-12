@@ -9,6 +9,7 @@ export type ChecklistStatus =
 export type ChecklistItemStatus = 'Pending' | 'Done';
 
 export interface ChecklistItemDto {
+  checklistRowVersion?: string;
   id: string;
   checklistId: string;
   name: string;
@@ -17,8 +18,16 @@ export interface ChecklistItemDto {
   formSchemaJson: string;
   linkedInspectionId: string | null;
   linkedInspectionStatus?: string | null;
+  linkedInspectionRowVersion?: string | null;
+  linkedInspectionWorkflowSyncStatus?: 'Synchronized' | 'Pending' | 'Retrying' | 'NeedsRecovery' | null;
   status: ChecklistItemStatus;
-  rowVersion?: string;
+  rowVersion: string;
+}
+
+export interface DeleteChecklistItemResult {
+  id: string;
+  checklistId: string;
+  checklistRowVersion: string;
 }
 
 export interface ChecklistAuditHistoryDto {
@@ -30,10 +39,11 @@ export interface ChecklistAuditHistoryDto {
   fromStatus: string;
   toStatus: string;
   comment?: string;
-  timestamp: string;
+  createdAt: string;
 }
 
 export interface ChecklistDto {
+  workflowSyncStatus: 'Pending' | 'Retrying' | 'Synchronized' | 'NeedsRecovery';
   id: string;
   objectId: string;
   objectName: string;
@@ -55,7 +65,7 @@ export interface ChecklistDto {
   progressPercentage: number;
   items: ChecklistItemDto[];
   auditHistories: ChecklistAuditHistoryDto[];
-  rowVersion?: string;
+  rowVersion: string;
 }
 
 export interface ChecklistSummaryDto {
@@ -84,24 +94,29 @@ export interface CreateChecklistPayload {
 
 export interface SubmitChecklistPayload {
   comment?: string;
+  rowVersion: string;
 }
 
 export interface SupervisorApprovePayload {
   comment?: string;
+  rowVersion: string;
 }
 
 export interface SupervisorRejectPayload {
+  rowVersion: string;
   reason: string;
   rejectReason?: string;
   comment?: string;
 }
 
 export interface SupervisorModifyPayload {
+  rowVersion: string;
   name?: string;
   description?: string;
   comment?: string;
   items?: Array<{
     id?: string;
+    rowVersion?: string;
     name: string;
     orderIndex?: number;
     isRequired?: boolean;
@@ -110,6 +125,7 @@ export interface SupervisorModifyPayload {
 }
 
 export interface AddChecklistItemPayload {
+  checklistRowVersion: string;
   name: string;
   orderIndex?: number;
   isRequired?: boolean;
@@ -117,6 +133,8 @@ export interface AddChecklistItemPayload {
 }
 
 export interface UpdateChecklistItemPayload {
+  checklistRowVersion: string;
+  rowVersion: string;
   name: string;
   orderIndex?: number;
   isRequired?: boolean;
@@ -124,5 +142,7 @@ export interface UpdateChecklistItemPayload {
 }
 
 export interface LinkInspectionPayload {
+  checklistRowVersion: string;
+  rowVersion: string;
   inspectionId: string;
 }

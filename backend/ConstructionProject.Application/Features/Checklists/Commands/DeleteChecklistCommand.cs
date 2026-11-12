@@ -9,7 +9,8 @@ public record DeleteChecklistCommand(
     Guid Id,
     Guid? ActorId,
     string? ActorName,
-    string? ActorRole
+    string? ActorRole,
+    byte[]? RowVersion = null
 ) : IRequest<bool>;
 
 public class DeleteChecklistCommandHandler : IRequestHandler<DeleteChecklistCommand, bool>
@@ -33,6 +34,9 @@ public class DeleteChecklistCommandHandler : IRequestHandler<DeleteChecklistComm
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.Id}.");
         }
 
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, checklist.RowVersion);
+
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, checklist.Id, cancellationToken);
         // Ràng buộc Khóa: Nếu bất kỳ tiêu chí nào đã phát sinh phiếu nghiệm thu -> Cấm xóa
         var hasInspection = checklist.Items.Any(i => i.LinkedInspectionId.HasValue);
         if (hasInspection)

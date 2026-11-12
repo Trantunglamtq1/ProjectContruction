@@ -204,6 +204,7 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
   const isEditable =
     isSubmitterRole &&
     inspection &&
+    inspection.workflowSyncStatus === 'Synchronized' &&
     (inspection.status === 'Draft' || inspection.status === 'Rejected');
 
   const handleSaveDraft = async () => {
@@ -212,6 +213,7 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
     try {
       const updated = await inspectionApi.updateInspectionDraft(inspection.id, {
         formDataJson: JSON.stringify(formData),
+        rowVersion: inspection.rowVersion,
       });
       setInspection(updated);
       message.success('Đã lưu nội dung bản nháp thành công!');
@@ -230,9 +232,10 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
     try {
       const updated = await inspectionApi.submitInspection(inspection.id, {
         formDataJson: JSON.stringify(formData),
+        rowVersion: inspection.rowVersion,
       });
       setInspection(updated);
-      message.success('Hồ sơ đã được nộp thẩm tra chính thức! Trạng thái: Chờ thẩm tra (Submitted).');
+      message.info('Đã ghi nhận hồ sơ; quy trình đang được đồng bộ. Vui lòng tải lại để xem kết quả.');
       onUpdated();
       const newHistory = await inspectionApi.getInspectionHistory(inspection.id).catch(() => []);
       setHistory(newHistory);
@@ -255,12 +258,17 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
       try {
         const updated = await inspectionApi.updateInspectionDraft(inspection.id, {
           formDataJson: JSON.stringify(updatedData),
+          rowVersion: inspection.rowVersion,
         });
         setInspection(updated);
         message.success('Đã lưu cấu hình biểu mẫu tùy biến vào hồ sơ!');
         onUpdated();
-      } catch {
-        message.warning('Đã áp dụng biểu mẫu mới trên giao diện. Nhấn Lưu nháp để đồng bộ.');
+      } catch (error: any) {
+        if (error.response?.status === 409) {
+          message.error(error.response.data?.message || 'Dữ liệu đã thay đổi. Vui lòng tải lại hồ sơ.');
+        } else {
+          message.warning('Đã áp dụng biểu mẫu mới trên giao diện. Nhấn Lưu nháp để đồng bộ.');
+        }
       }
     }
   };
@@ -354,6 +362,19 @@ export const InspectionDetailDrawer: React.FC<InspectionDetailDrawerProps> = ({
       <Spin spinning={loading}>
         {inspection && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {inspection.workflowSyncStatus && inspection.workflowSyncStatus !== 'Synchronized' && (
+              <Alert
+                type="warning"
+                showIcon
+                message={inspection.workflowSyncStatus === 'Pending' ? 'Quy trình đang được đồng bộ' : inspection.workflowSyncStatus === 'Retrying' ? 'Đồng bộ gặp lỗi, hệ thống đang thử lại' : 'Quy trình cần được khôi phục'}
+                description="Vui lòng tải lại hồ sơ để xem kết quả; nếu trạng thái kéo dài, hãy liên hệ quản trị viên."
+                action={
+                  <Button size="small" loading={loading} onClick={() => loadInspectionDetails(inspection.id)}>
+                    Tải lại hồ sơ
+                  </Button>
+                }
+              />
+            )}
             {/* Cảnh báo từ chối nếu có */}
             {inspection.status === 'Rejected' && inspection.rejectReason && (
               <Alert

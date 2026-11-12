@@ -11,7 +11,8 @@ public record ReceiveInspectionCommand(
     Guid Id,
     Guid? ReviewerId = null,
     string? ReviewerName = null,
-    string? Comment = null
+    string? Comment = null,
+    byte[]? RowVersion = null
 ) : IRequest<InspectionDto>;
 
 public class ReceiveInspectionCommandHandler : IRequestHandler<ReceiveInspectionCommand, InspectionDto>
@@ -35,6 +36,11 @@ public class ReceiveInspectionCommandHandler : IRequestHandler<ReceiveInspection
         {
             throw new KeyNotFoundException($"Không tìm thấy Form Inspection với Id = {request.Id}.");
         }
+
+        InspectionVersionGuard.EnsureCurrent(request.RowVersion, inspection.RowVersion);
+        await InspectionWorkflowQueue.EnsureReadyAsync(_context, inspection.Id, cancellationToken);
+        if (string.IsNullOrWhiteSpace(inspection.WorkflowInstanceId))
+            throw new InvalidOperationException("Không tìm thấy quy trình duyệt. Vui lòng liên hệ quản trị viên để khôi phục.");
 
         // Quy tắc State Transition: Chỉ tiếp nhận hồ sơ đang ở trạng thái 'Submitted'
         if (inspection.Status != InspectionStatus.Submitted)
@@ -79,6 +85,7 @@ public class ReceiveInspectionCommandHandler : IRequestHandler<ReceiveInspection
             FormDataJson = inspection.FormDataJson,
             Status = inspection.Status.ToString(),
             WorkflowInstanceId = inspection.WorkflowInstanceId,
+            RowVersion = inspection.RowVersion,
             SubmittedById = inspection.SubmittedById,
             SubmittedBy = inspection.SubmittedBy,
             SubmittedAt = inspection.SubmittedAt,

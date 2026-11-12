@@ -7,7 +7,8 @@ public record ReviewPassInspectionCommand(
     Guid Id,
     Guid? ReviewerId = null,
     string? ReviewerName = null,
-    string? Comment = null
+    string? Comment = null,
+    byte[]? RowVersion = null
 ) : IRequest<InspectionDto>;
 
 public class ReviewPassInspectionCommandHandler : IRequestHandler<ReviewPassInspectionCommand, InspectionDto>
@@ -21,6 +22,6 @@ public class ReviewPassInspectionCommandHandler : IRequestHandler<ReviewPassInsp
 
     public Task<InspectionDto> Handle(ReviewPassInspectionCommand request, CancellationToken cancellationToken)
     {
-        return _mediator.Send(new ReviewInspectionCommand(request.Id, request.ReviewerId, request.ReviewerName, request.Comment), cancellationToken);
+        return _mediator.Send(new ReviewInspectionCommand(request.Id, request.ReviewerId, request.ReviewerName, request.Comment, request.RowVersion), cancellationToken);
     }
 }

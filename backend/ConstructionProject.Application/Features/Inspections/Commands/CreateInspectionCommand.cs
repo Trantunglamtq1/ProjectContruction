@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ConstructionProject.Application.Common.Interfaces;
+using ConstructionProject.Application.Features.Checklists.Commands;
 using ConstructionProject.Application.DTOs;
 using ConstructionProject.Domain.Entities;
 using ConstructionProject.Domain.Enums;
@@ -52,16 +53,13 @@ public class CreateInspectionCommandValidator : AbstractValidator<CreateInspecti
 public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCommand, InspectionDto>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IInspectionWorkflowService _workflowService;
     private readonly INotificationService _notificationService;
 
     public CreateInspectionCommandHandler(
         IApplicationDbContext context, 
-        IInspectionWorkflowService workflowService,
         INotificationService notificationService)
     {
         _context = context;
-        _workflowService = workflowService;
         _notificationService = notificationService;
     }
 
@@ -79,6 +77,7 @@ public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCo
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.ChecklistId}. Form Inspection không thể đứng riêng lẻ mà bắt buộc phải thuộc về 1 Checklist.");
         }
 
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, checklist.Id, cancellationToken);
         // 2. Kiểm tra điều kiện trạng thái: Chỉ mở khóa điền phiếu nghiệm thu khi Kế hoạch Checklist đã được Giám sát Approved
         if (checklist.Status != ChecklistStatus.Approved && checklist.Status != ChecklistStatus.InProgress)
         {
@@ -100,61 +99,27 @@ public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCo
 
         // 4. Chuẩn hóa FormDataJson
         var formData = string.IsNullOrWhiteSpace(request.FormDataJson) ? "{}" : request.FormDataJson.Trim();
+        if (request.SubmitImmediately)
+            SubmitInspectionCommandHandler.ValidateFormDataAgainstSchema(formData);
 
         // 5. Kiểm tra nếu đã có phiếu nghiệm thu liên kết trước đó
-        FormInspection entity;
         if (item.LinkedInspectionId.HasValue)
-        {
-            var existingInspection = await _context.FormInspections
-                .FirstOrDefaultAsync(i => i.Id == item.LinkedInspectionId.Value, cancellationToken);
+            throw new InvalidOperationException("Tiêu chí đã có hồ sơ kiểm tra. Vui lòng mở hồ sơ hiện có để chỉnh sửa hoặc theo dõi.");
 
-            if (existingInspection != null)
-            {
-                // Nếu phiếu đã Approved thì không cho ghi đè
-                if (existingInspection.Status == InspectionStatus.Approved)
-                {
-                    throw new InvalidOperationException("Tiêu chí này đã được phê duyệt nghiệm thu (Approved). Không thể tạo mới hoặc ghi đè.");
-                }
-
-                entity = existingInspection;
-                entity.FormDataJson = formData;
-                entity.UpdatedAt = DateTime.UtcNow;
-            }
-            else
-            {
-                entity = new FormInspection
-                {
-                    Id = Guid.NewGuid(),
-                    ObjectId = checklist.ObjectId,
-                    ChecklistId = checklist.Id,
-                    ChecklistItemId = item.Id,
-                    FormSchemaId = item.Id.ToString(),
-                    FormDataJson = formData,
-                    Status = InspectionStatus.Draft,
-                    SubmittedById = request.SubmitterId,
-                    SubmittedBy = request.SubmitterName,
-                    CreatedAt = DateTime.UtcNow
-                };
-                _context.FormInspections.Add(entity);
-            }
-        }
-        else
+        var entity = new FormInspection
         {
-            entity = new FormInspection
-            {
-                Id = Guid.NewGuid(),
-                ObjectId = checklist.ObjectId,
-                ChecklistId = checklist.Id,
-                ChecklistItemId = item.Id,
-                FormSchemaId = item.Id.ToString(),
-                FormDataJson = formData,
-                Status = InspectionStatus.Draft,
-                SubmittedById = request.SubmitterId,
-                SubmittedBy = request.SubmitterName,
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.FormInspections.Add(entity);
-        }
+            Id = Guid.NewGuid(),
+            ObjectId = checklist.ObjectId,
+            ChecklistId = checklist.Id,
+            ChecklistItemId = item.Id,
+            FormSchemaId = item.Id.ToString(),
+            FormDataJson = formData,
+            Status = InspectionStatus.Draft,
+            SubmittedById = request.SubmitterId,
+            SubmittedBy = request.SubmitterName,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.FormInspections.Add(entity);
 
         // Gắn liên kết 2 chiều
         item.LinkedInspectionId = entity.Id;
@@ -175,15 +140,7 @@ public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCo
             entity.SubmittedById = request.SubmitterId;
             entity.SubmittedBy = request.SubmitterName ?? "Submitter";
 
-            var workflowInstanceId = await _workflowService.StartApprovalWorkflowAsync(
-                entity.Id,
-                entity.SubmittedBy,
-                cancellationToken);
-
-            if (!string.IsNullOrWhiteSpace(workflowInstanceId))
-            {
-                entity.WorkflowInstanceId = workflowInstanceId;
-            }
+            InspectionWorkflowQueue.EnqueueStart(_context, entity, entity.SubmittedBy);
 
             var submitAudit = new InspectionAuditHistory
             {
@@ -225,7 +182,7 @@ public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCo
             await _notificationService.SendNotificationToRoleAsync("Reviewer", new NotificationMessage
             {
                 Title = "Hồ sơ nghiệm thu mới cần thẩm tra",
-                Content = $"Kỹ sư {entity.SubmittedBy ?? "hiện trường"} đã nộp hồ sơ kiểm tra cho tiêu chí '{item.Name}' thuộc cấu kiện '{constructionObject.Name}'",
+                Content = $"Kỹ sư {entity.SubmittedBy ?? "hiện trường"} đã nộp hồ sơ kiểm tra cho tiêu chí '{item.Name}' thuộc cấu kiện '{constructionObject.Name}'. Quy trình đang được đồng bộ.",
                 Type = "info",
                 ReferenceId = entity.Id.ToString(),
                 ReferenceType = "Inspection",
@@ -250,6 +207,8 @@ public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCo
             FormDataJson = entity.FormDataJson,
             Status = entity.Status.ToString(),
             WorkflowInstanceId = entity.WorkflowInstanceId,
+            RowVersion = entity.RowVersion,
+            WorkflowSyncStatus = request.SubmitImmediately ? "Pending" : "Synchronized",
             SubmittedById = entity.SubmittedById,
             SubmittedBy = entity.SubmittedBy,
             SubmittedAt = entity.SubmittedAt,

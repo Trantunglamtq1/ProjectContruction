@@ -20,10 +20,12 @@ public class GetChecklistByIdQueryHandler : IRequestHandler<GetChecklistByIdQuer
     public async Task<ChecklistDto?> Handle(GetChecklistByIdQuery request, CancellationToken cancellationToken)
     {
         var checklist = await _context.Checklists
+            .Include(c => c.WorkflowOperations)
             .Include(c => c.Object)
                 .ThenInclude(o => o!.DrawingFile)
             .Include(c => c.Items)
                 .ThenInclude(i => i.LinkedInspection)
+                    .ThenInclude(i => i!.WorkflowOperations)
             .Include(c => c.AuditHistories)
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
@@ -35,6 +37,7 @@ public class GetChecklistByIdQueryHandler : IRequestHandler<GetChecklistByIdQuer
         return new ChecklistDto
         {
             Id = checklist.Id,
+            RowVersion = checklist.RowVersion,
             ObjectId = checklist.ObjectId,
             ObjectName = checklist.Object?.Name ?? string.Empty,
             DrawingFileId = checklist.Object?.DrawingFileId ?? Guid.Empty,
@@ -43,6 +46,7 @@ public class GetChecklistByIdQueryHandler : IRequestHandler<GetChecklistByIdQuer
             Name = checklist.Name,
             Description = checklist.Description,
             Status = checklist.Status.ToString(),
+            WorkflowSyncStatus = ChecklistWorkflowSync.GetStatus(checklist),
             WorkflowInstanceId = checklist.WorkflowInstanceId,
             RejectReason = checklist.RejectReason,
             CreatedById = checklist.CreatedById,
@@ -57,6 +61,7 @@ public class GetChecklistByIdQueryHandler : IRequestHandler<GetChecklistByIdQuer
             Items = activeItems.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
             {
                 Id = i.Id,
+                RowVersion = i.RowVersion,
                 ChecklistId = i.ChecklistId,
                 Name = i.Name,
                 OrderIndex = i.OrderIndex,
@@ -64,6 +69,8 @@ public class GetChecklistByIdQueryHandler : IRequestHandler<GetChecklistByIdQuer
                 FormSchemaJson = i.FormSchemaJson,
                 LinkedInspectionId = i.LinkedInspectionId,
                 LinkedInspectionStatus = i.LinkedInspection?.Status.ToString(),
+                LinkedInspectionRowVersion = i.LinkedInspection?.RowVersion,
+                LinkedInspectionWorkflowSyncStatus = i.LinkedInspection == null ? null : InspectionWorkflowSync.GetStatus(i.LinkedInspection),
                 Status = i.Status.ToString()
             }).ToList(),
             AuditHistories = checklist.AuditHistories.OrderByDescending(a => a.CreatedAt).Select(a => new ChecklistAuditHistoryDto

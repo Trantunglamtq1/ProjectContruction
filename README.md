@@ -5,13 +5,39 @@ Hệ thống quản lý hoạt động kiểm tra và nghiệm thu cấu kiện/
 ## 🎯 Điểm mấu chốt của hệ thống
 - **Nguồn gốc từ Bản vẽ (Drawing Origin):** Mọi cấu kiện (**Object**) không phải dữ liệu nhập tay tuỳ ý mà bắt buộc truy vết được về đúng bản vẽ PDF và vị trí khoanh vùng (**Marker Coordinates**) trên trang bản vẽ.
 - **Biểu mẫu động (FormIO):** Form Inspection được cấu hình động qua JSON Schema, thay đổi tiêu chí kiểm tra không cần sửa code.
-- **Quy trình phê duyệt (Elsa Workflow):** Quản lý luồng duyệt trạng thái (`Draft` → `Submitted` → `UnderReview` → `Approved` / `Rejected`).
+- **Quy trình phê duyệt inspection (Elsa Workflow):** `Draft` → `Submitted` → `UnderReview` → `Reviewed` → `Approved`, có từ chối và nộp lại.
 - **Nghiệm thu liên kết (Checklist):** Tiêu chí Checklist gắn liền với từng Form Inspection; tự động đánh dấu `Done` khi Inspection được `Approved`.
 - **Bảo mật & Phân quyền (JWT Auth):** Hệ thống phân quyền chặt chẽ theo 4 Actor:
   - 👑 **Admin**: Quản trị tài khoản, gán và chuyển đổi Role cho người dùng.
   - 👷 **Submitter** (Kỹ sư hiện trường): Upload bản vẽ, khoanh marker tạo Object, điền và nộp Form Inspection.
   - 🔍 **Reviewer** (Giám sát công trình): Xem xét Inspection, quản lý Checklist và theo dõi tiến độ.
   - ✍️ **Approver** (Quản lý dự án): Ra quyết định phê duyệt (Approve) hoặc từ chối (Reject).
+
+---
+
+## Độ tin cậy luồng inspection
+
+Các thao tác nộp, thẩm tra, phê duyệt và từ chối ghi trạng thái nghiệp vụ, lịch sử, thay đổi checklist liên quan và lệnh đồng bộ trong cùng lần lưu SQL Server. API trả `202 Accepted` và `workflowSyncStatus: "Pending"` khi đã ghi nhận thao tác nhưng Elsa còn đang đồng bộ. Worker thử lại lệnh chưa hoàn tất; `Retrying` cho biết đồng bộ gặp lỗi, cần theo dõi và xử lý nguyên nhân. Chỉ tiếp tục bước duyệt tiếp theo khi trạng thái là `Synchronized`.
+
+Elsa 3.2 dùng SQL Server để lưu workflow và bookmark. Worker dùng khóa SQL theo hồ sơ và kiểm tra trạng thái Elsa trước khi thử lại; không giả định giao dịch Elsa và giao dịch nghiệp vụ là một. Thông báo sau khi lưu là best effort, chưa có cam kết gửi lại nếu dịch vụ thông báo lỗi.
+
+API trả `rowVersion` dạng base64; client phải gửi lại giá trị đã đọc khi sửa, nộp, tiếp nhận, thẩm tra, duyệt, từ chối hoặc xóa inspection. Dữ liệu cũ trả HTTP `409`; thiếu hoặc sai định dạng phiên bản bị từ chối. API client cần cập nhật cho hợp đồng này.
+
+Migration giữ trạng thái và lịch sử cũ, lưu ID workflow trước đây vào lệnh khôi phục và dựng bookmark phù hợp với cấp duyệt đã lưu. Không tự tạo quyết định duyệt mới. Migration khôi phục không hỗ trợ rollback tự động; cần sao lưu và kiểm tra kế hoạch khôi phục trước khi áp dụng. Thiết lập connection string qua cấu hình môi trường, không đưa mật khẩu vào mã nguồn.
+
+Chạy test SQL Server riêng bằng cách đặt biến môi trường `CONSTRUCTION_TEST_SQL` thành connection string của **máy chủ thử nghiệm**, rồi chạy `dotnet test tests/ConstructionProject.IntegrationTests/ConstructionProject.IntegrationTests.csproj`. Các test SQL tạo database tên `ConstructionProject_Test_<guid>` và giữ lại để kiểm tra; không trỏ test vào máy chủ production. Nếu không đặt biến này, các test SQL được bỏ qua và không chứng minh hành vi migration, concurrency hay restart.
+
+Checklist cũng dùng hàng đợi đồng bộ Elsa và trả `202 Accepted` khi đã ghi nhận nhưng chưa đồng bộ xong. API trả `rowVersion` cho checklist và từng tiêu chí; client gửi lại phiên bản khi thay đổi, bao gồm JSON body trong yêu cầu DELETE. Token cũ trả HTTP 409. Migration `AddChecklistItemsRevision` và `AddChecklistWorkflowOperations` giữ dữ liệu cũ và xếp khôi phục các checklist đang chờ; cần sao lưu và kiểm tra trạng thái hàng đợi khi áp dụng.
+
+**Giới hạn:** phân quyền theo công trình và phiên bản bản vẽ chưa triển khai. Các hồ sơ thiếu người tạo cần được quản trị viên xử lý trước khi sửa hoặc nộp lại. Chưa có màn hình quản trị để xử lý lệnh đồng bộ bị lỗi kéo dài; thông báo chưa được bảo đảm gửi lại.
+
+### Demo khoảng 5 phút
+
+1. Đăng nhập Submitter, mở checklist đã được duyệt, tạo và nộp phiếu inspection.
+2. Chờ trạng thái đồng bộ hoàn tất; đăng nhập Reviewer, tiếp nhận rồi thẩm tra, hoặc từ chối kèm lý do.
+3. Nếu bị từ chối, đăng nhập lại Submitter để sửa và nộp lại; Reviewer tiếp nhận và thẩm tra lại.
+4. Đăng nhập Approver để duyệt cấp cuối; xem lịch sử và trạng thái checklist.
+5. Thử sửa một bản nháp đã thay đổi từ phiên khác để xem thông báo `409` và yêu cầu tải lại.
 
 ---
 
@@ -75,7 +101,7 @@ Truy cập Swagger UI trực tiếp trên trình duyệt:
 
 ### 4. Chạy kiểm thử tự động
 
-Dự án có 3 tầng kiểm thử, tất cả đều chạy được **offline, không cần Docker/SQL Server**:
+Dự án có 3 tầng kiểm thử. Unit tests và nhóm API dùng InMemory chạy không cần SQL Server; các test migration, rowversion và workflow bền vững cần SQL Server thực.
 
 #### Backend — Unit tests (xUnit + Moq + FluentAssertions + EF InMemory)
 
@@ -95,6 +121,8 @@ Dựng API thật (controllers, JWT, middleware, SignalR) với database in-memo
 dotnet test tests/ConstructionProject.IntegrationTests/ConstructionProject.IntegrationTests.csproj
 ```
 
+Để chạy cả các test SQL Server, đặt `CONSTRUCTION_TEST_SQL` thành chuỗi kết nối tới máy chủ thử nghiệm có quyền tạo database. Các test tạo database riêng mang tiền tố `ConstructionProject_Test_` và giữ lại sau khi chạy. Khi thiếu biến này, các test SQL bị bỏ qua; kết quả đó không chứng minh migration/concurrency/workflow đạt. Không dùng kết nối ứng dụng hoặc production. Trên Windows nếu test host không được ghi EventLog, đặt `Logging__EventLog__LogLevel__Default=None` cho tiến trình test.
+
 #### Frontend — Unit tests (Vitest)
 
 Kiểm thử logic thuần đã tách khỏi component: undo/redo history và tính toán kích thước nút bấm:
@@ -106,14 +134,16 @@ npm run test:watch    # watch mode
 npm run test:coverage # kèm báo cáo coverage (v8)
 ```
 
-#### Kết quả hiện tại
+#### Kết quả kiểm chứng ngày 12/11/2026 (bản tích hợp giai đoạn 1)
 
 | Tầng | Công cụ | Số test | Trạng thái |
 |------|---------|---------|------------|
-| Backend Unit | xUnit + Moq + EF InMemory | **31** | ✅ Pass |
-| Backend Integration | WebApplicationFactory + JWT | **11** | ✅ Pass |
+| Backend Unit | xUnit + Moq + EF InMemory | **47** | ✅ Pass |
+| Backend Integration | WebApplicationFactory + JWT + SQL Server | **45** | ✅ Pass, không bỏ qua |
 | Frontend Unit | Vitest + v8 coverage | **16** | ✅ Pass |
-| **Tổng** | | **58** | ✅ |
+| **Tổng** | | **108** | ✅ |
+
+Backend build, frontend build/lint đạt; EF xác nhận model khớp migration. Playwright đã kiểm tra hai tab nhận 409, giữ nội dung chưa lưu và tải lại; thêm/xóa tiêu chí; nộp, restart, từ chối/sửa/nộp lại checklist; tạo nháp, nộp, từ chối/sửa/nộp lại inspection, tiếp nhận, duyệt hai cấp và checklist hoàn tất. Phiếu hoàn tất vẫn xem được ở chế độ chỉ đọc; nhật ký dùng `createdAt` UTC do API trả về. Kiểm tra hiển thị Pending/Retrying/NeedsRecovery dùng phản hồi GET giả lập; lỗi engine/retry thực được kiểm tra bằng SQL integration tests. Còn cảnh báo lint/Ant Design, bundle lớn và EF query filter; không phải test thất bại. Đây là kết quả cục bộ, chưa tích hợp vào develop hoặc triển khai.
 
 #### CI/CD
 

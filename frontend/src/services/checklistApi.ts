@@ -11,6 +11,7 @@ import type {
   UpdateChecklistItemPayload,
   LinkInspectionPayload,
   ChecklistItemDto,
+  DeleteChecklistItemResult,
 } from '../types/checklist';
 
 export const checklistApi = {
@@ -39,14 +40,14 @@ export const checklistApi = {
   },
 
   // Kỹ sư nộp duyệt Checklist (Kích hoạt Elsa Workflow #1)
-  submitForApproval: async (id: string, payload?: SubmitChecklistPayload): Promise<ChecklistDto> => {
-    const res = await apiClient.post<ChecklistDto>(`/checklists/${id}/submit`, payload || {});
+  submitForApproval: async (id: string, payload: SubmitChecklistPayload): Promise<ChecklistDto> => {
+    const res = await apiClient.post<ChecklistDto>(`/checklists/${id}/submit`, payload);
     return res.data;
   },
 
   // Giám sát phê duyệt Checklist
-  supervisorApprove: async (id: string, payload?: SupervisorApprovePayload): Promise<ChecklistDto> => {
-    const res = await apiClient.post<ChecklistDto>(`/checklists/${id}/supervisor-approve`, payload || {});
+  supervisorApprove: async (id: string, payload: SupervisorApprovePayload): Promise<ChecklistDto> => {
+    const res = await apiClient.post<ChecklistDto>(`/checklists/${id}/supervisor-approve`, payload);
     return res.data;
   },
 
@@ -56,6 +57,7 @@ export const checklistApi = {
       reason: payload.reason,
       rejectReason: payload.rejectReason || payload.reason,
       comment: payload.comment || payload.reason,
+      rowVersion: payload.rowVersion,
     });
     return res.data;
   },
@@ -83,8 +85,9 @@ export const checklistApi = {
   },
 
   // Xóa tiêu chí (Xóa mềm, chặn nếu đã có inspection)
-  deleteItem: async (checklistId: string, itemId: string): Promise<void> => {
-    await apiClient.delete(`/checklists/${checklistId}/items/${itemId}`);
+  deleteItem: async (checklistId: string, itemId: string, checklistRowVersion: string, rowVersion: string): Promise<DeleteChecklistItemResult> => {
+    const res = await apiClient.delete<DeleteChecklistItemResult>(`/checklists/${checklistId}/items/${itemId}`, { data: { checklistRowVersion, rowVersion } });
+    return res.data;
   },
 
   // Giai đoạn 2: Liên kết FormInspection đã được nộp/duyệt vào tiêu chí
@@ -101,7 +104,7 @@ export const checklistApi = {
   },
 
   // Xóa Checklist (Xóa mềm)
-  deleteChecklist: async (id: string): Promise<void> => {
-    await apiClient.delete(`/checklists/${id}`);
+  deleteChecklist: async (id: string, rowVersion: string): Promise<void> => {
+    await apiClient.delete(`/checklists/${id}`, { data: { rowVersion } });
   },
 };

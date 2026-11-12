@@ -20,7 +20,8 @@ builder.Services.AddControllers()
 
 // Add Layer Services
 builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddInfrastructureServices(builder.Configuration,
+    !builder.Environment.IsEnvironment("Testing") || builder.Configuration.GetValue<bool>("Workflow:EnableInTests"));
 
 // Add JWT Authentication
 var jwtSecret = builder.Configuration["JwtSettings:Secret"] ?? "ConstructionProject_Super_Secret_Jwt_Key_2026_!@#$%^&*()_SecureKey";

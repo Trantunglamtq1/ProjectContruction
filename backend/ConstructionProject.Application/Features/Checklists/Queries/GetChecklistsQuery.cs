@@ -23,6 +23,7 @@ public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, Lis
     public async Task<List<ChecklistDto>> Handle(GetChecklistsQuery request, CancellationToken cancellationToken)
     {
         var query = _context.Checklists
+            .Include(c => c.WorkflowOperations)
             .Include(c => c.Object)
                 .ThenInclude(o => o!.DrawingFile)
             .Include(c => c.Items)
@@ -49,6 +50,7 @@ public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, Lis
             return new ChecklistDto
             {
                 Id = checklist.Id,
+                RowVersion = checklist.RowVersion,
                 ObjectId = checklist.ObjectId,
                 ObjectName = checklist.Object?.Name ?? string.Empty,
                 DrawingFileId = checklist.Object?.DrawingFileId ?? Guid.Empty,
@@ -57,6 +59,7 @@ public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, Lis
                 Name = checklist.Name,
                 Description = checklist.Description,
                 Status = checklist.Status.ToString(),
+                WorkflowSyncStatus = ChecklistWorkflowSync.GetStatus(checklist),
                 WorkflowInstanceId = checklist.WorkflowInstanceId,
                 RejectReason = checklist.RejectReason,
                 CreatedById = checklist.CreatedById,
@@ -71,6 +74,7 @@ public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, Lis
                 Items = activeItems.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
                 {
                     Id = i.Id,
+                    RowVersion = i.RowVersion,
                     ChecklistId = i.ChecklistId,
                     Name = i.Name,
                     OrderIndex = i.OrderIndex,

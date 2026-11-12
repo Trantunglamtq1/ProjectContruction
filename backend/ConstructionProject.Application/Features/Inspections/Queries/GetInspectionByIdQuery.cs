@@ -25,6 +25,7 @@ public class GetInspectionByIdQueryHandler : IRequestHandler<GetInspectionByIdQu
             .Include(i => i.Checklist)
             .Include(i => i.ChecklistItem)
             .Include(i => i.LinkedChecklistItems)
+            .Include(i => i.WorkflowOperations)
             .FirstOrDefaultAsync(i => i.Id == request.Id, cancellationToken);
 
         if (entity == null)
@@ -49,6 +50,8 @@ public class GetInspectionByIdQueryHandler : IRequestHandler<GetInspectionByIdQu
             FormDataJson = entity.FormDataJson,
             Status = entity.Status.ToString(),
             WorkflowInstanceId = entity.WorkflowInstanceId,
+            RowVersion = entity.RowVersion,
+            WorkflowSyncStatus = InspectionWorkflowSync.GetStatus(entity),
             SubmittedById = entity.SubmittedById,
             SubmittedBy = entity.SubmittedBy,
             SubmittedAt = entity.SubmittedAt,

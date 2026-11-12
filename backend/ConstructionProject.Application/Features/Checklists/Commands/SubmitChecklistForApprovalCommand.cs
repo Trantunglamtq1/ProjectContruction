@@ -10,22 +10,20 @@ namespace ConstructionProject.Application.Features.Checklists.Commands;
 public record SubmitChecklistForApprovalCommand(
     Guid Id,
     Guid? SubmitterId,
-    string? SubmitterName
+    string? SubmitterName,
+    byte[]? RowVersion = null
 ) : IRequest<ChecklistDto>;
 
 public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitChecklistForApprovalCommand, ChecklistDto>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IChecklistWorkflowService _workflowService;
     private readonly INotificationService _notificationService;
 
     public SubmitChecklistForApprovalCommandHandler(
         IApplicationDbContext context, 
-        IChecklistWorkflowService workflowService,
         INotificationService notificationService)
     {
         _context = context;
-        _workflowService = workflowService;
         _notificationService = notificationService;
     }
 
@@ -42,6 +40,8 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.Id}.");
         }
 
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, checklist.RowVersion);
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, checklist.Id, cancellationToken);
         if (checklist.Status != ChecklistStatus.Draft && checklist.Status != ChecklistStatus.Rejected)
         {
             throw new InvalidOperationException($"Chỉ có thể trình duyệt Kế hoạch Checklist đang ở trạng thái 'Draft' hoặc 'Rejected'. Trạng thái hiện tại: '{checklist.Status}'.");
@@ -58,14 +58,7 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
 
         var submitter = !string.IsNullOrWhiteSpace(request.SubmitterName) ? request.SubmitterName : "Submitter";
 
-        // Kích hoạt Elsa Workflow #1
-        var workflowInstanceId = await _workflowService.StartChecklistWorkflowAsync(
-            checklist.Id,
-            checklist.Name,
-            submitter,
-            cancellationToken);
-
-        checklist.WorkflowInstanceId = workflowInstanceId;
+        ChecklistWorkflowQueue.EnqueueStart(_context, checklist, submitter);
 
         // Ghi Audit Log (FR-10) trực tiếp qua DbSet để bảo đảm EntityState.Added
         var auditHistory = new ChecklistAuditHistory
@@ -78,7 +71,7 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
             ActorId = request.SubmitterId,
             ActorName = submitter,
             ActorRole = "Submitter",
-            Comment = $"Kỹ sư trình duyệt Kế hoạch Checklist sang Giám sát thẩm duyệt (Elsa Instance: {workflowInstanceId}).",
+            Comment = "Kỹ sư trình duyệt kế hoạch checklist; quy trình đang được đồng bộ.",
             CreatedAt = DateTime.UtcNow
         };
         _context.ChecklistAuditHistories.Add(auditHistory);
@@ -89,7 +82,7 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
         await _notificationService.SendNotificationToRoleAsync("Reviewer", new NotificationMessage
         {
             Title = "Kế hoạch Checklist mới chờ thẩm định",
-            Content = $"Kỹ sư {submitter} đã trình duyệt kế hoạch Checklist '{checklist.Name}'. Vui lòng thẩm định cấu trúc và biểu mẫu.",
+            Content = $"Đã ghi nhận kế hoạch Checklist '{checklist.Name}' của {submitter}; quy trình đang được đồng bộ.",
             Type = "info",
             ReferenceId = checklist.Id.ToString(),
             ReferenceType = "Checklist",
@@ -117,6 +110,7 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
         return new ChecklistDto
         {
             Id = checklist.Id,
+            RowVersion = checklist.RowVersion,
             ObjectId = checklist.ObjectId,
             ObjectName = checklist.Object?.Name ?? string.Empty,
             DrawingFileId = checklist.Object?.DrawingFileId ?? Guid.Empty,
@@ -125,6 +119,7 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
             Name = checklist.Name,
             Description = checklist.Description,
             Status = checklist.Status.ToString(),
+            WorkflowSyncStatus = "Pending",
             WorkflowInstanceId = checklist.WorkflowInstanceId,
             CreatedById = checklist.CreatedById,
             CreatedBy = checklist.CreatedBy,
@@ -135,6 +130,7 @@ public class SubmitChecklistForApprovalCommandHandler : IRequestHandler<SubmitCh
             Items = checklist.Items.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
             {
                 Id = i.Id,
+                RowVersion = i.RowVersion,
                 ChecklistId = i.ChecklistId,
                 Name = i.Name,
                 OrderIndex = i.OrderIndex,

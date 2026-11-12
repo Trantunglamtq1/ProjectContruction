@@ -41,10 +41,14 @@ public class Checklist
     // Optimistic Concurrency Control (NFR-2)
     public byte[]? RowVersion { get; set; }
 
+    // Changed whenever a child item changes, so the parent rowversion protects its structure.
+    public long ItemsRevision { get; set; }
+
     // Navigation Properties
     public ConstructionObject? Object { get; set; }
     public User? Creator { get; set; }
     public User? Reviewer { get; set; }
     public ICollection<ChecklistItem> Items { get; set; } = new List<ChecklistItem>();
     public ICollection<ChecklistAuditHistory> AuditHistories { get; set; } = new List<ChecklistAuditHistory>();
+    public ICollection<ChecklistWorkflowOperation> WorkflowOperations { get; set; } = new List<ChecklistWorkflowOperation>();
 }

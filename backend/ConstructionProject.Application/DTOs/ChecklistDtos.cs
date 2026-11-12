@@ -2,6 +2,8 @@ namespace ConstructionProject.Application.DTOs;
 
 public class ChecklistDto
 {
+    public byte[]? RowVersion { get; set; }
+    public string WorkflowSyncStatus { get; set; } = "Synchronized";
     public Guid Id { get; set; }
     public Guid ObjectId { get; set; }
     public string ObjectName { get; set; } = string.Empty;
@@ -26,7 +28,7 @@ public class ChecklistDto
     public DateTime? ReviewedAt { get; set; }
 
     // Chỉ mở khóa tạo phiếu nghiệm thu hiện trường khi kế hoạch đã được Giám sát Approved
-    public bool CanFillInspection => Status == "Approved" || Status == "InProgress";
+    public bool CanFillInspection => WorkflowSyncStatus == "Synchronized" && (Status == "Approved" || Status == "InProgress");
 
     public int ItemsCount { get; set; }
     public int RequiredItemsCount { get; set; }
@@ -40,6 +42,8 @@ public class ChecklistDto
 
 public class ChecklistItemDto
 {
+    public byte[]? ChecklistRowVersion { get; set; }
+    public byte[]? RowVersion { get; set; }
     public Guid Id { get; set; }
     public Guid ChecklistId { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -49,6 +53,8 @@ public class ChecklistItemDto
 
     public Guid? LinkedInspectionId { get; set; }
     public string? LinkedInspectionStatus { get; set; }
+    public byte[]? LinkedInspectionRowVersion { get; set; }
+    public string? LinkedInspectionWorkflowSyncStatus { get; set; }
     public string Status { get; set; } = "Pending"; // Pending / Done
 }
 
@@ -108,7 +114,8 @@ public record AddChecklistItemRequest(
     string Name,
     int OrderIndex = 0,
     bool IsRequired = true,
-    string? FormSchemaJson = "{}"
+    string? FormSchemaJson = "{}",
+    byte[]? ChecklistRowVersion = null
 );
 
 public record UpdateChecklistItemRequest(
@@ -116,14 +123,17 @@ public record UpdateChecklistItemRequest(
     int OrderIndex = 0,
     bool IsRequired = true,
     string? FormSchemaJson = "{}",
-    string? Status = null
+    string? Status = null,
+    byte[]? ChecklistRowVersion = null,
+    byte[]? RowVersion = null
 );
 
 public record SupervisorModifyChecklistRequest(
     string? Name,
     string? Description,
     List<SupervisorModifyItemDto>? Items,
-    string? Comment
+    string? Comment,
+    byte[]? RowVersion = null
 );
 
 public record SupervisorModifyItemDto(
@@ -132,15 +142,23 @@ public record SupervisorModifyItemDto(
     int OrderIndex = 0,
     bool IsRequired = true,
     string? FormSchemaJson = "{}",
-    bool IsDeleted = false
+    bool IsDeleted = false,
+    byte[]? RowVersion = null
 );
 
 public record SupervisorDecisionRequest(
     string? Comment = null,
     string? RejectReason = null,
-    string? Reason = null
+    string? Reason = null,
+    byte[]? RowVersion = null
 );
 
 public record LinkInspectionToChecklistItemRequest(
-    Guid InspectionId
+    Guid InspectionId,
+    byte[]? ChecklistRowVersion = null,
+    byte[]? RowVersion = null
 );
+
+public record ChecklistVersionRequest(byte[]? RowVersion, byte[]? ChecklistRowVersion = null);
+
+public record DeleteChecklistItemResult(Guid Id, Guid ChecklistId, byte[]? ChecklistRowVersion);

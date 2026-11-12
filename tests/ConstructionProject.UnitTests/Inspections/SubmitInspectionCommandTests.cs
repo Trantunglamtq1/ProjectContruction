@@ -11,30 +11,36 @@ namespace ConstructionProject.UnitTests.Inspections;
 
 public class SubmitInspectionCommandTests
 {
-    private readonly Mock<IInspectionWorkflowService> _workflow = new();
     private readonly Mock<INotificationService> _notifications = new();
 
-    public SubmitInspectionCommandTests()
+    [Fact]
+    public async Task Submit_RecordsWorkflowIntentWithBusinessChange_WithoutStartingElsaInRequest()
     {
-        _workflow
-            .Setup(w => w.StartApprovalWorkflowAsync(It.IsAny<Guid>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("wf-test-001");
+        using var db = new TestDb();
+        var seed = InspectionSeed.Create(db.Context);
+        var handler = new SubmitInspectionCommandHandler(db.Context, _notifications.Object);
+        var result = await handler.Handle(new SubmitInspectionCommand(seed.Inspection.Id, "{\"value\":1}", seed.Inspection.SubmittedById, "Submitter", seed.Inspection.RowVersion), CancellationToken.None);
+        result.Status.Should().Be(InspectionStatus.Submitted.ToString());
+        result.WorkflowInstanceId.Should().BeNull();
+        var operation = await db.Context.InspectionWorkflowOperations.SingleAsync(x => x.InspectionId == seed.Inspection.Id);
+        operation.Action.Should().Be("Start");
+        operation.CompletedAt.Should().BeNull();
     }
-
     [Fact]
     public async Task Handle_WhenDraft_TransitionsToSubmitted_AndCreatesAuditAndNotifiesReviewer()
     {
         using var db = new TestDb();
         var seed = InspectionSeed.Create(db.Context);
 
-        var handler = new SubmitInspectionCommandHandler(db.Context, _workflow.Object, _notifications.Object);
+        var handler = new SubmitInspectionCommandHandler(db.Context, _notifications.Object);
         var result = await handler.Handle(
-            new SubmitInspectionCommand(seed.Inspection.Id, "{\"ketQua\":\"Dat\"}", seed.Inspection.SubmittedById, "Kỹ sư A"),
+            new SubmitInspectionCommand(seed.Inspection.Id, "{\"ketQua\":\"Dat\"}", seed.Inspection.SubmittedById, "Kỹ sư A", seed.Inspection.RowVersion),
             CancellationToken.None);
 
         result.Status.Should().Be(InspectionStatus.Submitted.ToString());
         result.SubmittedAt.Should().NotBeNull();
-        result.WorkflowInstanceId.Should().Be("wf-test-001");
+        result.WorkflowInstanceId.Should().BeNull();
+        result.WorkflowSyncStatus.Should().Be("Pending");
 
         var stored = await db.Context.FormInspections.SingleAsync(i => i.Id == seed.Inspection.Id);
         stored.Status.Should().Be(InspectionStatus.Submitted);
@@ -45,14 +51,36 @@ public class SubmitInspectionCommandTests
         history.FromStatus.Should().Be(InspectionStatus.Draft);
         history.ToStatus.Should().Be(InspectionStatus.Submitted);
 
-        _workflow.Verify(
-            w => w.StartApprovalWorkflowAsync(seed.Inspection.Id, It.IsAny<string?>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        (await db.Context.InspectionWorkflowOperations.SingleAsync(x => x.InspectionId == seed.Inspection.Id)).Action.Should().Be("Start");
         _notifications.Verify(
             n => n.SendNotificationToRoleAsync("Reviewer", It.IsAny<NotificationMessage>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
+    [Fact]
+    public async Task Handle_WhenPreviousOperationPending_DoesNotPersistSubmission()
+    {
+        using var db = new TestDb();
+        var seed = InspectionSeed.Create(db.Context);
+        db.Context.InspectionWorkflowOperations.Add(new InspectionWorkflowOperation { InspectionId = seed.Inspection.Id, InstanceId = "pending", Action = "Start" });
+        await db.Context.SaveChangesAsync();
+        var handler = new SubmitInspectionCommandHandler(db.Context, _notifications.Object);
+        var action = () => handler.Handle(new SubmitInspectionCommand(seed.Inspection.Id, "{\"value\":1}", seed.Inspection.SubmittedById, "Submitter", seed.Inspection.RowVersion), CancellationToken.None);
+        await action.Should().ThrowAsync<InvalidOperationException>();
+        var saved = await db.Context.FormInspections.AsNoTracking().SingleAsync(x => x.Id == seed.Inspection.Id);
+        saved.Status.Should().Be(InspectionStatus.Draft);
+        (await db.Context.InspectionAuditHistories.CountAsync()).Should().Be(0);
+    }
+    [Fact]
+    public async Task Handle_WhenAnotherSubmitterAttemptsSubmission_IsForbidden()
+    {
+        using var db = new TestDb();
+        var seed = InspectionSeed.Create(db.Context);
+        var handler = new SubmitInspectionCommandHandler(db.Context, _notifications.Object);
+        var action = () => handler.Handle(new SubmitInspectionCommand(seed.Inspection.Id, "{\"value\":1}", Guid.NewGuid(), "Other", seed.Inspection.RowVersion), CancellationToken.None);
+        await action.Should().ThrowAsync<ConstructionProject.Application.Common.Exceptions.ForbiddenAccessException>();
+        (await db.Context.InspectionWorkflowOperations.CountAsync()).Should().Be(0);
+    }
     [Fact]
     public async Task Handle_WhenRejected_Resubmits_AndClearsRejectReason()
     {
@@ -61,9 +89,9 @@ public class SubmitInspectionCommandTests
         seed.Inspection.RejectReason = "Thiếu ảnh hiện trường";
         await db.Context.SaveChangesAsync();
 
-        var handler = new SubmitInspectionCommandHandler(db.Context, _workflow.Object, _notifications.Object);
+        var handler = new SubmitInspectionCommandHandler(db.Context, _notifications.Object);
         var result = await handler.Handle(
-            new SubmitInspectionCommand(seed.Inspection.Id, "{\"ketQua\":\"Dat\"}", null, "Kỹ sư A"),
+            new SubmitInspectionCommand(seed.Inspection.Id, "{\"ketQua\":\"Dat\"}", seed.Inspection.SubmittedById, "Kỹ sư A", seed.Inspection.RowVersion),
             CancellationToken.None);
 
         result.Status.Should().Be(InspectionStatus.Submitted.ToString());
@@ -80,10 +108,10 @@ public class SubmitInspectionCommandTests
         using var db = new TestDb();
         var seed = InspectionSeed.Create(db.Context, InspectionStatus.Submitted);
 
-        var handler = new SubmitInspectionCommandHandler(db.Context, _workflow.Object, _notifications.Object);
+        var handler = new SubmitInspectionCommandHandler(db.Context, _notifications.Object);
 
         var act = () => handler.Handle(
-            new SubmitInspectionCommand(seed.Inspection.Id, "{\"ketQua\":\"Dat\"}", null, null),
+            new SubmitInspectionCommand(seed.Inspection.Id, "{\"ketQua\":\"Dat\"}", null, null, seed.Inspection.RowVersion),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
@@ -96,10 +124,10 @@ public class SubmitInspectionCommandTests
         using var db = new TestDb();
         var seed = InspectionSeed.Create(db.Context);
 
-        var handler = new SubmitInspectionCommandHandler(db.Context, _workflow.Object, _notifications.Object);
+        var handler = new SubmitInspectionCommandHandler(db.Context, _notifications.Object);
 
         var act = () => handler.Handle(
-            new SubmitInspectionCommand(seed.Inspection.Id, "{}", null, null),
+            new SubmitInspectionCommand(seed.Inspection.Id, "{}", seed.Inspection.SubmittedById, null, seed.Inspection.RowVersion),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
@@ -107,16 +135,14 @@ public class SubmitInspectionCommandTests
 
         var stored = await db.Context.FormInspections.SingleAsync(i => i.Id == seed.Inspection.Id);
         stored.Status.Should().Be(InspectionStatus.Draft);
-        _workflow.Verify(
-            w => w.StartApprovalWorkflowAsync(It.IsAny<Guid>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        (await db.Context.InspectionWorkflowOperations.CountAsync()).Should().Be(0);
     }
 
     [Fact]
     public async Task Handle_WhenInspectionDoesNotExist_ThrowsKeyNotFound()
     {
         using var db = new TestDb();
-        var handler = new SubmitInspectionCommandHandler(db.Context, _workflow.Object, _notifications.Object);
+        var handler = new SubmitInspectionCommandHandler(db.Context, _notifications.Object);
 
         var act = () => handler.Handle(
             new SubmitInspectionCommand(Guid.NewGuid(), "{\"ketQua\":\"Dat\"}", null, null),

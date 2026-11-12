@@ -11,6 +11,8 @@ public class FormInspectionConfiguration : IEntityTypeConfiguration<FormInspecti
         builder.ToTable("FormInspections");
         builder.HasKey(f => f.Id);
 
+        builder.Property(f => f.RowVersion).IsRowVersion();
+
         builder.Property(f => f.FormSchemaId)
             .IsRequired()
             .HasMaxLength(100);

@@ -34,7 +34,7 @@ jobs:
       - name: Unit tests
         run: >
           dotnet test tests/ConstructionProject.UnitTests/ConstructionProject.UnitTests.csproj
-          --configuration Release --no-restore --no-build
+          --configuration Release --no-restore
           --collect:"XPlat Code Coverage"
           --results-directory TestResults/Unit
 

@@ -31,6 +31,7 @@ import {
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { checklistApi } from '../../services/checklistApi';
+import { ChecklistSyncTag } from '../../components/checklists/ChecklistSyncTag';
 import type { ChecklistDto, ChecklistStatus } from '../../types/checklist';
 import { ChecklistDetailModal } from '../../components/checklists/ChecklistDetailModal';
 
@@ -57,7 +58,7 @@ export const SubmitterChecklistPage: React.FC = () => {
 
   // Mutation: Xóa bản nháp Checklist
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => checklistApi.deleteChecklist(id),
+    mutationFn: (checklist: ChecklistDto) => checklistApi.deleteChecklist(checklist.id, checklist.rowVersion),
     onSuccess: () => {
       message.success('Đã xóa bản nháp Checklist thành công!');
       refetch();
@@ -157,6 +158,7 @@ export const SubmitterChecklistPage: React.FC = () => {
       render: (status: ChecklistStatus, record: ChecklistDto) => (
         <Space direction="vertical" size={2}>
           {getStatusTag(status)}
+          <ChecklistSyncTag status={record.workflowSyncStatus} />
           {record.canFillInspection && (
             <Text type="secondary" style={{ fontSize: 10, color: '#52c41a' }}>
               ✓ Đã mở khóa điền phiếu
@@ -222,14 +224,14 @@ export const SubmitterChecklistPage: React.FC = () => {
               ? 'Thiết kế Form'
               : 'Chi tiết'}
           </Button>
-          {(record.status === 'Draft' || record.status === 'Rejected') && (
+          {record.workflowSyncStatus === 'Synchronized' && (record.status === 'Draft' || record.status === 'Rejected') && (
             <Popconfirm
               title="Xóa kế hoạch Checklist?"
               description={`Bạn có chắc muốn xóa bản nháp "${record.name}" không?`}
               okText="Xóa"
               cancelText="Hủy"
               okButtonProps={{ danger: true, loading: deleteMutation.isPending }}
-              onConfirm={() => deleteMutation.mutate(record.id)}
+              onConfirm={() => deleteMutation.mutate(record)}
             >
               <Button danger size="small" icon={<DeleteOutlined />} />
             </Popconfirm>
@@ -356,6 +358,7 @@ export const SubmitterChecklistPage: React.FC = () => {
 
         <Table
           dataSource={filteredChecklists}
+          scroll={{ x: 1150 }}
           columns={columns}
           rowKey="id"
           loading={isLoading}

@@ -1,4 +1,5 @@
 using ConstructionProject.Application.Common.Interfaces;
+using ConstructionProject.Application.DTOs;
 using ConstructionProject.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +10,13 @@ public record DeleteChecklistItemCommand(
     Guid Id,
     Guid? ActorId,
     string? ActorName,
-    string? ActorRole
-) : IRequest<bool>;
+    string? ActorRole,
+    Guid ChecklistId = default,
+    byte[]? ChecklistRowVersion = null,
+    byte[]? RowVersion = null
+) : IRequest<DeleteChecklistItemResult>;
 
-public class DeleteChecklistItemCommandHandler : IRequestHandler<DeleteChecklistItemCommand, bool>
+public class DeleteChecklistItemCommandHandler : IRequestHandler<DeleteChecklistItemCommand, DeleteChecklistItemResult>
 {
     private readonly IApplicationDbContext _context;
 
@@ -21,7 +25,7 @@ public class DeleteChecklistItemCommandHandler : IRequestHandler<DeleteChecklist
         _context = context;
     }
 
-    public async Task<bool> Handle(DeleteChecklistItemCommand request, CancellationToken cancellationToken)
+    public async Task<DeleteChecklistItemResult> Handle(DeleteChecklistItemCommand request, CancellationToken cancellationToken)
     {
         var item = await _context.ChecklistItems
             .Include(i => i.Checklist)
@@ -33,6 +37,11 @@ public class DeleteChecklistItemCommandHandler : IRequestHandler<DeleteChecklist
             throw new KeyNotFoundException($"Không tìm thấy ChecklistItem với Id = {request.Id}.");
         }
 
+        if (item.Checklist == null || item.Checklist.Id != request.ChecklistId)
+            throw new KeyNotFoundException("Không tìm thấy tiêu chí trong checklist.");
+        ChecklistVersionGuard.EnsureCurrent(request.ChecklistRowVersion, item.Checklist.RowVersion);
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, item.RowVersion);
+
         // Ràng buộc Khóa (NFR-1 Locking): Không được xóa nếu đã có phiếu nghiệm thu phát sinh
         if (item.LinkedInspectionId.HasValue)
         {
@@ -40,6 +49,7 @@ public class DeleteChecklistItemCommandHandler : IRequestHandler<DeleteChecklist
         }
 
         var checklist = item.Checklist;
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, item.ChecklistId, cancellationToken);
         if (checklist != null)
         {
             if (checklist.Status == ChecklistStatus.Approved || checklist.Status == ChecklistStatus.InProgress || checklist.Status == ChecklistStatus.Completed)
@@ -69,6 +79,6 @@ public class DeleteChecklistItemCommandHandler : IRequestHandler<DeleteChecklist
         }
 
         await _context.SaveChangesAsync(cancellationToken);
-        return true;
+        return new DeleteChecklistItemResult(item.Id, item.ChecklistId, checklist!.RowVersion);
     }
 }

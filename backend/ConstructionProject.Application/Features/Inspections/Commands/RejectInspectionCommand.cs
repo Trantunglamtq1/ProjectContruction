@@ -1,4 +1,6 @@
 using ConstructionProject.Application.Common.Interfaces;
+using ConstructionProject.Application.Common.Exceptions;
+using ConstructionProject.Domain.Constants;
 using ConstructionProject.Application.DTOs;
 using ConstructionProject.Domain.Entities;
 using ConstructionProject.Domain.Enums;
@@ -13,7 +15,8 @@ public record RejectInspectionCommand(
     string Reason,
     Guid? ActorId = null,
     string? ActorName = null,
-    string? ActorRole = null
+    string? ActorRole = null,
+    byte[]? RowVersion = null
 ) : IRequest<InspectionDto>;
 
 public class RejectInspectionCommandValidator : AbstractValidator<RejectInspectionCommand>
@@ -32,16 +35,13 @@ public class RejectInspectionCommandValidator : AbstractValidator<RejectInspecti
 public class RejectInspectionCommandHandler : IRequestHandler<RejectInspectionCommand, InspectionDto>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IInspectionWorkflowService _workflowService;
     private readonly INotificationService _notificationService;
 
     public RejectInspectionCommandHandler(
         IApplicationDbContext context, 
-        IInspectionWorkflowService workflowService,
         INotificationService notificationService)
     {
         _context = context;
-        _workflowService = workflowService;
         _notificationService = notificationService;
     }
 
@@ -58,6 +58,9 @@ public class RejectInspectionCommandHandler : IRequestHandler<RejectInspectionCo
             throw new KeyNotFoundException($"Không tìm thấy Form Inspection với Id = {request.Id}.");
         }
 
+        InspectionVersionGuard.EnsureCurrent(request.RowVersion, inspection.RowVersion);
+        await InspectionWorkflowQueue.EnsureReadyAsync(_context, inspection.Id, cancellationToken);
+
         // Quy tắc State Transition: Chỉ từ chối khi hồ sơ đang trong luồng xét duyệt ('Submitted', 'UnderReview', 'Reviewed')
         if (inspection.Status != InspectionStatus.UnderReview && 
             inspection.Status != InspectionStatus.Reviewed &&
@@ -66,33 +69,19 @@ public class RejectInspectionCommandHandler : IRequestHandler<RejectInspectionCo
             throw new InvalidOperationException($"Không thể từ chối hồ sơ đang ở trạng thái '{inspection.Status}'. Chỉ có thể từ chối khi đang trong luồng thẩm tra/phê duyệt.");
         }
 
+        var requiredRole = inspection.Status == InspectionStatus.Reviewed ? RoleConstants.Approver : RoleConstants.Reviewer;
+        if (!string.Equals(request.ActorRole, requiredRole, StringComparison.OrdinalIgnoreCase))
+            throw new ForbiddenAccessException("Bạn không có quyền từ chối hồ sơ ở cấp duyệt này.");
+
         var oldStatus = inspection.Status;
         inspection.Status = InspectionStatus.Rejected;
         inspection.RejectReason = request.Reason.Trim();
         inspection.UpdatedAt = DateTime.UtcNow;
 
         // Bắn tín hiệu từ chối đến Elsa Workflow
-        if (!string.IsNullOrWhiteSpace(inspection.WorkflowInstanceId))
-        {
-            if (oldStatus == InspectionStatus.Reviewed)
-            {
-                await _workflowService.ResumeApproverBookmarkAsync(
-                    inspection.WorkflowInstanceId,
-                    isApproved: false,
-                    request.ActorName,
-                    inspection.RejectReason,
-                    cancellationToken);
-            }
-            else
-            {
-                await _workflowService.ResumeReviewerBookmarkAsync(
-                    inspection.WorkflowInstanceId,
-                    isApproved: false,
-                    request.ActorName,
-                    inspection.RejectReason,
-                    cancellationToken);
-            }
-        }
+        InspectionWorkflowQueue.EnqueueDecision(_context, inspection,
+            oldStatus == InspectionStatus.Reviewed ? "RejectApprover" : "RejectReviewer",
+            request.ActorName, inspection.RejectReason);
 
         // Lưu vết lịch sử Audit
         var history = new InspectionAuditHistory
@@ -118,7 +107,7 @@ public class RejectInspectionCommandHandler : IRequestHandler<RejectInspectionCo
             await _notificationService.SendNotificationToUserAsync(inspection.SubmittedById.Value.ToString(), new NotificationMessage
             {
                 Title = "Hồ sơ bị từ chối / Yêu cầu sửa đổi",
-                Content = $"Hồ sơ cấu kiện '{inspection.Object?.Name ?? "cấu kiện"}' bị từ chối bởi {request.ActorRole ?? "cấp phê duyệt"}. Lý do: \"{request.Reason}\"",
+                Content = $"Đã ghi nhận yêu cầu sửa hồ sơ cấu kiện '{inspection.Object?.Name ?? "cấu kiện"}'. Lý do: \"{request.Reason}\". Quy trình đang được đồng bộ.",
                 Type = "error",
                 ReferenceId = inspection.Id.ToString(),
                 ReferenceType = "Inspection",
@@ -132,7 +121,7 @@ public class RejectInspectionCommandHandler : IRequestHandler<RejectInspectionCo
             await _notificationService.SendNotificationToRoleAsync("Reviewer", new NotificationMessage
             {
                 Title = "Chủ đầu tư đã từ chối hồ sơ",
-                Content = $"CĐT {request.ActorName ?? "Approver"} đã từ chối hồ sơ '{inspection.Object?.Name ?? inspection.Id.ToString()}'. Lý do: \"{request.Reason}\"",
+                Content = $"Đã ghi nhận yêu cầu sửa hồ sơ '{inspection.Object?.Name ?? inspection.Id.ToString()}'. Lý do: \"{request.Reason}\". Quy trình đang được đồng bộ.",
                 Type = "warning",
                 ReferenceId = inspection.Id.ToString(),
                 ReferenceType = "Inspection",
@@ -152,6 +141,8 @@ public class RejectInspectionCommandHandler : IRequestHandler<RejectInspectionCo
             FormDataJson = inspection.FormDataJson,
             Status = inspection.Status.ToString(),
             WorkflowInstanceId = inspection.WorkflowInstanceId,
+            RowVersion = inspection.RowVersion,
+            WorkflowSyncStatus = "Pending",
             SubmittedById = inspection.SubmittedById,
             SubmittedBy = inspection.SubmittedBy,
             SubmittedAt = inspection.SubmittedAt,

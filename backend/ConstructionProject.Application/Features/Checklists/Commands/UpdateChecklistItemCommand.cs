@@ -15,7 +15,10 @@ public record UpdateChecklistItemCommand(
     string? FormSchemaJson,
     Guid? ActorId,
     string? ActorName,
-    string? ActorRole
+    string? ActorRole,
+    Guid ChecklistId = default,
+    byte[]? ChecklistRowVersion = null,
+    byte[]? RowVersion = null
 ) : IRequest<ChecklistItemDto>;
 
 public class UpdateChecklistItemCommandValidator : AbstractValidator<UpdateChecklistItemCommand>
@@ -49,6 +52,11 @@ public class UpdateChecklistItemCommandHandler : IRequestHandler<UpdateChecklist
         }
 
         var checklist = item.Checklist;
+        if (checklist == null || checklist.Id != request.ChecklistId)
+            throw new KeyNotFoundException("Không tìm thấy tiêu chí trong checklist.");
+        ChecklistVersionGuard.EnsureCurrent(request.ChecklistRowVersion, checklist.RowVersion);
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, item.RowVersion);
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, item.ChecklistId, cancellationToken);
         if (checklist != null)
         {
             // Kiểm tra State Locking (NFR-1)
@@ -87,7 +95,9 @@ public class UpdateChecklistItemCommandHandler : IRequestHandler<UpdateChecklist
 
         return new ChecklistItemDto
         {
+            ChecklistRowVersion = checklist!.RowVersion,
             Id = item.Id,
+            RowVersion = item.RowVersion,
             ChecklistId = item.ChecklistId,
             Name = item.Name,
             OrderIndex = item.OrderIndex,

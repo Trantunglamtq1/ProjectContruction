@@ -13,7 +13,9 @@ public record LinkInspectionToChecklistItemCommand(
     Guid InspectionId,
     Guid? ActorId,
     string? ActorName,
-    string? ActorRole
+    string? ActorRole,
+    byte[]? ChecklistRowVersion = null,
+    byte[]? RowVersion = null
 ) : IRequest<ChecklistItemDto>;
 
 public class LinkInspectionToChecklistItemCommandHandler : IRequestHandler<LinkInspectionToChecklistItemCommand, ChecklistItemDto>
@@ -37,6 +39,9 @@ public class LinkInspectionToChecklistItemCommandHandler : IRequestHandler<LinkI
             throw new KeyNotFoundException($"Không tìm thấy Checklist với Id = {request.ChecklistId}.");
         }
 
+        ChecklistVersionGuard.EnsureCurrent(request.ChecklistRowVersion, checklist.RowVersion);
+
+        await ChecklistWorkflowQueue.EnsureReadyAsync(_context, checklist.Id, cancellationToken);
         // RÀNG BUỘC KHÓA NGHIỆP VỤ (NFR-1):
         // Khi Checklist chưa được Giám sát duyệt -> Khóa hoàn toàn chức năng lập/gán phiếu nghiệm thu
         if (checklist.Status != ChecklistStatus.Approved && checklist.Status != ChecklistStatus.InProgress)
@@ -49,6 +54,8 @@ public class LinkInspectionToChecklistItemCommandHandler : IRequestHandler<LinkI
         {
             throw new KeyNotFoundException($"Không tìm thấy ChecklistItem với Id = {request.ItemId} trong Checklist.");
         }
+
+        ChecklistVersionGuard.EnsureCurrent(request.RowVersion, item.RowVersion);
 
         var inspection = await _context.FormInspections
             .FirstOrDefaultAsync(f => f.Id == request.InspectionId, cancellationToken);
@@ -101,7 +108,9 @@ public class LinkInspectionToChecklistItemCommandHandler : IRequestHandler<LinkI
 
         return new ChecklistItemDto
         {
+            ChecklistRowVersion = checklist.RowVersion,
             Id = item.Id,
+            RowVersion = item.RowVersion,
             ChecklistId = item.ChecklistId,
             Name = item.Name,
             OrderIndex = item.OrderIndex,
@@ -109,6 +118,7 @@ public class LinkInspectionToChecklistItemCommandHandler : IRequestHandler<LinkI
             FormSchemaJson = item.FormSchemaJson,
             LinkedInspectionId = item.LinkedInspectionId,
             LinkedInspectionStatus = inspection.Status.ToString(),
+            LinkedInspectionRowVersion = inspection.RowVersion,
             Status = item.Status.ToString()
         };
     }

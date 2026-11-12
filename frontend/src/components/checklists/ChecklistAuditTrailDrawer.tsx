@@ -10,7 +10,10 @@ import {
   FileDoneOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import type { ChecklistAuditHistoryDto } from '../../types/checklist';
+
+dayjs.extend(utc);
 
 const { Text, Paragraph } = Typography;
 
@@ -82,7 +85,7 @@ export const ChecklistAuditTrailDrawer: React.FC<ChecklistAuditTrailDrawerProps>
 
   // Sắp xếp lịch sử theo thời gian giảm dần (mới nhất trên cùng)
   const sortedHistories = [...(auditHistories || [])].sort((a, b) =>
-    dayjs(b.timestamp).diff(dayjs(a.timestamp))
+    dayjs.utc(b.createdAt).diff(dayjs.utc(a.createdAt))
   );
 
   return (
@@ -129,7 +132,7 @@ export const ChecklistAuditTrailDrawer: React.FC<ChecklistAuditTrailDrawerProps>
                     {item.action}
                   </Tag>
                   <Text type="secondary" style={{ fontSize: 11 }}>
-                    {dayjs(item.timestamp).format('DD/MM/YYYY HH:mm:ss')}
+                    {dayjs.utc(item.createdAt).local().format('DD/MM/YYYY HH:mm:ss')}
                   </Text>
                 </div>
 

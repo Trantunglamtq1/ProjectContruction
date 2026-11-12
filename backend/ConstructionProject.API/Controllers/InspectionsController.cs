@@ -19,16 +19,21 @@ public record CreateInspectionRequest(
 );
 
 public record UpdateInspectionDraftRequest(
-    string FormDataJson
+    string FormDataJson,
+    byte[]? RowVersion
 );
 
 public record SubmitInspectionRequest(
-    string? FormDataJson
+    string? FormDataJson,
+    byte[]? RowVersion
 );
+
+public record DeleteInspectionRequest(byte[]? RowVersion);
 
 public record WorkflowActionRequest(
     string? Comment = null,
-    string? Notes = null
+    string? Notes = null,
+    byte[]? RowVersion = null
 )
 {
     public string? GetEffectiveComment() =>
@@ -38,7 +43,8 @@ public record WorkflowActionRequest(
 public record RejectInspectionRequest(
     string? Reason = null,
     string? Comment = null,
-    string? Notes = null
+    string? Notes = null,
+    byte[]? RowVersion = null
 )
 {
     public string GetEffectiveReason() =>
@@ -109,7 +115,8 @@ public class InspectionsController : ControllerBase
         var command = new UpdateInspectionDraftCommand(
             id,
             request.FormDataJson,
-            _currentUserService.UserId
+            _currentUserService.UserId,
+            request.RowVersion
         );
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -135,11 +142,12 @@ public class InspectionsController : ControllerBase
             id,
             request?.FormDataJson,
             _currentUserService.UserId,
-            _currentUserService.FullName ?? _currentUserService.Username
+            _currentUserService.FullName ?? _currentUserService.Username,
+            request?.RowVersion
         );
 
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return Accepted(result);
     }
 
     /// <summary>
@@ -154,9 +162,10 @@ public class InspectionsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteInspection(
         Guid id,
+        [FromBody] DeleteInspectionRequest request,
         CancellationToken cancellationToken)
     {
-        await _mediator.Send(new DeleteInspectionCommand(id, _currentUserService.UserId), cancellationToken);
+        await _mediator.Send(new DeleteInspectionCommand(id, _currentUserService.UserId, request.RowVersion), cancellationToken);
         return NoContent();
     }
 
@@ -235,14 +244,15 @@ public class InspectionsController : ControllerBase
             id,
             _currentUserService.UserId,
             _currentUserService.FullName ?? _currentUserService.Username,
-            request?.Comment
+            request?.Comment,
+            request?.RowVersion
         );
         var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
     }
 
     /// <summary>
-    /// Reviewer thẩm tra đạt kỹ thuật - Phê duyệt Cấp 1 (Submitted/UnderReview -> Reviewed)
+    /// Reviewer thẩm tra đạt kỹ thuật - Phê duyệt Cấp 1 (UnderReview -> Reviewed)
     /// </summary>
     [HttpPost("{id:guid}/review")]
     [HttpPost("{id:guid}/review-pass")]
@@ -261,10 +271,11 @@ public class InspectionsController : ControllerBase
             id,
             _currentUserService.UserId,
             _currentUserService.FullName ?? _currentUserService.Username,
-            request?.GetEffectiveComment()
+            request?.GetEffectiveComment(),
+            request?.RowVersion
         );
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return Accepted(result);
     }
 
     /// <summary>
@@ -287,10 +298,11 @@ public class InspectionsController : ControllerBase
             id,
             _currentUserService.UserId,
             _currentUserService.FullName ?? _currentUserService.Username,
-            request?.GetEffectiveComment()
+            request?.GetEffectiveComment(),
+            request?.RowVersion
         );
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return Accepted(result);
     }
 
     /// <summary>
@@ -314,10 +326,11 @@ public class InspectionsController : ControllerBase
             reason,
             _currentUserService.UserId,
             _currentUserService.FullName ?? _currentUserService.Username,
-            _currentUserService.Role
+            _currentUserService.Role,
+            request?.RowVersion
         );
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return Accepted(result);
     }
 
     /// <summary>

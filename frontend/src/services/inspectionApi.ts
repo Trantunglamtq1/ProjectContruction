@@ -69,7 +69,7 @@ export const inspectionApi = {
   // Cập nhật dữ liệu bản nháp (Draft)
   updateInspectionDraft: async (
     id: string,
-    data: { formDataJson: string }
+    data: { formDataJson: string; rowVersion: string }
   ): Promise<InspectionDto> => {
     const response = await apiClient.put<InspectionDto>(`/inspections/${id}`, data);
     return response.data;
@@ -78,22 +78,26 @@ export const inspectionApi = {
   // Nộp đơn kiểm tra (Submit: Draft -> Submitted)
   submitInspection: async (
     id: string,
-    data?: { formDataJson?: string }
+    data: { formDataJson?: string; rowVersion: string }
   ): Promise<InspectionDto> => {
-    const response = await apiClient.post<InspectionDto>(`/inspections/${id}/submit`, data || {});
+    const response = await apiClient.post<InspectionDto>(`/inspections/${id}/submit`, data);
     return response.data;
   },
 
   // Xóa đơn kiểm tra nháp (Draft)
-  deleteInspection: async (id: string): Promise<{ success: boolean }> => {
-    const response = await apiClient.delete<{ success: boolean }>(`/inspections/${id}`);
+  deleteInspection: async (id: string, rowVersion: string): Promise<void> => {
+    await apiClient.delete(`/inspections/${id}`, { data: { rowVersion } });
+  },
+
+  // Giám sát tiếp nhận hồ sơ trước khi thẩm tra.
+  receiveInspection: async (id: string, rowVersion: string): Promise<InspectionDto> => {
+    const response = await apiClient.post<InspectionDto>(`/inspections/${id}/receive`, { rowVersion });
     return response.data;
   },
 
-  // Giám sát (Reviewer) thẩm tra & phê duyệt cấp 1 (Submitted -> Reviewed)
   reviewInspection: async (
     id: string,
-    data?: { notes?: string }
+    data: { notes?: string; rowVersion: string }
   ): Promise<InspectionDto> => {
     const response = await apiClient.post<InspectionDto>(`/inspections/${id}/review`, data || {});
     return response.data;
@@ -102,7 +106,7 @@ export const inspectionApi = {
   // Chủ đầu tư (Approver) phê duyệt cuối cùng (Reviewed -> Approved)
   approveInspection: async (
     id: string,
-    data?: { notes?: string }
+    data: { notes?: string; rowVersion: string }
   ): Promise<InspectionDto> => {
     const response = await apiClient.post<InspectionDto>(`/inspections/${id}/approve`, data || {});
     return response.data;
@@ -111,7 +115,7 @@ export const inspectionApi = {
   // Từ chối phiếu nghiệm thu (Reviewer hoặc Approver) -> Rejected
   rejectInspection: async (
     id: string,
-    data: { reason: string }
+    data: { reason: string; rowVersion: string }
   ): Promise<InspectionDto> => {
     const response = await apiClient.post<InspectionDto>(`/inspections/${id}/reject`, data);
     return response.data;

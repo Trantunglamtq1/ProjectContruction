@@ -25,6 +25,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { checklistApi } from '../../services/checklistApi';
+import { ChecklistSyncTag } from './ChecklistSyncTag';
 import type { ChecklistDto, ChecklistSummaryDto } from '../../types/checklist';
 import { ChecklistDetailModal } from './ChecklistDetailModal';
 
@@ -120,7 +121,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
 
   // Mutation: Xóa bản nháp Checklist
   const deleteMutation = useMutation({
-    mutationFn: (checklistId: string) => checklistApi.deleteChecklist(checklistId),
+    mutationFn: (checklist: ChecklistDto) => checklistApi.deleteChecklist(checklist.id, checklist.rowVersion),
     onSuccess: () => {
       message.success('Đã xóa bản nháp Checklist thành công!');
       refetchSummary();
@@ -269,6 +270,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
                           {chk.name}
                         </Text>
                         {getStatusTag(chk.status)}
+                        <ChecklistSyncTag status={chk.workflowSyncStatus} />
                       </div>
                       {chk.description && (
                         <Paragraph
@@ -296,7 +298,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
                         status={chk.status === 'Completed' ? 'success' : 'normal'}
                       />
                       <Space size={4}>
-                        {isSubmitter && (chk.status === 'Draft' || chk.status === 'Rejected') && (
+                        {isSubmitter && chk.workflowSyncStatus === 'Synchronized' && (chk.status === 'Draft' || chk.status === 'Rejected') && (
                           <Popconfirm
                             title="Xóa kế hoạch Checklist?"
                             description={`Bạn có chắc chắn muốn xóa bản nháp "${chk.name}" không?`}
@@ -305,7 +307,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
                             okButtonProps={{ danger: true, loading: deleteMutation.isPending }}
                             onConfirm={(e) => {
                               e?.stopPropagation();
-                              deleteMutation.mutate(chk.id);
+                              deleteMutation.mutate(chk);
                             }}
                             onCancel={(e) => e?.stopPropagation()}
                           >

@@ -1,6 +1,9 @@
 using System.Net;
 using System.Text.Json;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using ConstructionProject.Application.Common.Exceptions;
+using Microsoft.Data.SqlClient;
 
 namespace ConstructionProject.API.Middlewares;
 
@@ -37,6 +40,24 @@ public class ExceptionHandlingMiddleware
 
         switch (exception)
         {
+            case DbUpdateException { InnerException: SqlException sql } when
+                (sql.Number is 2601 or 2627) && (sql.Message.Contains("IX_InspectionWorkflowOperations_InspectionId", StringComparison.Ordinal) || sql.Message.Contains("IX_ChecklistWorkflowOperations_ChecklistId", StringComparison.Ordinal)):
+                statusCode = HttpStatusCode.Conflict;
+                response = new { status = (int)statusCode, message = "Hồ sơ đang được xử lý. Vui lòng tải lại dữ liệu." };
+                break;
+            case ForbiddenAccessException forbidden:
+                statusCode = HttpStatusCode.Forbidden;
+                response = new { status = (int)statusCode, message = forbidden.Message };
+                break;
+            case DbUpdateConcurrencyException:
+                statusCode = HttpStatusCode.Conflict;
+                response = new
+                {
+                    status = (int)statusCode,
+                    message = "Dữ liệu đã thay đổi. Vui lòng tải lại và thử lại."
+                };
+                break;
+
             case ValidationException validationException:
                 statusCode = HttpStatusCode.BadRequest;
                 response = new

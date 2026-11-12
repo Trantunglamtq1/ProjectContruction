@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ConstructionProject.Application.Common.Interfaces;
+using ConstructionProject.Application.Common.Exceptions;
 using ConstructionProject.Application.DTOs;
 using ConstructionProject.Domain.Enums;
 using FluentValidation;
@@ -12,7 +13,8 @@ public record SubmitInspectionCommand(
     Guid Id,
     string? FormDataJson = null,
     Guid? SubmitterId = null,
-    string? SubmitterName = null
+    string? SubmitterName = null,
+    byte[]? RowVersion = null
 ) : IRequest<InspectionDto>;
 
 public class SubmitInspectionCommandValidator : AbstractValidator<SubmitInspectionCommand>
@@ -25,6 +27,10 @@ public class SubmitInspectionCommandValidator : AbstractValidator<SubmitInspecti
         RuleFor(x => x.FormDataJson)
             .Must(BeValidJson).When(x => !string.IsNullOrWhiteSpace(x.FormDataJson))
             .WithMessage("FormDataJson gửi lên phải là định dạng JSON hợp lệ.");
+
+        RuleFor(x => x.RowVersion)
+            .NotNull().Must(value => value is { Length: 8 })
+            .WithMessage("Phiên bản dữ liệu không hợp lệ. Vui lòng tải lại hồ sơ.");
     }
 
     private static bool BeValidJson(string? json)
@@ -45,16 +51,13 @@ public class SubmitInspectionCommandValidator : AbstractValidator<SubmitInspecti
 public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCommand, InspectionDto>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IInspectionWorkflowService _workflowService;
     private readonly INotificationService _notificationService;
 
     public SubmitInspectionCommandHandler(
         IApplicationDbContext context, 
-        IInspectionWorkflowService workflowService,
         INotificationService notificationService)
     {
         _context = context;
-        _workflowService = workflowService;
         _notificationService = notificationService;
     }
 
@@ -73,11 +76,22 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
             throw new KeyNotFoundException($"Không tìm thấy Form Inspection với Id = {request.Id}.");
         }
 
+        if (request.RowVersion is not { Length: 8 })
+            throw new InvalidOperationException("Phiên bản dữ liệu không hợp lệ. Vui lòng tải lại hồ sơ.");
+
+        if (inspection.RowVersion == null || !request.RowVersion.SequenceEqual(inspection.RowVersion))
+            throw new DbUpdateConcurrencyException();
+
+        await InspectionWorkflowQueue.EnsureReadyAsync(_context, inspection.Id, cancellationToken);
+
         // Chỉ cho phép submit khi trạng thái là Draft hoặc Rejected (resubmit sau khi bị từ chối)
         if (inspection.Status != InspectionStatus.Draft && inspection.Status != InspectionStatus.Rejected)
         {
             throw new InvalidOperationException($"Không thể nộp đơn kiểm tra đang ở trạng thái '{inspection.Status}'. Đơn chỉ có thể nộp khi là 'Draft' hoặc 'Rejected'.");
         }
+
+        if (!request.SubmitterId.HasValue || !inspection.SubmittedById.HasValue || request.SubmitterId != inspection.SubmittedById)
+            throw new ForbiddenAccessException("Chỉ người tạo hồ sơ mới được nộp hoặc nộp lại hồ sơ.");
 
         // Cập nhật FormDataJson nếu request có gửi kèm nội dung mới nhất
         if (!string.IsNullOrWhiteSpace(request.FormDataJson))
@@ -110,15 +124,7 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
         inspection.RejectReason = null;
 
         // Kích hoạt quy trình Elsa Workflow Instance
-        var workflowInstanceId = await _workflowService.StartApprovalWorkflowAsync(
-            inspection.Id,
-            inspection.SubmittedBy,
-            cancellationToken);
-
-        if (!string.IsNullOrWhiteSpace(workflowInstanceId))
-        {
-            inspection.WorkflowInstanceId = workflowInstanceId;
-        }
+        InspectionWorkflowQueue.EnqueueStart(_context, inspection, inspection.SubmittedBy);
 
         var history = new ConstructionProject.Domain.Entities.InspectionAuditHistory
         {
@@ -131,8 +137,8 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
             ActorName = inspection.SubmittedBy ?? "Submitter",
             ActorRole = "Submitter",
             Comment = isResubmit 
-                ? $"Kỹ sư hiện trường đã khắc phục lỗi và gửi lại hồ sơ (Resubmit). Elsa Workflow Instance: {inspection.WorkflowInstanceId}." 
-                : $"Kỹ sư hiện trường đã nộp hồ sơ kiểm tra để chờ thẩm tra. Elsa Workflow Instance: {inspection.WorkflowInstanceId}.",
+                ? "Kỹ sư hiện trường đã sửa và nộp lại hồ sơ; quy trình đang được đồng bộ."
+                : "Kỹ sư hiện trường đã nộp hồ sơ; quy trình đang được đồng bộ.",
             CreatedAt = DateTime.UtcNow
         };
         _context.InspectionAuditHistories.Add(history);
@@ -142,7 +148,7 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
         await _notificationService.SendNotificationToRoleAsync("Reviewer", new NotificationMessage
         {
             Title = isResubmit ? "Hồ sơ nộp lại cần thẩm tra" : "Hồ sơ nghiệm thu mới cần thẩm tra",
-            Content = $"Kỹ sư {inspection.SubmittedBy ?? "hiện trường"} đã nộp hồ sơ kiểm tra cho cấu kiện '{inspection.Object?.Name ?? "cấu kiện"}'",
+            Content = $"Kỹ sư {inspection.SubmittedBy ?? "hiện trường"} đã nộp hồ sơ kiểm tra cho cấu kiện '{inspection.Object?.Name ?? "cấu kiện"}'. Quy trình đang được đồng bộ.",
             Type = "info",
             ReferenceId = inspection.Id.ToString(),
             ReferenceType = "Inspection",
@@ -166,6 +172,8 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
             FormDataJson = inspection.FormDataJson,
             Status = inspection.Status.ToString(),
             WorkflowInstanceId = inspection.WorkflowInstanceId,
+            RowVersion = inspection.RowVersion,
+            WorkflowSyncStatus = "Pending",
             SubmittedById = inspection.SubmittedById,
             SubmittedBy = inspection.SubmittedBy,
             SubmittedAt = inspection.SubmittedAt,
@@ -182,7 +190,7 @@ public class SubmitInspectionCommandHandler : IRequestHandler<SubmitInspectionCo
         };
     }
 
-    private static void ValidateFormDataAgainstSchema(string json)
+    internal static void ValidateFormDataAgainstSchema(string json)
     {
         if (string.IsNullOrWhiteSpace(json) || json.Trim() == "{}" || json.Trim() == "[]")
         {

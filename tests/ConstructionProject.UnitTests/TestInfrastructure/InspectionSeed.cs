@@ -67,6 +67,7 @@ public sealed class InspectionSeed
             FormSchemaId = "default-inspection-schema",
             FormDataJson = formDataJson,
             Status = status,
+            RowVersion = new byte[8],
             SubmittedById = Guid.NewGuid(),
             SubmittedBy = "Kỹ sư hiện trường",
             SubmittedAt = status == InspectionStatus.Draft ? null : DateTime.UtcNow,

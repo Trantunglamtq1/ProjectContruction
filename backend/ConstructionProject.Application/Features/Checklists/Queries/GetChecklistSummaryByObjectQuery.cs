@@ -41,8 +41,10 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
         }
 
         var checklists = await _context.Checklists
+            .Include(c => c.WorkflowOperations)
             .Include(c => c.Items)
                 .ThenInclude(i => i.LinkedInspection)
+                    .ThenInclude(i => i!.WorkflowOperations)
             .Include(c => c.AuditHistories)
             .Where(c => c.ObjectId == request.ObjectId)
             .AsNoTracking()
@@ -57,6 +59,7 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
             return new ChecklistDto
             {
                 Id = c.Id,
+                RowVersion = c.RowVersion,
                 ObjectId = c.ObjectId,
                 ObjectName = obj.Name,
                 ObjectCode = obj.Name,
@@ -64,6 +67,7 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
                 Name = c.Name,
                 Description = c.Description,
                 Status = c.Status.ToString(),
+                WorkflowSyncStatus = ChecklistWorkflowSync.GetStatus(c),
                 WorkflowInstanceId = c.WorkflowInstanceId,
                 RejectReason = c.RejectReason,
                 CreatedById = c.CreatedById,
@@ -78,6 +82,7 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
                 Items = activeItems.OrderBy(i => i.OrderIndex).Select(i => new ChecklistItemDto
                 {
                     Id = i.Id,
+                    RowVersion = i.RowVersion,
                     ChecklistId = i.ChecklistId,
                     Name = i.Name,
                     OrderIndex = i.OrderIndex,
@@ -85,6 +90,8 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
                     FormSchemaJson = i.FormSchemaJson,
                     LinkedInspectionId = i.LinkedInspectionId,
                     LinkedInspectionStatus = i.LinkedInspection?.Status.ToString(),
+                    LinkedInspectionRowVersion = i.LinkedInspection?.RowVersion,
+                    LinkedInspectionWorkflowSyncStatus = i.LinkedInspection == null ? null : InspectionWorkflowSync.GetStatus(i.LinkedInspection),
                     Status = i.Status.ToString()
                 }).ToList(),
                 AuditHistories = c.AuditHistories.OrderByDescending(a => a.CreatedAt).Select(a => new ChecklistAuditHistoryDto
