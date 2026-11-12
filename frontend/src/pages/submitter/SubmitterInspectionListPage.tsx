@@ -88,9 +88,9 @@ export const SubmitterInspectionListPage: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, rowVersion: string) => {
     try {
-      await inspectionApi.deleteInspection(id);
+      await inspectionApi.deleteInspection(id, rowVersion);
       message.success('Đã xóa đơn kiểm tra nháp.');
       loadData();
     } catch (error: any) {
@@ -279,7 +279,7 @@ export const SubmitterInspectionListPage: React.FC = () => {
               <Popconfirm
                 title="Xóa hồ sơ kiểm tra?"
                 description="Bản nháp này sẽ bị xóa hoàn toàn khỏi hệ thống."
-                onConfirm={() => handleDelete(record.id)}
+                onConfirm={() => handleDelete(record.id, record.rowVersion)}
                 okText="Xóa"
                 cancelText="Hủy"
                 okButtonProps={{ danger: true }}

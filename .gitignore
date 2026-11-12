@@ -55,3 +55,7 @@ Thumbs.db
 
 ## Internal business & design docs (local only, not published)
 docs-internal/
+## Local agent guidance and internal specifications
+/.agents/
+/.specify/
+/specs/

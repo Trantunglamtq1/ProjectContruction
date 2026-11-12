@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ConstructionProject.Application.Common.Interfaces;
+using ConstructionProject.Application.Common.Exceptions;
 using ConstructionProject.Application.DTOs;
 using ConstructionProject.Domain.Enums;
 using FluentValidation;
@@ -11,7 +12,8 @@ namespace ConstructionProject.Application.Features.Inspections.Commands;
 public record UpdateInspectionDraftCommand(
     Guid Id,
     string FormDataJson,
-    Guid? CurrentUserId = null
+    Guid? CurrentUserId = null,
+    byte[]? RowVersion = null
 ) : IRequest<InspectionDto>;
 
 public class UpdateInspectionDraftCommandValidator : AbstractValidator<UpdateInspectionDraftCommand>
@@ -24,6 +26,10 @@ public class UpdateInspectionDraftCommandValidator : AbstractValidator<UpdateIns
         RuleFor(x => x.FormDataJson)
             .NotEmpty().WithMessage("FormDataJson không được để trống.")
             .Must(BeValidJson).WithMessage("FormDataJson phải là định dạng JSON hợp lệ.");
+
+        RuleFor(x => x.RowVersion)
+            .NotNull().Must(value => value is { Length: 8 })
+            .WithMessage("Phiên bản dữ liệu không hợp lệ. Vui lòng tải lại hồ sơ.");
     }
 
     private static bool BeValidJson(string json)
@@ -62,6 +68,13 @@ public class UpdateInspectionDraftCommandHandler : IRequestHandler<UpdateInspect
             throw new KeyNotFoundException($"Không tìm thấy Form Inspection với Id = {request.Id}.");
         }
 
+        if (request.RowVersion is not { Length: 8 })
+            throw new InvalidOperationException("Phiên bản dữ liệu không hợp lệ. Vui lòng tải lại hồ sơ.");
+
+        if (inspection.RowVersion == null || !request.RowVersion.SequenceEqual(inspection.RowVersion))
+            throw new DbUpdateConcurrencyException();
+        await InspectionWorkflowQueue.EnsureReadyAsync(_context, inspection.Id, cancellationToken);
+
         // Cho phép chỉnh sửa khi trạng thái là Draft hoặc Rejected (nộp lại sau khi bị từ chối)
         if (inspection.Status != InspectionStatus.Draft && inspection.Status != InspectionStatus.Rejected)
         {
@@ -69,9 +82,9 @@ public class UpdateInspectionDraftCommandHandler : IRequestHandler<UpdateInspect
         }
 
         // Kiểm tra quyền: Nếu đã lưu SubmittedById thì chỉ chính người đó mới được sửa (hoặc kiểm tra role Submitter)
-        if (request.CurrentUserId.HasValue && inspection.SubmittedById.HasValue && inspection.SubmittedById != request.CurrentUserId)
+        if (!request.CurrentUserId.HasValue || !inspection.SubmittedById.HasValue || inspection.SubmittedById != request.CurrentUserId)
         {
-            throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa bản nháp của kỹ sư khác.");
+            throw new ForbiddenAccessException("Bạn không có quyền chỉnh sửa bản nháp của kỹ sư khác.");
         }
 
         inspection.FormDataJson = request.FormDataJson.Trim();
@@ -91,6 +104,7 @@ public class UpdateInspectionDraftCommandHandler : IRequestHandler<UpdateInspect
             FormDataJson = inspection.FormDataJson,
             Status = inspection.Status.ToString(),
             WorkflowInstanceId = inspection.WorkflowInstanceId,
+            RowVersion = inspection.RowVersion,
             SubmittedById = inspection.SubmittedById,
             SubmittedBy = inspection.SubmittedBy,
             SubmittedAt = inspection.SubmittedAt,

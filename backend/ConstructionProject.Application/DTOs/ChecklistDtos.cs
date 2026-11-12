@@ -49,6 +49,8 @@ public class ChecklistItemDto
 
     public Guid? LinkedInspectionId { get; set; }
     public string? LinkedInspectionStatus { get; set; }
+    public byte[]? LinkedInspectionRowVersion { get; set; }
+    public string? LinkedInspectionWorkflowSyncStatus { get; set; }
     public string Status { get; set; } = "Pending"; // Pending / Done
 }
 

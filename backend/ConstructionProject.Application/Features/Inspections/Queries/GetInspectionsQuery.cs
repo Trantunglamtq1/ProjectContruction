@@ -38,6 +38,7 @@ public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, P
             .Include(i => i.Checklist)
             .Include(i => i.ChecklistItem)
             .Include(i => i.LinkedChecklistItems)
+            .Include(i => i.WorkflowOperations)
             .AsQueryable();
 
         // Lọc theo ChecklistId
@@ -106,6 +107,8 @@ public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, P
             FormDataJson = entity.FormDataJson,
             Status = entity.Status.ToString(),
             WorkflowInstanceId = entity.WorkflowInstanceId,
+            RowVersion = entity.RowVersion,
+            WorkflowSyncStatus = InspectionWorkflowSync.GetStatus(entity),
             SubmittedById = entity.SubmittedById,
             SubmittedBy = entity.SubmittedBy,
             SubmittedAt = entity.SubmittedAt,

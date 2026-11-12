@@ -95,6 +95,8 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
     queryKey: ['checklist', checklistId],
     queryFn: () => checklistApi.getChecklistById(checklistId!),
     enabled: open && !!checklistId,
+    refetchInterval: query => query.state.data?.items.some(item =>
+      item.linkedInspectionWorkflowSyncStatus === 'Pending' || item.linkedInspectionWorkflowSyncStatus === 'Retrying') ? 3000 : false,
   });
 
   // Mutation: Thêm tiêu chí
@@ -209,13 +211,35 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
     },
   });
 
-  // Xử lý Reviewer phê duyệt Cấp 1 phiếu nghiệm thu của tiêu chí bên trong Checklist
-  const handleReviewItemInspection = async (item: ChecklistItemDto) => {
-    if (!item.linkedInspectionId) return;
+  const handleReceiveItemInspection = async (item: ChecklistItemDto) => {
+    if (!item.linkedInspectionId || !item.linkedInspectionRowVersion) {
+      message.error('Không có phiên bản hồ sơ. Vui lòng tải lại dữ liệu.');
+      return;
+    }
     try {
       setActionLoadingId(item.id);
-      await inspectionApi.reviewInspection(item.linkedInspectionId);
-      message.success(`Đã thẩm tra đạt tiêu chuẩn kỹ thuật tiêu chí "${item.name}"!`);
+      await inspectionApi.receiveInspection(item.linkedInspectionId, item.linkedInspectionRowVersion);
+      message.success(`Đã tiếp nhận hồ sơ tiêu chí "${item.name}" để thẩm tra.`);
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ['checklists'] });
+      onRefresh?.();
+    } catch (err: any) {
+      message.error(err.response?.data?.message || 'Lỗi khi tiếp nhận hồ sơ.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Xử lý Reviewer phê duyệt Cấp 1 phiếu nghiệm thu của tiêu chí bên trong Checklist
+  const handleReviewItemInspection = async (item: ChecklistItemDto) => {
+    if (!item.linkedInspectionId || !item.linkedInspectionRowVersion) {
+      message.error('Không có phiên bản hồ sơ. Vui lòng tải lại dữ liệu.');
+      return;
+    }
+    try {
+      setActionLoadingId(item.id);
+      await inspectionApi.reviewInspection(item.linkedInspectionId, { rowVersion: item.linkedInspectionRowVersion });
+      message.info(`Đã ghi nhận thẩm tra tiêu chí "${item.name}"; quy trình đang được đồng bộ.`);
       refetch();
       queryClient.invalidateQueries({ queryKey: ['checklists'] });
       onRefresh?.();
@@ -228,11 +252,14 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
 
   // Xử lý Approver phê duyệt Cấp 2 phiếu nghiệm thu của tiêu chí bên trong Checklist
   const handleApproveItemInspection = async (item: ChecklistItemDto) => {
-    if (!item.linkedInspectionId) return;
+    if (!item.linkedInspectionId || !item.linkedInspectionRowVersion) {
+      message.error('Không có phiên bản hồ sơ. Vui lòng tải lại dữ liệu.');
+      return;
+    }
     try {
       setActionLoadingId(item.id);
-      await inspectionApi.approveInspection(item.linkedInspectionId);
-      message.success(`Đã phê duyệt chính thức tiêu chí "${item.name}" sang ĐẠT!`);
+      await inspectionApi.approveInspection(item.linkedInspectionId, { rowVersion: item.linkedInspectionRowVersion });
+      message.info(`Đã ghi nhận phê duyệt tiêu chí "${item.name}"; quy trình đang được đồng bộ.`);
       refetch();
       queryClient.invalidateQueries({ queryKey: ['checklists'] });
       onRefresh?.();
@@ -245,12 +272,15 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
 
   // Xử lý Từ chối (Reviewer hoặc Approver) phiếu nghiệm thu kèm lý do
   const handleConfirmRejectItem = async () => {
-    if (!itemRejectTarget || !itemRejectTarget.linkedInspectionId) return;
+    if (!itemRejectTarget?.linkedInspectionId || !itemRejectTarget.linkedInspectionRowVersion) {
+      message.error('Không có phiên bản hồ sơ. Vui lòng tải lại dữ liệu.');
+      return;
+    }
     try {
       const values = await itemRejectForm.validateFields();
       setActionLoadingId(itemRejectTarget.id);
-      await inspectionApi.rejectInspection(itemRejectTarget.linkedInspectionId, { reason: values.reason });
-      message.warning(`Đã từ chối tiêu chí "${itemRejectTarget.name}" và gửi yêu cầu sửa đổi cho Kỹ sư!`);
+      await inspectionApi.rejectInspection(itemRejectTarget.linkedInspectionId, { reason: values.reason, rowVersion: itemRejectTarget.linkedInspectionRowVersion });
+      message.info(`Đã ghi nhận yêu cầu sửa tiêu chí "${itemRejectTarget.name}"; quy trình đang được đồng bộ.`);
       setItemRejectModalOpen(false);
       setItemRejectTarget(null);
       itemRejectForm.resetFields();
@@ -573,6 +603,8 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                                   ? 'blue'
                                   : record.linkedInspectionStatus === 'Submitted'
                                     ? 'processing'
+                                    : record.linkedInspectionStatus === 'UnderReview'
+                                      ? 'processing'
                                     : record.linkedInspectionStatus === 'Rejected'
                                       ? 'error'
                                       : 'default'
@@ -584,6 +616,8 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                                 ? 'Đã thẩm tra'
                                 : record.linkedInspectionStatus === 'Submitted'
                                   ? 'Chờ duyệt'
+                                  : record.linkedInspectionStatus === 'UnderReview'
+                                    ? 'Đang thẩm tra'
                                   : record.linkedInspectionStatus === 'Rejected'
                                     ? 'Cần sửa đổi'
                                     : 'Bản nháp'}
@@ -654,16 +688,19 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                 align: 'center',
                 render: (_: any, record: ChecklistItemDto) => {
                   // Giai đoạn nghiệm thu hiện trường: Giám sát và CĐT thẩm tra & phê duyệt trực tiếp trong Checklist
+                  if (record.linkedInspectionId && record.linkedInspectionWorkflowSyncStatus && record.linkedInspectionWorkflowSyncStatus !== 'Synchronized') {
+                    return <Tag color="warning">{record.linkedInspectionWorkflowSyncStatus === 'Pending' ? 'Đang đồng bộ' : record.linkedInspectionWorkflowSyncStatus === 'Retrying' ? 'Lỗi đồng bộ, đang thử lại' : 'Cần khôi phục đồng bộ'}</Tag>;
+                  }
                   if (checklist.canFillInspection && record.linkedInspectionId) {
-                    // Reviewer thẩm tra Cấp 1 khi hồ sơ ở trạng thái Submitted
-                    if (isReviewer && record.linkedInspectionStatus === 'Submitted') {
+                    // Reviewer tiếp nhận trước, sau đó thẩm tra cấp 1.
+                    if (isReviewer && (record.linkedInspectionStatus === 'Submitted' || record.linkedInspectionStatus === 'UnderReview')) {
                       return (
                         <Space size={6}>
                           <Popconfirm
-                            title="Xác nhận thẩm tra ĐẠT?"
-                            description={`Phê duyệt Cấp 1 cho tiêu chí "${record.name}".`}
-                            onConfirm={() => handleReviewItemInspection(record)}
-                            okText="Duyệt Đạt"
+                            title={record.linkedInspectionStatus === 'Submitted' ? 'Tiếp nhận hồ sơ?' : 'Xác nhận thẩm tra ĐẠT?'}
+                            description={record.linkedInspectionStatus === 'Submitted' ? `Tiếp nhận tiêu chí "${record.name}" để thẩm tra.` : `Phê duyệt Cấp 1 cho tiêu chí "${record.name}".`}
+                            onConfirm={() => record.linkedInspectionStatus === 'Submitted' ? handleReceiveItemInspection(record) : handleReviewItemInspection(record)}
+                            okText={record.linkedInspectionStatus === 'Submitted' ? 'Tiếp nhận' : 'Duyệt Đạt'}
                             cancelText="Hủy"
                             okButtonProps={{ loading: actionLoadingId === record.id }}
                           >
@@ -674,7 +711,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
                               icon={<CheckCircleOutlined />}
                               loading={actionLoadingId === record.id}
                             >
-                              Duyệt Cấp 1
+                              {record.linkedInspectionStatus === 'Submitted' ? 'Tiếp nhận' : 'Duyệt Cấp 1'}
                             </Button>
                           </Popconfirm>
                           <Button

@@ -11,22 +11,20 @@ public record ReviewInspectionCommand(
     Guid Id,
     Guid? ReviewerId = null,
     string? ReviewerName = null,
-    string? Comment = null
+    string? Comment = null,
+    byte[]? RowVersion = null
 ) : IRequest<InspectionDto>;
 
 public class ReviewInspectionCommandHandler : IRequestHandler<ReviewInspectionCommand, InspectionDto>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IInspectionWorkflowService _workflowService;
     private readonly INotificationService _notificationService;
 
     public ReviewInspectionCommandHandler(
         IApplicationDbContext context, 
-        IInspectionWorkflowService workflowService,
         INotificationService notificationService)
     {
         _context = context;
-        _workflowService = workflowService;
         _notificationService = notificationService;
     }
 
@@ -43,10 +41,13 @@ public class ReviewInspectionCommandHandler : IRequestHandler<ReviewInspectionCo
             throw new KeyNotFoundException($"Không tìm thấy Form Inspection với Id = {request.Id}.");
         }
 
-        // Quy tắc State Transition: Cho phép chuyển từ 'Submitted' (Đã nộp) hoặc 'UnderReview' (Đang thẩm tra) sang 'Reviewed'
-        if (inspection.Status != InspectionStatus.Submitted && inspection.Status != InspectionStatus.UnderReview)
+        InspectionVersionGuard.EnsureCurrent(request.RowVersion, inspection.RowVersion);
+        await InspectionWorkflowQueue.EnsureReadyAsync(_context, inspection.Id, cancellationToken);
+
+        // Hồ sơ phải được tiếp nhận trước khi thẩm tra.
+        if (inspection.Status != InspectionStatus.UnderReview)
         {
-            throw new InvalidOperationException($"Chỉ có thể duyệt thẩm tra Cấp 1 khi hồ sơ đang ở trạng thái 'Submitted' (Đã nộp) hoặc 'UnderReview' (Đang thẩm tra). Trạng thái hiện tại: '{inspection.Status}'.");
+            throw new InvalidOperationException($"Chỉ có thể thẩm tra hồ sơ đã được tiếp nhận ('UnderReview'). Trạng thái hiện tại: '{inspection.Status}'.");
         }
 
         var oldStatus = inspection.Status;
@@ -57,15 +58,7 @@ public class ReviewInspectionCommandHandler : IRequestHandler<ReviewInspectionCo
         inspection.UpdatedAt = DateTime.UtcNow;
 
         // Tiếp tục tiến trình Elsa Workflow sang cấp duyệt tiếp theo
-        if (!string.IsNullOrWhiteSpace(inspection.WorkflowInstanceId))
-        {
-            await _workflowService.ResumeReviewerBookmarkAsync(
-                inspection.WorkflowInstanceId,
-                isApproved: true,
-                inspection.ReviewedBy,
-                request.Comment,
-                cancellationToken);
-        }
+        InspectionWorkflowQueue.EnqueueDecision(_context, inspection, "Review", inspection.ReviewedBy, request.Comment);
 
         // Lưu vết lịch sử Audit
         var history = new InspectionAuditHistory
@@ -88,8 +81,8 @@ public class ReviewInspectionCommandHandler : IRequestHandler<ReviewInspectionCo
         // Bắn thông báo cho Role Approver (Chủ đầu tư)
         await _notificationService.SendNotificationToRoleAsync("Approver", new NotificationMessage
         {
-            Title = "Hồ sơ đã qua Thẩm tra Cấp 1",
-            Content = $"TVGS {inspection.ReviewedBy} đã thẩm tra Đạt hồ sơ '{inspection.Object?.Name ?? inspection.Id.ToString()}', sẵn sàng chờ CĐT phê duyệt.",
+            Title = "Đã ghi nhận thẩm tra cấp 1",
+            Content = $"Đã ghi nhận thẩm tra hồ sơ '{inspection.Object?.Name ?? inspection.Id.ToString()}'. Quy trình đang được đồng bộ.",
             Type = "info",
             ReferenceId = inspection.Id.ToString(),
             ReferenceType = "Inspection",
@@ -101,8 +94,8 @@ public class ReviewInspectionCommandHandler : IRequestHandler<ReviewInspectionCo
         {
             await _notificationService.SendNotificationToUserAsync(inspection.SubmittedById.Value.ToString(), new NotificationMessage
             {
-                Title = "Hồ sơ đã được thẩm tra Đạt (Cấp 1)",
-                Content = $"Hồ sơ cấu kiện '{inspection.Object?.Name ?? "cấu kiện"}' đã được TVGS thẩm tra Đạt và chuyển lên Chủ đầu tư.",
+                Title = "Đã ghi nhận thẩm tra cấp 1",
+                Content = $"Đã ghi nhận thẩm tra hồ sơ cấu kiện '{inspection.Object?.Name ?? "cấu kiện"}'. Quy trình đang được đồng bộ.",
                 Type = "success",
                 ReferenceId = inspection.Id.ToString(),
                 ReferenceType = "Inspection",
@@ -122,6 +115,8 @@ public class ReviewInspectionCommandHandler : IRequestHandler<ReviewInspectionCo
             FormDataJson = inspection.FormDataJson,
             Status = inspection.Status.ToString(),
             WorkflowInstanceId = inspection.WorkflowInstanceId,
+            RowVersion = inspection.RowVersion,
+            WorkflowSyncStatus = "Pending",
             SubmittedById = inspection.SubmittedById,
             SubmittedBy = inspection.SubmittedBy,
             SubmittedAt = inspection.SubmittedAt,

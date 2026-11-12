@@ -9,6 +9,7 @@ public interface IApplicationDbContext
     DbSet<ConstructionObject> Objects { get; }
     DbSet<FormInspection> FormInspections { get; }
     DbSet<InspectionAuditHistory> InspectionAuditHistories { get; }
+    DbSet<InspectionWorkflowOperation> InspectionWorkflowOperations { get; }
     DbSet<Checklist> Checklists { get; }
     DbSet<ChecklistItem> ChecklistItems { get; }
     DbSet<ChecklistAuditHistory> ChecklistAuditHistories { get; }

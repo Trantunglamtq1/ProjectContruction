@@ -22,6 +22,8 @@ export interface InspectionDto {
   formDataJson: string;
   status: InspectionStatus;
   workflowInstanceId?: string | null;
+  rowVersion: string;
+  workflowSyncStatus: 'Synchronized' | 'Pending' | 'Retrying' | 'NeedsRecovery';
   
   submittedById?: string | null;
   submittedBy?: string | null;

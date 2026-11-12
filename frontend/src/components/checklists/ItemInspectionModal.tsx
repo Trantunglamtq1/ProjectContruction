@@ -202,7 +202,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
     if (!item) return false;
     if (!item.linkedInspectionId) return isSubmitter;
     if (!inspection) return false;
-    return (inspection.status === 'Draft' || inspection.status === 'Rejected') && isSubmitter;
+    return (inspection.status === 'Draft' || inspection.status === 'Rejected') && isSubmitter && inspection.workflowSyncStatus === 'Synchronized';
   }, [item, inspection, isSubmitter]);
 
 
@@ -265,20 +265,26 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
 
         message.success(
           isSubmitImmediately
-            ? `Đã gửi duyệt hồ sơ nghiệm thu tiêu chí "${item.name}"!`
+            ? `Đã ghi nhận hồ sơ tiêu chí "${item.name}"; quy trình đang được đồng bộ.`
             : `Đã lưu bản nháp nghiệm thu tiêu chí "${item.name}"!`
         );
       } else {
         // Cập nhật phiếu nghiệm thu đang có (Draft hoặc Rejected)
-        await inspectionApi.updateInspectionDraft(item.linkedInspectionId, {
+        if (!inspection?.rowVersion) {
+          throw new Error('Không có phiên bản hồ sơ. Vui lòng tải lại dữ liệu.');
+        }
+        const updatedInspection = await inspectionApi.updateInspectionDraft(item.linkedInspectionId, {
           formDataJson: jsonString,
+          rowVersion: inspection.rowVersion,
         });
+        queryClient.setQueryData(['inspection-detail', item.linkedInspectionId], updatedInspection);
 
         if (isSubmitImmediately) {
           await inspectionApi.submitInspection(item.linkedInspectionId, {
             formDataJson: jsonString,
+            rowVersion: updatedInspection.rowVersion,
           });
-          message.success(`Đã nộp hồ sơ nghiệm thu tiêu chí "${item.name}" lên Giám sát!`);
+          message.info(`Đã ghi nhận hồ sơ tiêu chí "${item.name}"; quy trình đang được đồng bộ.`);
         } else {
           message.success('Đã lưu bản nháp thành công!');
         }

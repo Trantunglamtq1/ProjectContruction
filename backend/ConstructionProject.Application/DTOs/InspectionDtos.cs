@@ -40,6 +40,8 @@ public class InspectionDto
     public string FormDataJson { get; set; } = "{}";
     public string Status { get; set; } = "Draft";
     public string? WorkflowInstanceId { get; set; }
+    public byte[]? RowVersion { get; set; }
+    public string WorkflowSyncStatus { get; set; } = "Synchronized";
     
     public Guid? SubmittedById { get; set; }
     public string? SubmittedBy { get; set; }

@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<ConstructionObject> Objects => Set<ConstructionObject>();
     public DbSet<FormInspection> FormInspections => Set<FormInspection>();
     public DbSet<InspectionAuditHistory> InspectionAuditHistories => Set<InspectionAuditHistory>();
+    public DbSet<InspectionWorkflowOperation> InspectionWorkflowOperations => Set<InspectionWorkflowOperation>();
     public DbSet<Checklist> Checklists => Set<Checklist>();
     public DbSet<ChecklistItem> ChecklistItems => Set<ChecklistItem>();
     public DbSet<ChecklistAuditHistory> ChecklistAuditHistories => Set<ChecklistAuditHistory>();

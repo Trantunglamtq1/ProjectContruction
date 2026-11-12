@@ -109,6 +109,7 @@ public class LinkInspectionToChecklistItemCommandHandler : IRequestHandler<LinkI
             FormSchemaJson = item.FormSchemaJson,
             LinkedInspectionId = item.LinkedInspectionId,
             LinkedInspectionStatus = inspection.Status.ToString(),
+            LinkedInspectionRowVersion = inspection.RowVersion,
             Status = item.Status.ToString()
         };
     }

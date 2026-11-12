@@ -17,6 +17,8 @@ export interface ChecklistItemDto {
   formSchemaJson: string;
   linkedInspectionId: string | null;
   linkedInspectionStatus?: string | null;
+  linkedInspectionRowVersion?: string | null;
+  linkedInspectionWorkflowSyncStatus?: 'Synchronized' | 'Pending' | 'Retrying' | 'NeedsRecovery' | null;
   status: ChecklistItemStatus;
   rowVersion?: string;
 }

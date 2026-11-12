@@ -43,6 +43,7 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
         var checklists = await _context.Checklists
             .Include(c => c.Items)
                 .ThenInclude(i => i.LinkedInspection)
+                    .ThenInclude(i => i!.WorkflowOperations)
             .Include(c => c.AuditHistories)
             .Where(c => c.ObjectId == request.ObjectId)
             .AsNoTracking()
@@ -85,6 +86,8 @@ public class GetChecklistSummaryByObjectQueryHandler : IRequestHandler<GetCheckl
                     FormSchemaJson = i.FormSchemaJson,
                     LinkedInspectionId = i.LinkedInspectionId,
                     LinkedInspectionStatus = i.LinkedInspection?.Status.ToString(),
+                    LinkedInspectionRowVersion = i.LinkedInspection?.RowVersion,
+                    LinkedInspectionWorkflowSyncStatus = i.LinkedInspection == null ? null : InspectionWorkflowSync.GetStatus(i.LinkedInspection),
                     Status = i.Status.ToString()
                 }).ToList(),
                 AuditHistories = c.AuditHistories.OrderByDescending(a => a.CreatedAt).Select(a => new ChecklistAuditHistoryDto

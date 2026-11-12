@@ -32,7 +32,7 @@ public class SubmitInspectionCommandValidatorTests
     public void Validate_WithNullFormData_IsValid()
     {
         // FormDataJson có thể null khi submit dùng dữ liệu đã lưu trước đó
-        var result = _validator.Validate(new SubmitInspectionCommand(Guid.NewGuid(), null));
+        var result = _validator.Validate(new SubmitInspectionCommand(Guid.NewGuid(), null, RowVersion: new byte[8]));
 
         result.IsValid.Should().BeTrue();
     }
@@ -40,7 +40,7 @@ public class SubmitInspectionCommandValidatorTests
     [Fact]
     public void Validate_WithValidObjectJson_IsValid()
     {
-        var result = _validator.Validate(new SubmitInspectionCommand(Guid.NewGuid(), "{\"ketQua\":\"Dat\"}"));
+        var result = _validator.Validate(new SubmitInspectionCommand(Guid.NewGuid(), "{\"ketQua\":\"Dat\"}", RowVersion: new byte[8]));
 
         result.IsValid.Should().BeTrue();
     }

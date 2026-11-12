@@ -28,6 +28,8 @@ public class FormInspection
     
     // Id của Elsa Workflow Instance quản lý tiến trình duyệt hồ sơ
     public string? WorkflowInstanceId { get; set; }
+
+    public byte[]? RowVersion { get; set; }
     
     // UserId submit (từ JWT) và thời điểm submit
     public Guid? SubmittedById { get; set; }
@@ -59,4 +61,5 @@ public class FormInspection
     public User? Approver { get; set; }
     public ICollection<ChecklistItem> LinkedChecklistItems { get; set; } = new List<ChecklistItem>();
     public ICollection<InspectionAuditHistory> AuditHistories { get; set; } = new List<InspectionAuditHistory>();
+    public ICollection<InspectionWorkflowOperation> WorkflowOperations { get; set; } = new List<InspectionWorkflowOperation>();
 }

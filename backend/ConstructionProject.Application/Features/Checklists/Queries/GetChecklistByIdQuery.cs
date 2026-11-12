@@ -24,6 +24,7 @@ public class GetChecklistByIdQueryHandler : IRequestHandler<GetChecklistByIdQuer
                 .ThenInclude(o => o!.DrawingFile)
             .Include(c => c.Items)
                 .ThenInclude(i => i.LinkedInspection)
+                    .ThenInclude(i => i!.WorkflowOperations)
             .Include(c => c.AuditHistories)
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
@@ -64,6 +65,8 @@ public class GetChecklistByIdQueryHandler : IRequestHandler<GetChecklistByIdQuer
                 FormSchemaJson = i.FormSchemaJson,
                 LinkedInspectionId = i.LinkedInspectionId,
                 LinkedInspectionStatus = i.LinkedInspection?.Status.ToString(),
+                LinkedInspectionRowVersion = i.LinkedInspection?.RowVersion,
+                LinkedInspectionWorkflowSyncStatus = i.LinkedInspection == null ? null : InspectionWorkflowSync.GetStatus(i.LinkedInspection),
                 Status = i.Status.ToString()
             }).ToList(),
             AuditHistories = checklist.AuditHistories.OrderByDescending(a => a.CreatedAt).Select(a => new ChecklistAuditHistoryDto
