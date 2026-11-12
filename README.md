@@ -23,6 +23,10 @@ Elsa 3.2 dùng SQL Server để lưu workflow và bookmark. Worker dùng khóa S
 
 API trả `rowVersion` dạng base64; client phải gửi lại giá trị đã đọc khi sửa, nộp, tiếp nhận, thẩm tra, duyệt, từ chối hoặc xóa inspection. Dữ liệu cũ trả HTTP `409`; thiếu hoặc sai định dạng phiên bản bị từ chối. API client cần cập nhật cho hợp đồng này.
 
+Danh sách `GET /api/inspections` nhận `pageNumber` và `pageSize`; vẫn nhận `page` cho client cũ, ưu tiên `pageNumber` nếu có cả hai. Response bổ sung `statusCounts` với đủ sáu khóa `Draft`, `Submitted`, `UnderReview`, `Reviewed`, `Approved`, `Rejected`. Số đếm và `totalCount` cùng áp dụng search và tất cả bộ lọc trên toàn bộ kết quả, trước phân trang; đổi trang không đổi phạm vi thống kê.
+
+`search` hỗ trợ ID đầy đủ hoặc mã tám ký tự đầu đang hiển thị (ví dụ `#A1B2C3D4`), có/không `#`, không phân biệt hoa thường và bỏ khoảng trắng đầu/cuối. Mã ngắn có thể khớp nhiều hồ sơ; không coi mã ngắn là định danh duy nhất. Tìm theo tên cấu kiện, người nộp và bản vẽ tiếp tục được hỗ trợ.
+
 Migration giữ trạng thái và lịch sử cũ, lưu ID workflow trước đây vào lệnh khôi phục và dựng bookmark phù hợp với cấp duyệt đã lưu. Không tự tạo quyết định duyệt mới. Migration khôi phục không hỗ trợ rollback tự động; cần sao lưu và kiểm tra kế hoạch khôi phục trước khi áp dụng. Thiết lập connection string qua cấu hình môi trường, không đưa mật khẩu vào mã nguồn.
 
 Chạy test SQL Server riêng bằng cách đặt biến môi trường `CONSTRUCTION_TEST_SQL` thành connection string của **máy chủ thử nghiệm**, rồi chạy `dotnet test tests/ConstructionProject.IntegrationTests/ConstructionProject.IntegrationTests.csproj`. Các test SQL tạo database tên `ConstructionProject_Test_<guid>` và giữ lại để kiểm tra; không trỏ test vào máy chủ production. Nếu không đặt biến này, các test SQL được bỏ qua và không chứng minh hành vi migration, concurrency hay restart.

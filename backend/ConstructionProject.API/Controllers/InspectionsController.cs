@@ -174,7 +174,7 @@ public class InspectionsController : ControllerBase
     /// </summary>
     [HttpGet]
     [Authorize(Roles = $"{RoleConstants.Submitter},{RoleConstants.Reviewer},{RoleConstants.Approver}")]
-    [ProducesResponseType(typeof(PaginatedResult<InspectionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(InspectionListResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetInspections(
@@ -186,6 +186,7 @@ public class InspectionsController : ControllerBase
         [FromQuery] string? search,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] int? pageNumber = null,
         CancellationToken cancellationToken = default)
     {
         var query = new GetInspectionsQuery(
@@ -195,7 +196,7 @@ public class InspectionsController : ControllerBase
             checklistItemId,
             status,
             search,
-            page,
+            pageNumber ?? page,
             pageSize
         );
 

@@ -15,9 +15,9 @@ public record GetInspectionsQuery(
     string? Search = null,
     int PageNumber = 1,
     int PageSize = 10
-) : IRequest<PaginatedResult<InspectionDto>>;
+) : IRequest<InspectionListResult>;
 
-public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, PaginatedResult<InspectionDto>>
+public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, InspectionListResult>
 {
     private readonly IApplicationDbContext _context;
 
@@ -26,7 +26,7 @@ public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, P
         _context = context;
     }
 
-    public async Task<PaginatedResult<InspectionDto>> Handle(GetInspectionsQuery request, CancellationToken cancellationToken)
+    public async Task<InspectionListResult> Handle(GetInspectionsQuery request, CancellationToken cancellationToken)
     {
         var pageNumber = Math.Max(1, request.PageNumber);
         var pageSize = Math.Clamp(request.PageSize, 1, 100);
@@ -71,21 +71,34 @@ public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, P
             query = query.Where(i => i.Status == request.Status.Value);
         }
 
-        // Tìm kiếm từ khóa theo tên Object, tên Submitter hoặc tên bản vẽ
+        // Support the displayed eight-character code (# optional) and full GUID,
+        // alongside the existing text search. Short codes are not unique IDs.
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
-            var search = request.Search.Trim().ToLower();
+            var search = request.Search.Trim().ToLowerInvariant();
+            var code = search.StartsWith('#') ? search[1..] : search;
+            var isFullId = Guid.TryParse(code, out var inspectionId);
+            var isShortCode = code.Length == 8 && code.All(Uri.IsHexDigit);
             query = query.Where(i =>
+                (isFullId && i.Id == inspectionId) ||
+                (isShortCode && i.Id.ToString().ToLower().StartsWith(code)) ||
                 (i.Object != null && i.Object.Name.ToLower().Contains(search)) ||
                 (i.SubmittedBy != null && i.SubmittedBy.ToLower().Contains(search)) ||
                 (i.Object != null && i.Object.DrawingFile != null && i.Object.DrawingFile.FileName.ToLower().Contains(search))
             );
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
+        var groupedCounts = await query
+            .GroupBy(i => i.Status)
+            .Select(group => new { Status = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(group => group.Status, group => group.Count, cancellationToken);
+        var statusCounts = Enum.GetValues<InspectionStatus>()
+            .ToDictionary(status => status.ToString(), status => groupedCounts.GetValueOrDefault(status));
+        var totalCount = statusCounts.Values.Sum();
 
         var entities = await query
             .OrderByDescending(i => i.CreatedAt)
+            .ThenByDescending(i => i.Id)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
@@ -124,6 +137,13 @@ public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, P
             LinkedChecklistItemsCount = entity.LinkedChecklistItems?.Count ?? 0
         }).ToList();
 
-        return new PaginatedResult<InspectionDto>(dtos, totalCount, pageNumber, pageSize);
+        return new InspectionListResult
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            StatusCounts = statusCounts,
+        };
     }
 }

@@ -21,6 +21,12 @@ public class PaginatedResult<T>
     }
 }
 
+public class InspectionListResult : PaginatedResult<InspectionDto>
+{
+    // All matching records after filters, before pagination. Keys are API status names.
+    public Dictionary<string, int> StatusCounts { get; set; } = new();
+}
+
 public class InspectionDto
 {
     public Guid Id { get; set; }

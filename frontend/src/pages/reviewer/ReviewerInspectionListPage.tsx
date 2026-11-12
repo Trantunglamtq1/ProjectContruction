@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Table, Button, Space, Input, Select, Typography, Tag, Alert, Badge, message } from 'antd';
 import {
@@ -21,6 +21,7 @@ export const ReviewerInspectionListPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [inspections, setInspections] = useState<InspectionDto[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const latestRequest = useRef(0);
   const [pageIndex, setPageIndex] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -40,10 +41,12 @@ export const ReviewerInspectionListPage: React.FC = () => {
   useEffect(() => {
     if (urlSearch && urlSearch !== searchText) {
       setSearchText(urlSearch);
+      setPageIndex(1);
     }
   }, [urlSearch]);
 
   const loadData = useCallback(async () => {
+    const requestId = ++latestRequest.current;
     setLoading(true);
     try {
       const res = await inspectionApi.getInspections({
@@ -52,17 +55,19 @@ export const ReviewerInspectionListPage: React.FC = () => {
         status: statusFilter === 'ALL' ? undefined : statusFilter,
         search: searchText.trim() || undefined,
       });
+      if (requestId !== latestRequest.current) return;
       setInspections(res.items || []);
       setTotalCount(res.totalCount || 0);
     } catch {
-      message.error('Không thể tải danh sách hồ sơ kiểm tra.');
+      if (requestId === latestRequest.current) message.error('Không thể tải danh sách hồ sơ kiểm tra.');
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   }, [pageIndex, pageSize, statusFilter, searchText]);
 
   useEffect(() => {
     loadData();
+    return () => { latestRequest.current += 1; };
   }, [loadData]);
 
   const handleOpenDetail = (id: string) => {
@@ -229,12 +234,18 @@ export const ReviewerInspectionListPage: React.FC = () => {
               placeholder="Tìm theo mã hồ sơ hoặc cấu kiện..."
               prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setPageIndex(1);
+              }}
               style={{ width: 280 }}
             />
             <Select
               value={statusFilter}
-              onChange={setStatusFilter}
+              onChange={(value) => {
+                setStatusFilter(value);
+                setPageIndex(1);
+              }}
               style={{ width: 180 }}
               options={[
                 { value: 'ALL', label: 'Tất cả trạng thái' },

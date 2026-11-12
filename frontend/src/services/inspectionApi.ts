@@ -1,7 +1,7 @@
 import apiClient from './apiClient';
 import type {
   InspectionDto,
-  PaginatedResult,
+  InspectionListResult,
   InspectionAuditHistoryDto,
   FormSchemaItemDto,
   ConstructionObjectDto,
@@ -22,8 +22,8 @@ export interface GetInspectionsParams {
 
 export const inspectionApi = {
   // Lấy danh sách Inspection có lọc, tìm kiếm và phân trang
-  getInspections: async (params?: GetInspectionsParams): Promise<PaginatedResult<InspectionDto>> => {
-    const response = await apiClient.get<PaginatedResult<InspectionDto>>('/inspections', {
+  getInspections: async (params?: GetInspectionsParams): Promise<InspectionListResult> => {
+    const response = await apiClient.get<InspectionListResult>('/inspections', {
       params,
     });
     return response.data;

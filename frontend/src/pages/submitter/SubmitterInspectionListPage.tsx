@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Card,
@@ -43,6 +43,8 @@ export const SubmitterInspectionListPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [inspections, setInspections] = useState<InspectionDto[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [statusCounts, setStatusCounts] = useState<Record<InspectionStatus, number> | null>(null);
+  const latestRequest = useRef(0);
   const [pageIndex, setPageIndex] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -63,10 +65,12 @@ export const SubmitterInspectionListPage: React.FC = () => {
   useEffect(() => {
     if (urlSearch && urlSearch !== searchText) {
       setSearchText(urlSearch);
+      setPageIndex(1);
     }
   }, [urlSearch]);
 
   const loadData = useCallback(async () => {
+    const requestId = ++latestRequest.current;
     setLoading(true);
     try {
       const res = await inspectionApi.getInspections({
@@ -75,17 +79,20 @@ export const SubmitterInspectionListPage: React.FC = () => {
         status: statusFilter === 'ALL' ? undefined : statusFilter,
         search: searchText.trim() || undefined,
       });
+      if (requestId !== latestRequest.current) return;
       setInspections(res.items || []);
       setTotalCount(res.totalCount || 0);
+      setStatusCounts(res.statusCounts);
     } catch {
-      message.error('Không thể tải danh sách hồ sơ nghiệm thu.');
+      if (requestId === latestRequest.current) message.error('Không thể tải danh sách hồ sơ nghiệm thu.');
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   }, [pageIndex, pageSize, statusFilter, searchText]);
 
   useEffect(() => {
     loadData();
+    return () => { latestRequest.current += 1; };
   }, [loadData]);
 
   const handleDelete = async (id: string, rowVersion: string) => {
@@ -121,9 +128,9 @@ export const SubmitterInspectionListPage: React.FC = () => {
     }
   };
 
-  // Thống kê sơ bộ
+  // The API counts every matching record before pagination.
   const countByStatus = (status: InspectionStatus) =>
-    inspections.filter((item) => item.status === status).length;
+    statusCounts?.[status] ?? '—';
 
   const columns = [
     {
@@ -321,6 +328,7 @@ export const SubmitterInspectionListPage: React.FC = () => {
       />
 
       {/* Thẻ thống kê tổng quan */}
+      <Text type="secondary">Thống kê trên toàn bộ kết quả theo bộ lọc hiện tại.</Text>
       <Row gutter={[16, 16]}>
         <Col xs={12} sm={8} md={4}>
           <Card size="small" style={{ borderRadius: 8, borderLeft: '4px solid #1677FF' }}>
@@ -382,10 +390,9 @@ export const SubmitterInspectionListPage: React.FC = () => {
               placeholder="Tìm theo mã hoặc tên cấu kiện..."
               prefix={<SearchOutlined style={{ color: '#BFBFBF' }} />}
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onPressEnter={() => {
+              onChange={(e) => {
+                setSearchText(e.target.value);
                 setPageIndex(1);
-                loadData();
               }}
               style={{ width: 260 }}
               allowClear

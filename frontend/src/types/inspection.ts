@@ -63,6 +63,11 @@ export interface PaginatedResult<T> {
   hasNextPage: boolean;
 }
 
+export interface InspectionListResult extends PaginatedResult<InspectionDto> {
+  // Counts cover the entire filtered result, not just items on the current page.
+  statusCounts: Record<InspectionStatus, number>;
+}
+
 export interface InspectionAuditHistoryDto {
   id: string;
   inspectionId: string;
