@@ -33,6 +33,18 @@ services:
       - ./minio-data:/data
     command: server /data --console-address ":9001"
 
+  # Optional read cache: internal network only; SQL remains the source of truth.
+  redis:
+    image: redis:7.4-alpine
+    container_name: construction_redis
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   # 3. Backend: .NET 8 Web API Clean Architecture
   backend:
     build:
@@ -52,6 +64,11 @@ services:
       - Storage__MinIO__UseSSL=false
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5092
+      - Redis__Enabled=${REDIS_ENABLED:-true}
+      - Redis__ConnectionString=redis:6379
+      - "Redis__KeyPrefix=construction:"
+      - Redis__DrawingListTtlSeconds=60
+      - Redis__TimeoutMilliseconds=500
       - EmailSettings__SmtpServer=${EMAIL_SMTP_SERVER:-smtp.gmail.com}
       - EmailSettings__Port=${EMAIL_PORT:-587}
       - EmailSettings__SenderName=${EMAIL_SENDER_NAME:-ConstructInspect System}
@@ -62,6 +79,8 @@ services:
       database:
         condition: service_healthy
       minio:
+        condition: service_started
+      redis:
         condition: service_started
 
   # 4. Frontend: React 19 SPA + Nginx Reverse Proxy

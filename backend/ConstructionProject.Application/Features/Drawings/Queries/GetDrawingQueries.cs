@@ -12,16 +12,35 @@ public class GetDrawingFilesQueryHandler : IRequestHandler<GetDrawingFilesQuery,
 {
     private readonly IApplicationDbContext _context;
     private readonly IProjectAccessService _access;
+    private readonly IDrawingListCache _cache;
 
-    public GetDrawingFilesQueryHandler(IApplicationDbContext context, IProjectAccessService access)
+    public GetDrawingFilesQueryHandler(IApplicationDbContext context, IProjectAccessService access, IDrawingListCache cache)
     {
         _context = context;
         _access = access;
+        _cache = cache;
     }
 
     public async Task<List<DrawingFileDto>> Handle(GetDrawingFilesQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.DrawingFiles.Where(d => _access.AccessibleProjectIds.Contains(d.ProjectId)).AsNoTracking();
+        if (request.ProjectId is Guid projectId)
+        {
+            // Fresh SQL membership + version on every request, including hits and unchanged JWTs.
+            var project = await _context.Projects.AsNoTracking()
+                .Where(p => p.Id == projectId && _access.AccessibleProjectIds.Contains(p.Id))
+                .Select(p => new { p.DrawingListCacheVersion }).SingleOrDefaultAsync(cancellationToken);
+            if (project == null) return [];
+            var search = request.Search?.Trim().ToLowerInvariant() ?? string.Empty;
+            return await _cache.GetOrCreateAsync(projectId, project.DrawingListCacheVersion, search,
+                ct => LoadAsync(new GetDrawingFilesQuery(search, projectId), ct, projectAuthorized: true), cancellationToken);
+        }
+        return await LoadAsync(request, cancellationToken);
+    }
+
+    private async Task<List<DrawingFileDto>> LoadAsync(GetDrawingFilesQuery request, CancellationToken cancellationToken, bool projectAuthorized = false)
+    {
+        var query = _context.DrawingFiles.AsNoTracking();
+        if (!projectAuthorized) query = query.Where(d => _access.AccessibleProjectIds.Contains(d.ProjectId));
 
         if (request.ProjectId.HasValue) query = query.Where(d => d.ProjectId == request.ProjectId.Value);
 

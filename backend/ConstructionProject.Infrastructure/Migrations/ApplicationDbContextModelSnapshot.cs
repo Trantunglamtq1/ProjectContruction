@@ -635,6 +635,9 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("DrawingListCacheVersion")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -653,6 +656,7 @@ namespace ConstructionProject.Infrastructure.Migrations
                             Id = new Guid("aaaaaaaa-0000-0000-0000-000000000001"),
                             Code = "LEGACY",
                             CreatedAt = new DateTime(2026, 11, 13, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DrawingListCacheVersion = new Guid("00000000-0000-0000-0000-000000000000"),
                             Name = "Dữ liệu chuyển đổi"
                         });
                 });

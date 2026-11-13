@@ -34,6 +34,12 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         ChangeTracker.DetectChanges();
+        var (projectIds, drawingIds) = GetDrawingListChanges();
+        if (drawingIds.Length > 0)
+            projectIds.UnionWith(await DrawingFiles.AsNoTracking().Where(d => drawingIds.Contains(d.Id))
+                .Select(d => d.ProjectId).ToListAsync(cancellationToken));
+        if (projectIds.Count > 0)
+            RotateDrawingListVersions(await Projects.Where(p => projectIds.Contains(p.Id)).ToListAsync(cancellationToken), projectIds);
         var checklistIds = ChangeTracker.Entries<ChecklistItem>()
             .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
             .Select(entry => entry.Entity.ChecklistId)
@@ -56,6 +62,11 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         ChangeTracker.DetectChanges();
+        var (projectIds, drawingIds) = GetDrawingListChanges();
+        if (drawingIds.Length > 0)
+            projectIds.UnionWith(DrawingFiles.AsNoTracking().Where(d => drawingIds.Contains(d.Id)).Select(d => d.ProjectId));
+        if (projectIds.Count > 0)
+            RotateDrawingListVersions(Projects.Where(p => projectIds.Contains(p.Id)).ToList(), projectIds);
         var checklistIds = ChangeTracker.Entries<ChecklistItem>()
             .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
             .Select(entry => entry.Entity.ChecklistId)
@@ -71,6 +82,45 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         }
 
         return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    private (HashSet<Guid> ProjectIds, Guid[] DrawingIds) GetDrawingListChanges()
+    {
+        var projects = new HashSet<Guid>();
+        var drawings = new HashSet<Guid>();
+        foreach (var entry in ChangeTracker.Entries<DrawingFile>()
+                     .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
+        {
+            projects.Add(entry.Entity.ProjectId);
+            if (entry.State != EntityState.Added)
+                projects.Add(entry.OriginalValues.GetValue<Guid>(nameof(DrawingFile.ProjectId)));
+        }
+        foreach (var entry in ChangeTracker.Entries<ConstructionObject>()
+                     .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
+        {
+            drawings.Add(entry.Entity.DrawingFileId);
+            if (entry.State != EntityState.Added)
+                drawings.Add(entry.OriginalValues.GetValue<Guid>(nameof(ConstructionObject.DrawingFileId)));
+        }
+        // New drawings might not exist in SQL yet; changed/deleted parents also need their old project.
+        foreach (var entry in ChangeTracker.Entries<DrawingFile>().Where(e => drawings.Contains(e.Entity.Id)))
+        {
+            projects.Add(entry.Entity.ProjectId);
+            if (entry.State != EntityState.Added)
+                projects.Add(entry.OriginalValues.GetValue<Guid>(nameof(DrawingFile.ProjectId)));
+        }
+        return (projects, drawings.ToArray());
+    }
+
+    private void RotateDrawingListVersions(IEnumerable<Project> persistedProjects, HashSet<Guid> projectIds)
+    {
+        foreach (var project in persistedProjects.Concat(ChangeTracker.Entries<Project>()
+                     .Where(e => e.State == EntityState.Added && projectIds.Contains(e.Entity.Id))
+                     .Select(e => e.Entity)).DistinctBy(p => p.Id))
+        {
+            if (Entry(project).State != EntityState.Deleted)
+                project.DrawingListCacheVersion = Guid.NewGuid();
+        }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
