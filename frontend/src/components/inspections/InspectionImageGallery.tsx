@@ -21,6 +21,17 @@ import {
 import React, { useState } from 'react';
 import { inspectionApi } from '../../services/inspectionApi';
 import type { InspectionAttachmentDto } from '../../types/inspection';
+import { usePrivateFile } from '../../hooks/usePrivateFile';
+
+function PrivateImage({ fileUrl, ...props }: Omit<React.ComponentProps<typeof Image>, 'src'> & { fileUrl: string }) {
+  const source = usePrivateFile(fileUrl);
+  return source ? <Image {...props} src={source} /> : <Text type="secondary">Không có bản xem trước</Text>;
+}
+
+function PrivateFileLink({ fileUrl, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { fileUrl: string }) {
+  const source = usePrivateFile(fileUrl);
+  return source ? <a {...props} href={source} /> : <Text type="secondary">Không thể mở tệp</Text>;
+}
 
 const { Text } = Typography;
 const { Dragger } = Upload;
@@ -208,8 +219,8 @@ export const InspectionImageGallery: React.FC<InspectionImageGalleryProps> = ({
                   }}
                 >
                   {isImg ? (
-                    <Image
-                      src={att.fileUrl}
+                    <PrivateImage
+                      fileUrl={att.fileUrl}
                       alt={att.originalName}
                       style={{
                         width: '100%',
@@ -220,8 +231,8 @@ export const InspectionImageGallery: React.FC<InspectionImageGalleryProps> = ({
                       fallback="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23ccc'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'>Lỗi ảnh</text></svg>"
                     />
                   ) : (
-                    <a
-                      href={att.fileUrl}
+                    <PrivateFileLink
+                      fileUrl={att.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
@@ -233,7 +244,7 @@ export const InspectionImageGallery: React.FC<InspectionImageGalleryProps> = ({
                     >
                       <FilePdfOutlined style={{ fontSize: 36, marginBottom: 4 }} />
                       <Text style={{ fontSize: 12, color: '#475467' }}>Xem PDF</Text>
-                    </a>
+                    </PrivateFileLink>
                   )}
 
                   {/* Nút hành động nổi lên khi hover */}

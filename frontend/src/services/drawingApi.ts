@@ -1,4 +1,5 @@
 import apiClient from './apiClient';
+import { requireProjectId } from './projectScope';
 
 export interface DrawingFileDto {
   id: string;
@@ -49,6 +50,7 @@ export const drawingApi = {
   uploadDrawing: async (file: File, uploadedBy?: string): Promise<DrawingFileDto> => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('projectId', requireProjectId());
     if (uploadedBy) {
       formData.append('uploadedBy', uploadedBy);
     }

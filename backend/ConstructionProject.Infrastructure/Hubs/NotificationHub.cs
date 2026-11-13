@@ -1,47 +1,24 @@
 using System.Security.Claims;
+using ConstructionProject.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace ConstructionProject.Infrastructure.Hubs;
 
 [Authorize]
-public class NotificationHub : Hub
+public class NotificationHub(IApplicationDbContext db) : Hub
 {
-    private readonly ILogger<NotificationHub> _logger;
-
-    public NotificationHub(ILogger<NotificationHub> _logger)
-    {
-        this._logger = _logger;
-    }
-
     public override async Task OnConnectedAsync()
     {
-        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? Context.User?.FindFirst("sub")?.Value;
-        var role = Context.User?.FindFirst(ClaimTypes.Role)?.Value;
-
-        if (!string.IsNullOrEmpty(userId))
+        var subject = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Context.User?.FindFirst("sub")?.Value;
+        if (!Guid.TryParse(subject, out var id) || !await db.Users.AsNoTracking().AnyAsync(u => u.Id == id && u.IsActive, Context.ConnectionAborted))
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
-            _logger.LogInformation("SignalR: User {UserId} connected with ConnectionId {ConnectionId}", userId, Context.ConnectionId);
+            Context.Abort();
+            return;
         }
-
-        if (!string.IsNullOrEmpty(role))
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"Role_{role}");
-            _logger.LogInformation("SignalR: Connection {ConnectionId} added to group Role_{Role}", Context.ConnectionId, role);
-        }
-
+        // No client-controlled or cached project/role group subscriptions.
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{id:D}");
         await base.OnConnectedAsync();
-    }
-
-    public override async Task OnDisconnectedAsync(Exception? exception)
-    {
-        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? Context.User?.FindFirst("sub")?.Value;
-
-        _logger.LogInformation("SignalR: User {UserId} disconnected (ConnectionId: {ConnectionId})", userId, Context.ConnectionId);
-        await base.OnDisconnectedAsync(exception);
     }
 }

@@ -37,7 +37,10 @@ export const NotificationBell: React.FC = () => {
     markAsRead(item.id);
     if (item.targetUrl) {
       setOpen(false);
-      navigate(item.targetUrl);
+      const target = new URL(item.targetUrl, window.location.origin);
+      if (target.origin !== window.location.origin) return;
+      if (item.projectId) target.searchParams.set('projectId', item.projectId);
+      navigate(target.pathname + target.search);
     }
   };
 

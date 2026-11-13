@@ -70,9 +70,10 @@ public class ObjectsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetObjects(
         [FromQuery] Guid? drawingFileId, 
+        [FromQuery] Guid? projectId,
         CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetObjectsQuery(drawingFileId), cancellationToken);
+        var result = await _mediator.Send(new GetObjectsQuery(drawingFileId, projectId), cancellationToken);
         return Ok(result);
     }
 

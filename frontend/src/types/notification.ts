@@ -1,4 +1,5 @@
 export interface RealtimeNotification {
+  projectId?: string | null;
   id: string;
   title: string;
   content: string;

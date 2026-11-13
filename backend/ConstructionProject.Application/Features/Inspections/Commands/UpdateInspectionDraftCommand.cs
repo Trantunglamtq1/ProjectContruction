@@ -14,7 +14,10 @@ public record UpdateInspectionDraftCommand(
     string FormDataJson,
     Guid? CurrentUserId = null,
     byte[]? RowVersion = null
-) : IRequest<InspectionDto>;
+) : IRequest<InspectionDto>
+{
+    public string FormDataJson { get; set; } = FormDataJson;
+}
 
 public class UpdateInspectionDraftCommandValidator : AbstractValidator<UpdateInspectionDraftCommand>
 {

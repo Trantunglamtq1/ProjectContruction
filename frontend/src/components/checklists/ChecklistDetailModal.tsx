@@ -1,3 +1,4 @@
+import { getSelectedProjectId } from '../../services/projectScope';
 import {
   CheckCircleOutlined,
   CheckSquareOutlined,
@@ -101,7 +102,7 @@ export const ChecklistDetailModal: React.FC<ChecklistDetailModalProps> = ({
     refetch,
     error: loadError,
   } = useQuery<ChecklistDto>({
-    queryKey: ['checklist', checklistId],
+    queryKey: ['checklist', checklistId, getSelectedProjectId()],
     queryFn: () => checklistApi.getChecklistById(checklistId!),
     enabled: open && !!checklistId,
     refetchInterval: query => query.state.data?.workflowSyncStatus === 'Pending' || query.state.data?.workflowSyncStatus === 'Retrying' || query.state.data?.items.some(item =>

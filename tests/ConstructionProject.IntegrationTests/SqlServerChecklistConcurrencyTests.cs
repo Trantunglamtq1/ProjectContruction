@@ -279,6 +279,9 @@ VALUES ({itemId}, {checklistId}, 'Old item', {true}, 'Pending', {false}, '{{}}',
             db.Users.Add(new User { Username = "reviewer", Email = "reviewer@test.local", FullName = "Reviewer", PasswordHash = new PasswordHasher().HashPassword("Test@12345"), RoleId = RoleConstants.ReviewerRoleId, IsActive = true, EmailConfirmed = true });
             db.ChecklistItems.Add(item);
             await db.SaveChangesAsync();
+            var actorIds = await db.Users.Where(u => u.Username == "submitter" || u.Username == "reviewer").Select(u => u.Id).ToListAsync();
+            db.ProjectMembers.AddRange(actorIds.Select(id => new ProjectMember { ProjectId = Project.LegacyId, UserId = id }));
+            await db.SaveChangesAsync();
             return (checklist.Id, item.Id);
         }
     }

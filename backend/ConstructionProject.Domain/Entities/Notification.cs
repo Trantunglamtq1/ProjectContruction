@@ -6,6 +6,8 @@ namespace ConstructionProject.Domain.Entities;
 public class Notification
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid? ProjectId { get; set; }
+    public Project? Project { get; set; }
 
     // Id người nhận cụ thể (nếu gửi đích danh)
     public Guid? UserId { get; set; }

@@ -14,16 +14,18 @@ public record GetInspectionsQuery(
     InspectionStatus? Status = null,
     string? Search = null,
     int PageNumber = 1,
-    int PageSize = 10
+    int PageSize = 10, Guid? ProjectId = null
 ) : IRequest<InspectionListResult>;
 
 public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, InspectionListResult>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IProjectAccessService _access;
 
-    public GetInspectionsQueryHandler(IApplicationDbContext context)
+    public GetInspectionsQueryHandler(IApplicationDbContext context, IProjectAccessService access)
     {
         _context = context;
+        _access = access;
     }
 
     public async Task<InspectionListResult> Handle(GetInspectionsQuery request, CancellationToken cancellationToken)
@@ -31,7 +33,7 @@ public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, I
         var pageNumber = Math.Max(1, request.PageNumber);
         var pageSize = Math.Clamp(request.PageSize, 1, 100);
 
-        var query = _context.FormInspections
+        var query = _context.FormInspections.Where(i => _access.AccessibleProjectIds.Contains(i.Object!.DrawingFile!.ProjectId))
             .AsNoTracking()
             .Include(i => i.Object)
                 .ThenInclude(o => o!.DrawingFile)
@@ -40,6 +42,8 @@ public class GetInspectionsQueryHandler : IRequestHandler<GetInspectionsQuery, I
             .Include(i => i.LinkedChecklistItems)
             .Include(i => i.WorkflowOperations)
             .AsQueryable();
+
+        if (request.ProjectId.HasValue) query = query.Where(i => i.Object!.DrawingFile!.ProjectId == request.ProjectId.Value);
 
         // Lọc theo ChecklistId
         if (request.ChecklistId.HasValue && request.ChecklistId.Value != Guid.Empty)

@@ -14,13 +14,13 @@ export const getDefaultRouteForRole = (role: UserRole | string | string[] | null
   const actualRole = Array.isArray(role) ? role[0] : role;
   switch (actualRole) {
     case 'Admin':
-      return '/admin/users';
+      return '/projects';
     case 'Submitter':
-      return '/submitter/drawings';
+      return '/projects';
     case 'Reviewer':
-      return '/reviewer/inspections';
+      return '/projects';
     case 'Approver':
-      return '/approver/inspections';
+      return '/projects';
     default:
       return '/pending-approval';
   }

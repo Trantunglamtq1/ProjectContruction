@@ -12,6 +12,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { UnsavedChangesProvider } from './contexts/UnsavedChangesContext';
 import { UserManagementPage } from './pages/admin/UserManagementPage';
+import { ProjectsPage } from './pages/projects/ProjectsPage';
 import { ApproverChecklistPage } from './pages/approver/ApproverChecklistPage';
 import { ApproverDrawingListPage } from './pages/approver/ApproverDrawingListPage';
 import { ApproverInspectionListPage } from './pages/approver/ApproverInspectionListPage';
@@ -77,6 +78,7 @@ const router = createBrowserRouter(createRoutesFromElements(<Route element={<Uns
                   }
                 >
                   {/* ADMIN ROUTES */}
+                  <Route path="/projects" element={<ProjectsPage />} />
                   <Route
                     path="/admin/users"
                     element={

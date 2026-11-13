@@ -1,180 +1,68 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
 import { App } from 'antd';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from './AuthContext';
-import { signalRService } from '../services/signalrService';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { notificationApi } from '../services/notificationApi';
+import { signalRService } from '../services/signalrService';
+import { PROJECT_ACCESS_CHANGED, PROJECT_ACCESS_DENIED } from '../services/projectScope';
 import type { RealtimeNotification } from '../types/notification';
+import { useAuth } from './AuthContext';
 
-interface NotificationContextType {
-  notifications: RealtimeNotification[];
-  unreadCount: number;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  clearAll: () => void;
-  refreshNotifications: () => Promise<void>;
-}
+type Notifications = { notifications: RealtimeNotification[]; unreadCount: number; markAsRead: (id: string) => void;
+  markAllAsRead: () => void; clearAll: () => void; refreshNotifications: () => Promise<void> };
+const Context = createContext<Notifications | null>(null);
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
-
-const STORAGE_KEY = 'app_notifications_list';
-
-// Inner component to safely use App.useApp() which requires being inside <AntdApp>
-const NotificationProviderInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { notification } = App.useApp();
+export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { notification } = App.useApp();
   const queryClient = useQueryClient();
-  const unsubscribeRef = useRef<(() => void) | null>(null);
-  const isConnectedRef = useRef(false);
-
-  const [notifications, setNotifications] = useState<RealtimeNotification[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Đồng bộ danh sách thông báo từ Backend Database khi user đăng nhập
+  const [notifications, setNotifications] = useState<RealtimeNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const generation = useRef(0);
   const fetchNotifications = useCallback(async () => {
+    const revision = ++generation.current;
     if (!localStorage.getItem('token')) return;
     try {
       const data = await notificationApi.getMyNotifications();
-      if (Array.isArray(data.items)) {
-        setNotifications(data.items);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.items));
-      }
-    } catch {
-      // Fallback về localStorage nếu API tạm thời chưa sẵn sàng
-    }
+      if (revision !== generation.current) return;
+      setNotifications(data.items); setUnreadCount(data.unreadCount);
+    } catch { if (revision === generation.current) { setNotifications([]); setUnreadCount(0); } }
   }, []);
 
-  // Persist to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications.slice(0, 50)));
-    } catch { /* ignore */ }
-  }, [notifications]);
-
-  // Connect SignalR once when user logs in, disconnect on logout
-  // We use user.id as stable key — NOT token (token changes every 4s poll)
-  useEffect(() => {
-    if (!user?.id) {
-      // Logout: cleanup
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = null;
-      }
-      if (isConnectedRef.current) {
-        signalRService.disconnect();
-        isConnectedRef.current = false;
-      }
-      setNotifications([]);
-      localStorage.removeItem(STORAGE_KEY);
-      return;
-    }
-
-    // Nạp thông báo từ database khi người dùng đăng nhập
-    fetchNotifications();
-
-    // Already set up for this user — skip
-    if (isConnectedRef.current) return;
-
-    // Register listener
-    unsubscribeRef.current = signalRService.subscribe((item: RealtimeNotification) => {
-      const newNotif: RealtimeNotification = {
-        ...item,
-        isRead: false,
-        createdAt: item.createdAt || new Date().toISOString(),
-      };
-
-      setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id).slice(0, 49)]);
-
-      // Hiển thị Ant Design toast tương ứng với type (success, info, warning, error)
-      const notifType = (item.type as 'info' | 'success' | 'warning' | 'error') || 'info';
-      if (typeof notification[notifType] === 'function') {
-        notification[notifType]({
-          message: item.title,
-          description: item.content,
-          placement: 'topRight',
-          duration: 6,
-        });
-      } else {
-        notification.open({
-          message: item.title,
-          description: item.content,
-          placement: 'topRight',
-          duration: 6,
-        });
-      }
-
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['inspections'] });
-      queryClient.invalidateQueries({ queryKey: ['checklists'] });
-      queryClient.invalidateQueries({ queryKey: ['checklists-for-object'] });
-      queryClient.invalidateQueries({ queryKey: ['checklist-summary-object'] });
+    ++generation.current; setNotifications([]); setUnreadCount(0);
+    // Remove the old cross-user/project persistent cache; only server-visible rows are displayed.
+    localStorage.removeItem('app_notifications_list');
+    if (!user?.id) { void signalRService.disconnect(); return; }
+    void fetchNotifications();
+    const unsubscribe = signalRService.subscribe(async item => {
+      const revision = ++generation.current;
+      try {
+        const visible = await notificationApi.getMyNotifications();
+        if (revision !== generation.current) return;
+        setNotifications(visible.items); setUnreadCount(visible.unreadCount);
+        if (visible.items.some(n => n.id === item.id)) notification.open({ message: item.title, description: item.content, duration: 6 });
+        for (const key of ['inspections', 'checklists', 'checklists-for-object', 'checklist-summary-object']) void queryClient.invalidateQueries({ queryKey: [key] });
+      } catch { /* A stale realtime payload cannot bypass the history visibility check. */ }
     });
-
-    // Connect
-    signalRService.ensureConnected();
-    isConnectedRef.current = true;
-
+    const clear = () => { ++generation.current; setNotifications([]); setUnreadCount(0); notification.destroy(); void fetchNotifications(); };
+    window.addEventListener(PROJECT_ACCESS_CHANGED, clear); window.addEventListener(PROJECT_ACCESS_DENIED, clear);
+    void signalRService.ensureConnected();
+    const timer = window.setInterval(() => { void fetchNotifications(); }, 30000);
     return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = null;
-      }
+      ++generation.current; unsubscribe(); clearInterval(timer);
+      window.removeEventListener(PROJECT_ACCESS_CHANGED, clear); window.removeEventListener(PROJECT_ACCESS_DENIED, clear);
+      void signalRService.disconnect();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, fetchNotifications]);
+  }, [user?.id, fetchNotifications, notification, queryClient]);
 
-  const markAsRead = useCallback(async (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-    try {
-      await notificationApi.markAsRead(id);
-    } catch { /* ignore */ }
-  }, []);
+  const mutate = async (operation: () => Promise<unknown>) => { try { await operation(); } catch { /* Refresh the visible server state on failure. */ } finally { await fetchNotifications(); } };
+  return <Context.Provider value={{ notifications, unreadCount, refreshNotifications: fetchNotifications,
+    markAsRead: id => { void mutate(() => notificationApi.markAsRead(id)); },
+    markAllAsRead: () => { void mutate(notificationApi.markAllAsRead); }, clearAll: () => { void mutate(notificationApi.clearAll); } }}>{children}</Context.Provider>;
+}
 
-  const markAllAsRead = useCallback(async () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    try {
-      await notificationApi.markAllAsRead();
-    } catch { /* ignore */ }
-  }, []);
-
-  const clearAll = useCallback(async () => {
-    setNotifications([]);
-    localStorage.removeItem(STORAGE_KEY);
-    try {
-      await notificationApi.clearAll();
-    } catch { /* ignore */ }
-  }, []);
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, clearAll, refreshNotifications: fetchNotifications }}>
-      {children}
-    </NotificationContext.Provider>
-  );
-};
-
-export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <NotificationProviderInner>{children}</NotificationProviderInner>;
-};
-
-export const useRealtimeNotifications = (): NotificationContextType => {
-  const context = useContext(NotificationContext);
-  if (!context) {
-    throw new Error('useRealtimeNotifications must be used within a NotificationProvider');
-  }
+export function useRealtimeNotifications() {
+  const context = useContext(Context);
+  if (!context) throw new Error('NotificationProvider is required');
   return context;
-};
+}

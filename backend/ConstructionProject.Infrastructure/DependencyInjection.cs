@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IProjectAccessEvents, ProjectAccessEvents>();
         services.AddScoped<IEmailService, EmailService>();
 
         // Cấu hình Elsa Workflow 3.x Engine

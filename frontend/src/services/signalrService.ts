@@ -5,6 +5,7 @@ import {
   LogLevel,
 } from '@microsoft/signalr';
 import type { RealtimeNotification } from '../types/notification';
+import { PROJECT_ACCESS_CHANGED } from './projectScope';
 
 type NotificationListener = (notification: RealtimeNotification) => void;
 
@@ -39,6 +40,9 @@ class SignalRService {
       this.listeners.forEach((fn) => {
         try { fn(notification); } catch { /* ignore */ }
       });
+    });
+    conn.on('ProjectAccessChanged', (change: { projectId: string }) => {
+      window.dispatchEvent(new CustomEvent(PROJECT_ACCESS_CHANGED, { detail: change }));
     });
 
     conn.onreconnecting(() => console.warn('[SignalR] Reconnecting...'));

@@ -324,6 +324,9 @@ namespace ConstructionProject.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("StoredFileName")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -341,6 +344,8 @@ namespace ConstructionProject.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("UploadedById");
 
@@ -569,6 +574,9 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
 
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ReferenceId")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -604,11 +612,117 @@ namespace ConstructionProject.Infrastructure.Migrations
 
                     b.HasIndex("IsRead");
 
+                    b.HasIndex("ProjectId");
+
                     b.HasIndex("RoleName");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications", (string)null);
+                });
+
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Projects");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-0000-0000-0000-000000000001"),
+                            Code = "LEGACY",
+                            CreatedAt = new DateTime(2026, 11, 13, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Dữ liệu chuyển đổi"
+                        });
+                });
+
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.ProjectAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OriginalName")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UploadedById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("StoredFileName")
+                        .IsUnique();
+
+                    b.HasIndex("UploadedById");
+
+                    b.ToTable("ProjectAttachments");
+                });
+
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.ProjectMember", b =>
+                {
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("AssignedById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ProjectId", "UserId");
+
+                    b.HasIndex("AssignedById");
+
+                    b.HasIndex("UserId", "ProjectId");
+
+                    b.ToTable("ProjectMembers");
                 });
 
             modelBuilder.Entity("ConstructionProject.Domain.Entities.Role", b =>
@@ -819,10 +933,18 @@ namespace ConstructionProject.Infrastructure.Migrations
 
             modelBuilder.Entity("ConstructionProject.Domain.Entities.DrawingFile", b =>
                 {
+                    b.HasOne("ConstructionProject.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ConstructionProject.Domain.Entities.User", "Uploader")
                         .WithMany("UploadedDrawingFiles")
                         .HasForeignKey("UploadedById")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Project");
 
                     b.Navigation("Uploader");
                 });
@@ -895,6 +1017,56 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Navigation("Inspection");
                 });
 
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("ConstructionProject.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.ProjectAttachment", b =>
+                {
+                    b.HasOne("ConstructionProject.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ConstructionProject.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UploadedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.ProjectMember", b =>
+                {
+                    b.HasOne("ConstructionProject.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("AssignedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ConstructionProject.Domain.Entities.Project", "Project")
+                        .WithMany("Members")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ConstructionProject.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ConstructionProject.Domain.Entities.User", b =>
                 {
                     b.HasOne("ConstructionProject.Domain.Entities.Role", "Role")
@@ -933,6 +1105,11 @@ namespace ConstructionProject.Infrastructure.Migrations
                     b.Navigation("LinkedChecklistItems");
 
                     b.Navigation("WorkflowOperations");
+                });
+
+            modelBuilder.Entity("ConstructionProject.Domain.Entities.Project", b =>
+                {
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("ConstructionProject.Domain.Entities.Role", b =>

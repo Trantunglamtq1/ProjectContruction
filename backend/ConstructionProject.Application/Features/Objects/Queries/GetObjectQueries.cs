@@ -6,26 +6,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ConstructionProject.Application.Features.Objects.Queries;
 
-public record GetObjectsQuery(Guid? DrawingFileId = null) : IRequest<List<ObjectDto>>;
+public record GetObjectsQuery(Guid? DrawingFileId = null, Guid? ProjectId = null) : IRequest<List<ObjectDto>>;
 
 public class GetObjectsQueryHandler : IRequestHandler<GetObjectsQuery, List<ObjectDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IProjectAccessService _access;
 
-    public GetObjectsQueryHandler(IApplicationDbContext context)
+    public GetObjectsQueryHandler(IApplicationDbContext context, IProjectAccessService access)
     {
         _context = context;
+        _access = access;
     }
 
     public async Task<List<ObjectDto>> Handle(GetObjectsQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.Objects
+        var query = _context.Objects.Where(o => _access.AccessibleProjectIds.Contains(o.DrawingFile!.ProjectId))
             .AsNoTracking()
             .Include(o => o.DrawingFile)
             .Include(o => o.FormInspections)
             .Include(o => o.Checklists)
             .AsQueryable();
 
+        if (request.ProjectId.HasValue) query = query.Where(o => o.DrawingFile!.ProjectId == request.ProjectId.Value);
         if (request.DrawingFileId.HasValue && request.DrawingFileId.Value != Guid.Empty)
         {
             query = query.Where(o => o.DrawingFileId == request.DrawingFileId.Value);
@@ -58,15 +61,17 @@ public record GetObjectByIdQuery(Guid Id) : IRequest<ObjectDto?>;
 public class GetObjectByIdQueryHandler : IRequestHandler<GetObjectByIdQuery, ObjectDto?>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IProjectAccessService _access;
 
-    public GetObjectByIdQueryHandler(IApplicationDbContext context)
+    public GetObjectByIdQueryHandler(IApplicationDbContext context, IProjectAccessService access)
     {
         _context = context;
+        _access = access;
     }
 
     public async Task<ObjectDto?> Handle(GetObjectByIdQuery request, CancellationToken cancellationToken)
     {
-        var o = await _context.Objects
+        var o = await _context.Objects.Where(o => _access.AccessibleProjectIds.Contains(o.DrawingFile!.ProjectId))
             .AsNoTracking()
             .Include(x => x.DrawingFile)
             .Include(x => x.FormInspections)

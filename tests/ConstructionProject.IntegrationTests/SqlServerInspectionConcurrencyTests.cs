@@ -278,8 +278,10 @@ public class SqlServerInspectionConcurrencyTests
         info.Environment["ConnectionStrings__DefaultConnection"] = connection;
         info.Environment["ASPNETCORE_URLS"] = $"http://127.0.0.1:{port}";
         var process = Process.Start(info) ?? throw new InvalidOperationException("Không thể khởi động backend kiểm thử.");
-        process.OutputDataReceived += (_, _) => { };
-        process.ErrorDataReceived += (_, _) => { };
+        var logLock = new object();
+        void Log(object sender, DataReceivedEventArgs args) { if (args.Data != null) lock (logLock) File.AppendAllText(Path.Combine(AppContext.BaseDirectory,$"backend-{process.Id}.log"),args.Data + Environment.NewLine); }
+        process.OutputDataReceived += Log;
+        process.ErrorDataReceived += Log;
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         return process;
@@ -418,6 +420,9 @@ public class SqlServerInspectionConcurrencyTests
             db.Users.Add(new User { Username = "reviewer", Email = "reviewer@test.local", FullName = "Reviewer", PasswordHash = new PasswordHasher().HashPassword("Test@12345"), RoleId = RoleConstants.ReviewerRoleId, IsActive = true, EmailConfirmed = true });
             db.Users.Add(new User { Username = "approver", Email = "approver@test.local", FullName = "Approver", PasswordHash = new PasswordHasher().HashPassword("Test@12345"), RoleId = RoleConstants.ApproverRoleId, IsActive = true, EmailConfirmed = true });
             db.FormInspections.Add(inspection);
+            await db.SaveChangesAsync();
+            var actorIds = await db.Users.Where(u => u.Username == "submitter" || u.Username == "reviewer" || u.Username == "approver").Select(u => u.Id).ToListAsync();
+            db.ProjectMembers.AddRange(actorIds.Select(id => new ProjectMember { ProjectId = Project.LegacyId, UserId = id }));
             await db.SaveChangesAsync();
             return inspection.Id;
         }

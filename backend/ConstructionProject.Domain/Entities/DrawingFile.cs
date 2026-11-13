@@ -6,6 +6,10 @@ namespace ConstructionProject.Domain.Entities;
 public class DrawingFile
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    // Unclassified legacy/system-created records stay quarantined, never public.
+    // New HTTP uploads must explicitly provide an authorized project.
+    public Guid ProjectId { get; set; } = Project.LegacyId;
+    public Project Project { get; set; } = null!;
     public string FileName { get; set; } = string.Empty;
     public string StoredFileName { get; set; } = string.Empty;
     public string FileType { get; set; } = "pdf";

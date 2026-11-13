@@ -303,9 +303,10 @@ public class ChecklistsController : ControllerBase
     public async Task<IActionResult> GetChecklists(
         [FromQuery] Guid? objectId, 
         [FromQuery] string? status, 
+        [FromQuery] Guid? projectId,
         CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetChecklistsQuery(objectId, status), cancellationToken);
+        var result = await _mediator.Send(new GetChecklistsQuery(objectId, status, projectId), cancellationToken);
         return Ok(result);
     }
 
