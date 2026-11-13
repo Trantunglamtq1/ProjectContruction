@@ -1,6 +1,7 @@
 using ConstructionProject.Application.Common.Interfaces;
 using ConstructionProject.Infrastructure.Persistence;
 using ConstructionProject.Infrastructure.Services;
+using ConstructionProject.Infrastructure.Caching;
 using Elsa.Extensions;
 using Elsa.EntityFrameworkCore.Extensions;
 using Elsa.EntityFrameworkCore.Modules.Management;
@@ -16,6 +17,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration, bool enableDurableInspection = true)
     {
+        services.AddOptions<RedisCacheOptions>()
+            .Bind(configuration.GetSection(RedisCacheOptions.SectionName))
+            .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.ConnectionString), "Redis connection is required when enabled.")
+            .Validate(o => !string.IsNullOrWhiteSpace(o.KeyPrefix), "Redis key prefix is required.")
+            .Validate(o => o.DrawingListTtlSeconds is >= 1 and <= 3600, "Redis drawing TTL must be 1–3600 seconds.")
+            .Validate(o => o.TimeoutMilliseconds is >= 100 and <= 5000, "Redis timeout must be 100–5000 milliseconds.")
+            .ValidateOnStart();
+        services.AddSingleton<IDrawingListCache, RedisDrawingListCache>();
         var connectionString = configuration.GetConnectionString("DefaultConnection") 
             ?? "Server=.\\SQLEXPRESS;Database=ConstructionProjectDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true;";
 

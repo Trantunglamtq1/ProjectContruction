@@ -158,6 +158,32 @@ Backend build, frontend build/lint đạt; EF xác nhận model khớp migration
 
 ---
 
+## Redis cache danh sách bản vẽ
+
+Redis dùng cache-aside cho `GET /api/drawings?projectId=...`, gồm cả tìm kiếm và số lượng cấu kiện. Quyền dự án luôn được kiểm tra bằng SQL ở mỗi request. Không cache JWT, thành viên, quyền, file hay trạng thái Approval/Inspection. Danh sách không truyền `projectId` tiếp tục đọc SQL.
+
+Chạy cùng stack hiện có:
+
+```powershell
+docker compose -p contruction_project up -d --build
+docker exec construction_redis redis-cli ping
+```
+
+Compose bật Redis tại `redis:6379`, chỉ trong mạng Docker, giới hạn 128 MB và tự loại key cũ. Không cần Redis volume vì dữ liệu có thể tái tạo. SQL/MinIO dùng nguyên volume/bind mount hiện có. Host chạy .NET mặc định tắt cache; có thể đặt `Redis__Enabled=true`, `Redis__ConnectionString=<endpoint>`. Không công khai cổng Redis.
+
+`Redis:DrawingListTtlSeconds` mặc định 60 (1–3600), `Redis:TimeoutMilliseconds` mặc định 500 (100–5000), `Redis:KeyPrefix` mặc định `construction:`; môi trường dùng chung Redis cần prefix riêng. Một connection multiplexer được tái sử dụng. Khi Redis lỗi hoặc payload hỏng, API đọc SQL và vẫn xử lý hủy request. Log Debug của `ConstructionProject.Infrastructure.Caching.RedisDrawingListCache` ghi hit/miss, không ghi payload hay chuỗi kết nối.
+
+Migration `AddDrawingListCacheVersion` chỉ thêm cột Guid vào Projects. Phiên bản này đổi trong cùng giao dịch SQL khi bản vẽ/cấu kiện thay đổi; cache cũ không được dùng lại sau outage hay khi reader cũ hoàn tất muộn. Key gồm dự án, phiên bản và hash tìm kiếm; key cũ tự hết hạn. Thay đổi dữ liệu trực tiếp bằng SQL/bulk ngoài DbContext cần đổi phiên bản tương ứng hoặc tắt cache/chờ hết TTL.
+
+Rollback chức năng: đặt `REDIS_ENABLED=false` trong `.env`, chạy `docker compose -p contruction_project up -d --no-deps backend`. Có thể giữ cột mới; không cần phục hồi database hoặc xóa volume.
+
+Integration tests Redis thật dùng biến `CONSTRUCTION_TEST_REDIS`; mỗi test chỉ tạo/xóa key theo prefix riêng. CI cung cấp service Redis. Chạy host tests có thể tạm forward Redis qua cổng loopback bằng Compose override riêng. SQL tests dùng `CONSTRUCTION_TEST_SQL` trỏ master và tự tạo database test; không trỏ vào dữ liệu thật.
+
+```powershell
+$env:CONSTRUCTION_TEST_REDIS = '127.0.0.1:6380' # endpoint test đã cấu hình
+dotnet test tests/ConstructionProject.IntegrationTests/ConstructionProject.IntegrationTests.csproj
+```
+
 ## 🧪 Script kiểm thử API thủ công (tuỳ chọn)
 
 Yêu cầu API đang chạy ở `http://localhost:5092`:

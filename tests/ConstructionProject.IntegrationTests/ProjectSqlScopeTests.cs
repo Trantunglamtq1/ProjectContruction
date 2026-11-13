@@ -32,7 +32,10 @@ public class ProjectSqlScopeTests
         Assert.Equal(14,page.TotalCount); Assert.Equal(14,page.StatusCounts.Values.Sum()); Assert.Single(page.Items);
         var name = await new GetDrawingFileByNameQueryHandler(db,access).Handle(new("reliability.pdf"),default);
         Assert.NotNull(name); Assert.NotEqual(foreign.Id,name.Id);
-        Assert.Single(await new GetDrawingFilesQueryHandler(db,access).Handle(new(),default));
+        await using var cache = new ConstructionProject.Infrastructure.Caching.RedisDrawingListCache(
+            Microsoft.Extensions.Options.Options.Create(new ConstructionProject.Infrastructure.Caching.RedisCacheOptions()),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<ConstructionProject.Infrastructure.Caching.RedisDrawingListCache>.Instance);
+        Assert.Single(await new GetDrawingFilesQueryHandler(db,access,cache).Handle(new(),default));
         var projects = new ProjectHandlers(db,ProjectTestAccess.ForAdmin(db),ProjectTestAccess.AdminIdentity(),new NoEvents());
         Assert.Single(await projects.Handle(new GetProjectMembersQuery(Project.LegacyId),default));
         var assigned = await projects.Handle(new AssignProjectMemberCommand(Project.LegacyId,user.Id),default); Assert.Equal(user.Id,assigned.UserId);
