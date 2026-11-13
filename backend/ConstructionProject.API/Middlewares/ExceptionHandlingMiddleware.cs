@@ -40,6 +40,10 @@ public class ExceptionHandlingMiddleware
 
         switch (exception)
         {
+            case ConstructionProject.Application.Common.Security.ProjectAccessDeniedException projectDenied:
+                statusCode = HttpStatusCode.Forbidden;
+                response = new { status = (int)statusCode, code = "project_access_denied", message = projectDenied.Message };
+                break;
             case DbUpdateException { InnerException: SqlException sql } when
                 (sql.Number is 2601 or 2627) && (sql.Message.Contains("IX_InspectionWorkflowOperations_InspectionId", StringComparison.Ordinal) || sql.Message.Contains("IX_ChecklistWorkflowOperations_ChecklistId", StringComparison.Ordinal)):
                 statusCode = HttpStatusCode.Conflict;

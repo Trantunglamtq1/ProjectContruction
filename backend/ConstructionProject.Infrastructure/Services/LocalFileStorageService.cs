@@ -79,25 +79,7 @@ public class LocalFileStorageService : IFileStorageService
         var safeFileName = Path.GetFileName(storedFileName);
         var filePath = Path.Combine(_storageFolder, safeFileName);
 
-        // Nếu không tìm thấy file trực tiếp (ví dụ truyền tên file gốc lúc upload)
-        if (!File.Exists(filePath))
-        {
-            var normalizedName = safeFileName.Replace(" ", "_");
-            var matchedFile = Directory.EnumerateFiles(_storageFolder, $"*_{normalizedName}")
-                .Concat(Directory.EnumerateFiles(_storageFolder, $"*_{safeFileName}"))
-                .OrderByDescending(f => File.GetLastWriteTimeUtc(f))
-                .FirstOrDefault();
-
-            if (matchedFile != null && File.Exists(matchedFile))
-            {
-                filePath = matchedFile;
-                safeFileName = Path.GetFileName(matchedFile);
-            }
-            else
-            {
-                return Task.FromResult<(Stream stream, string contentType, string fileName)?>(null);
-            }
-        }
+        if (!File.Exists(filePath)) return Task.FromResult<(Stream stream,string contentType,string fileName)?>(null);
 
         var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
         var ext = Path.GetExtension(safeFileName).ToLowerInvariant();
@@ -114,31 +96,12 @@ public class LocalFileStorageService : IFileStorageService
         return Task.FromResult<(Stream stream, string contentType, string fileName)?>((stream, contentType, safeFileName));
     }
 
-    public Task<bool> DeleteFileAsync(string storedFileName, CancellationToken cancellationToken = default)
+    public Task<bool> DeleteFileAsync(string storedFileName,CancellationToken cancellationToken = default)
     {
         var safeFileName = Path.GetFileName(storedFileName);
-        var filePath = Path.Combine(_storageFolder, safeFileName);
-
-        if (!File.Exists(filePath))
-        {
-            var normalizedName = safeFileName.Replace(" ", "_");
-            var matchedFile = Directory.EnumerateFiles(_storageFolder, $"*_{normalizedName}")
-                .Concat(Directory.EnumerateFiles(_storageFolder, $"*_{safeFileName}"))
-                .OrderByDescending(f => File.GetLastWriteTimeUtc(f))
-                .FirstOrDefault();
-
-            if (matchedFile != null && File.Exists(matchedFile))
-            {
-                filePath = matchedFile;
-            }
-        }
-
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-            return Task.FromResult(true);
-        }
-
-        return Task.FromResult(false);
+        var filePath = Path.Combine(_storageFolder,safeFileName);
+        if (!File.Exists(filePath)) return Task.FromResult(false);
+        File.Delete(filePath);
+        return Task.FromResult(true);
     }
 }

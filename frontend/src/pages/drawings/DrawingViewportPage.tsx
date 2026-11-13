@@ -1,3 +1,4 @@
+import { getSelectedProjectId } from '../../services/projectScope';
 import {
   AimOutlined,
   AppstoreOutlined,
@@ -79,14 +80,14 @@ export const DrawingViewportPage: React.FC = () => {
     isLoading: isDrawingLoading,
     isError: isDrawingError,
   } = useQuery({
-    queryKey: ['drawing-detail', id],
+    queryKey: ['drawing-detail', id, getSelectedProjectId()],
     queryFn: () => (id ? drawingApi.getDrawingById(id) : Promise.reject('Không có mã bản vẽ')),
     enabled: !!id,
   });
 
   // 2. Query danh sách cấu kiện (Objects) thuộc bản vẽ
   const { data: objects = [] } = useQuery({
-    queryKey: ['drawing-objects', id],
+    queryKey: ['drawing-objects', id, getSelectedProjectId()],
     queryFn: () => (id ? objectApi.getObjectsByDrawing(id) : Promise.resolve([])),
     enabled: !!id,
   });

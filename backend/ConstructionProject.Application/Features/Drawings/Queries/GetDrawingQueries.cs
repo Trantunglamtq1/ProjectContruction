@@ -6,20 +6,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ConstructionProject.Application.Features.Drawings.Queries;
 
-public record GetDrawingFilesQuery(string? Search = null) : IRequest<List<DrawingFileDto>>;
+public record GetDrawingFilesQuery(string? Search = null, Guid? ProjectId = null) : IRequest<List<DrawingFileDto>>;
 
 public class GetDrawingFilesQueryHandler : IRequestHandler<GetDrawingFilesQuery, List<DrawingFileDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IProjectAccessService _access;
 
-    public GetDrawingFilesQueryHandler(IApplicationDbContext context)
+    public GetDrawingFilesQueryHandler(IApplicationDbContext context, IProjectAccessService access)
     {
         _context = context;
+        _access = access;
     }
 
     public async Task<List<DrawingFileDto>> Handle(GetDrawingFilesQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.DrawingFiles.AsNoTracking();
+        var query = _context.DrawingFiles.Where(d => _access.AccessibleProjectIds.Contains(d.ProjectId)).AsNoTracking();
+
+        if (request.ProjectId.HasValue) query = query.Where(d => d.ProjectId == request.ProjectId.Value);
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
@@ -49,15 +53,17 @@ public record GetDrawingFileByIdQuery(Guid Id) : IRequest<DrawingFileDetailDto?>
 public class GetDrawingFileByIdQueryHandler : IRequestHandler<GetDrawingFileByIdQuery, DrawingFileDetailDto?>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IProjectAccessService _access;
 
-    public GetDrawingFileByIdQueryHandler(IApplicationDbContext context)
+    public GetDrawingFileByIdQueryHandler(IApplicationDbContext context, IProjectAccessService access)
     {
         _context = context;
+        _access = access;
     }
 
     public async Task<DrawingFileDetailDto?> Handle(GetDrawingFileByIdQuery request, CancellationToken cancellationToken)
     {
-        var drawing = await _context.DrawingFiles
+        var drawing = await _context.DrawingFiles.Where(d => _access.AccessibleProjectIds.Contains(d.ProjectId))
             .AsNoTracking()
             .Include(d => d.Objects)
                 .ThenInclude(o => o.FormInspections)
@@ -98,15 +104,17 @@ public class GetDrawingFileByIdQueryHandler : IRequestHandler<GetDrawingFileById
     }
 }
 
-public record GetDrawingFileByNameQuery(string FileName) : IRequest<DrawingFileDetailDto?>;
+public record GetDrawingFileByNameQuery(string FileName, Guid? ProjectId = null) : IRequest<DrawingFileDetailDto?>;
 
 public class GetDrawingFileByNameQueryHandler : IRequestHandler<GetDrawingFileByNameQuery, DrawingFileDetailDto?>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IProjectAccessService _access;
 
-    public GetDrawingFileByNameQueryHandler(IApplicationDbContext context)
+    public GetDrawingFileByNameQueryHandler(IApplicationDbContext context, IProjectAccessService access)
     {
         _context = context;
+        _access = access;
     }
 
     public async Task<DrawingFileDetailDto?> Handle(GetDrawingFileByNameQuery request, CancellationToken cancellationToken)
@@ -114,7 +122,7 @@ public class GetDrawingFileByNameQueryHandler : IRequestHandler<GetDrawingFileBy
         var targetName = request.FileName.Trim();
         var safeTargetName = Path.GetFileName(targetName);
 
-        var drawing = await _context.DrawingFiles
+        var drawing = await _context.DrawingFiles.Where(d => _access.AccessibleProjectIds.Contains(d.ProjectId))
             .AsNoTracking()
             .Include(d => d.Objects)
                 .ThenInclude(o => o.FormInspections)
@@ -122,6 +130,7 @@ public class GetDrawingFileByNameQueryHandler : IRequestHandler<GetDrawingFileBy
                 .ThenInclude(o => o.Checklists)
             .Where(d => d.FileName.ToLower() == safeTargetName.ToLower() ||
                         d.StoredFileName.ToLower() == safeTargetName.ToLower())
+            .Where(d => !request.ProjectId.HasValue || d.ProjectId == request.ProjectId.Value)
             .OrderByDescending(d => d.UploadedAt)
             .FirstOrDefaultAsync(cancellationToken);
 

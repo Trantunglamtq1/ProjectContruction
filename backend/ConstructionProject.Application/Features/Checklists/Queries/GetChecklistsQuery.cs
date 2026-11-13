@@ -8,21 +8,23 @@ namespace ConstructionProject.Application.Features.Checklists.Queries;
 
 public record GetChecklistsQuery(
     Guid? ObjectId = null,
-    string? Status = null
+    string? Status = null, Guid? ProjectId = null
 ) : IRequest<List<ChecklistDto>>;
 
 public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, List<ChecklistDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IProjectAccessService _access;
 
-    public GetChecklistsQueryHandler(IApplicationDbContext context)
+    public GetChecklistsQueryHandler(IApplicationDbContext context, IProjectAccessService access)
     {
         _context = context;
+        _access = access;
     }
 
     public async Task<List<ChecklistDto>> Handle(GetChecklistsQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.Checklists
+        var query = _context.Checklists.Where(c => _access.AccessibleProjectIds.Contains(c.Object!.DrawingFile!.ProjectId))
             .Include(c => c.WorkflowOperations)
             .Include(c => c.Object)
                 .ThenInclude(o => o!.DrawingFile)
@@ -30,6 +32,7 @@ public class GetChecklistsQueryHandler : IRequestHandler<GetChecklistsQuery, Lis
             .AsNoTracking()
             .AsQueryable();
 
+        if (request.ProjectId.HasValue) query = query.Where(c => c.Object!.DrawingFile!.ProjectId == request.ProjectId.Value);
         if (request.ObjectId.HasValue && request.ObjectId.Value != Guid.Empty)
         {
             query = query.Where(c => c.ObjectId == request.ObjectId.Value);

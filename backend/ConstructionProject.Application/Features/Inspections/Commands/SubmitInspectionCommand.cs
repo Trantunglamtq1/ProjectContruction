@@ -15,7 +15,10 @@ public record SubmitInspectionCommand(
     Guid? SubmitterId = null,
     string? SubmitterName = null,
     byte[]? RowVersion = null
-) : IRequest<InspectionDto>;
+) : IRequest<InspectionDto>
+{
+    public string? FormDataJson { get; set; } = FormDataJson;
+}
 
 public class SubmitInspectionCommandValidator : AbstractValidator<SubmitInspectionCommand>
 {

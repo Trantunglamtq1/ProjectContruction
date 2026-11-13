@@ -6,3 +6,12 @@
 **/dist
 **/minio-data
 uploads/
+**/uploads/
+docs-internal/
+.agents/
+.specify/
+.codex/
+.aws/
+specs/
+.env*
+.playwright-mcp/

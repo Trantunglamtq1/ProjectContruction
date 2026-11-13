@@ -8,6 +8,7 @@ import type {
   InspectionListResult,
 } from '../types/inspection';
 import apiClient from './apiClient';
+import { requireProjectId } from './projectScope';
 
 export interface GetInspectionsParams {
   pageNumber?: number;
@@ -140,6 +141,7 @@ export const inspectionApi = {
   uploadAttachment: async (file: File): Promise<InspectionAttachmentDto> => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('projectId', requireProjectId());
     const response = await apiClient.post<InspectionAttachmentDto>('/inspections/upload-attachment', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

@@ -1,3 +1,4 @@
+import { getSelectedProjectId } from '../../services/projectScope';
 import {
   CheckSquareOutlined,
   FileDoneOutlined,
@@ -53,7 +54,7 @@ export const ApproverChecklistPage: React.FC = () => {
     isLoading,
     refetch,
   } = useQuery<ChecklistDto[]>({
-    queryKey: ['checklists'],
+    queryKey: ['checklists', getSelectedProjectId()],
     queryFn: () => checklistApi.getChecklists(),
   });
 

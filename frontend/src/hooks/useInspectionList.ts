@@ -1,3 +1,4 @@
+import { getSelectedProjectId } from '../services/projectScope';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,7 +18,7 @@ export function useInspectionList() {
     return () => window.clearTimeout(timer);
   }, [searchText, state.search, setParams]);
   const query = useQuery({
-    queryKey: ['inspections', user?.role, state.search, state.status, state.page, state.pageSize],
+    queryKey: ['inspections', user?.role, state.search, state.status, state.page, state.pageSize, getSelectedProjectId()],
     queryFn: ({ signal }) => inspectionApi.getInspections({ pageNumber: state.page, pageSize: state.pageSize,
       search: state.search || undefined, status: state.status === 'ALL' ? undefined : state.status }, signal),
   });

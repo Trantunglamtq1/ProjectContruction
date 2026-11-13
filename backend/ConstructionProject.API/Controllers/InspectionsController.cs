@@ -1,3 +1,5 @@
+using ConstructionProject.Application.Common.Security;
+using ConstructionProject.API.Helpers;
 using ConstructionProject.Application.Common.Interfaces;
 using ConstructionProject.Application.DTOs;
 using ConstructionProject.Application.Features.Inspections.Commands;
@@ -56,15 +58,19 @@ public record RejectInspectionRequest(
 public class InspectionsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ProjectFileAccess _projectFiles;
+    private readonly IProjectAccessService _projectAccess;
     private readonly ICurrentUserService _currentUserService;
     private readonly IFileStorageService _fileStorage;
 
     public InspectionsController(
         IMediator mediator, 
         ICurrentUserService currentUserService,
-        IFileStorageService fileStorage)
+        IFileStorageService fileStorage, ProjectFileAccess projectFiles, IProjectAccessService projectAccess)
     {
         _mediator = mediator;
+        _projectFiles = projectFiles;
+        _projectAccess = projectAccess;
         _currentUserService = currentUserService;
         _fileStorage = fileStorage;
     }
@@ -184,6 +190,7 @@ public class InspectionsController : ControllerBase
         [FromQuery] Guid? checklistItemId,
         [FromQuery] InspectionStatus? status,
         [FromQuery] string? search,
+        [FromQuery] Guid? projectId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] int? pageNumber = null,
@@ -197,7 +204,8 @@ public class InspectionsController : ControllerBase
             status,
             search,
             pageNumber ?? page,
-            pageSize
+            pageSize,
+            projectId
         );
 
         var result = await _mediator.Send(query, cancellationToken);
@@ -382,90 +390,34 @@ public class InspectionsController : ControllerBase
     /// Upload ảnh hiện trường hoặc tài liệu đính kèm cho Form Inspection (Tối đa 15MB/tệp, hỗ trợ JPG, PNG, WEBP, HEIC, PDF)
     /// </summary>
     [HttpPost("upload-attachment")]
-    [Authorize]
+    [Authorize(Roles = RoleConstants.Submitter)]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(InspectionAttachmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> UploadAttachment(
-        IFormFile file,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> UploadAttachment(IFormFile file,[FromForm] Guid projectId,CancellationToken cancellationToken)
     {
-        if (file == null || file.Length == 0)
-        {
-            return BadRequest(new { message = "Vui lòng chọn tệp ảnh hiện trường để tải lên." });
-        }
-
-        const long maxFileSize = 15 * 1024 * 1024; // 15MB
-        if (file.Length > maxFileSize)
-        {
-            return BadRequest(new { message = "Dung lượng tệp vượt quá giới hạn cho phép (Tối đa 15MB)." });
-        }
-
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".heic", ".pdf" };
-        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!allowedExtensions.Contains(ext))
-        {
-            return BadRequest(new { message = $"Định dạng tệp '{ext}' không được hỗ trợ. Vui lòng chọn tệp ảnh (.jpg, .jpeg, .png, .webp, .heic) hoặc .pdf." });
-        }
-
+        if (projectId == Guid.Empty) return BadRequest(new { message = "Vui lòng chọn dự án." });
+        await _projectAccess.DemandProjectAsync(projectId,cancellationToken);
+        if (file == null || file.Length == 0) return BadRequest(new { message = "Vui lòng chọn tệp đính kèm." });
+        if (file.Length > 15 * 1024 * 1024) return BadRequest(new { message = "Dung lượng tối đa là 15MB mỗi tệp." });
+        if (file.FileName.Length > 512) return BadRequest(new { message = "Tên tệp quá dài." });
+        var mime = ProjectFileAccess.MimeType(file.FileName);
         await using var stream = file.OpenReadStream();
-        var (fileUrl, storedFileName, size) = await _fileStorage.SaveFileAsync(
-            stream, 
-            file.FileName, 
-            file.ContentType, 
-            cancellationToken);
-
-        var viewUrl = $"/api/inspections/attachments/files/{storedFileName}";
-
-        var attachment = new InspectionAttachmentDto
-        {
-            OriginalName = file.FileName,
-            StoredFileName = storedFileName,
-            FileUrl = viewUrl,
-            Size = size,
-            ContentType = file.ContentType,
-            UploadedAt = DateTime.UtcNow
-        };
-
-        return Ok(attachment);
+        var (_,stored,size) = await _fileStorage.SaveFileAsync(stream,file.FileName,mime,cancellationToken);
+        return Ok(await _projectFiles.RegisterAsync(projectId,_currentUserService.UserId,stored,file.FileName,size,cancellationToken));
     }
 
     /// <summary>
     /// Tải / Xem trực tiếp tệp ảnh hiện trường đính kèm
     /// </summary>
     [HttpGet("attachments/files/{fileName}")]
-    [AllowAnonymous]
-    public async Task<IActionResult> GetAttachmentFileStream(
-        string fileName, 
-        CancellationToken cancellationToken)
+    [Authorize]
+    public async Task<IActionResult> GetAttachmentFileStream(string fileName,CancellationToken cancellationToken)
     {
-        var fileData = await _fileStorage.GetFileAsync(fileName, cancellationToken);
-        if (fileData == null)
-        {
-            return NotFound(new { message = $"Không tìm thấy tệp đính kèm '{fileName}' trên hệ thống lưu trữ." });
-        }
-
-        var ext = Path.GetExtension(fileData.Value.fileName).ToLowerInvariant();
-        var baseName = Path.GetFileNameWithoutExtension(fileData.Value.fileName);
-        var asciiSafeName = System.Text.RegularExpressions.Regex.Replace(baseName, @"[^\u0020-\u007E]", "_") + ext;
-        var utf8EncodedName = Uri.EscapeDataString(fileData.Value.fileName);
-
-        var contentType = fileData.Value.contentType;
-        if (string.IsNullOrWhiteSpace(contentType) || contentType == "application/octet-stream")
-        {
-            contentType = ext switch
-            {
-                ".png" => "image/png",
-                ".jpg" or ".jpeg" => "image/jpeg",
-                ".webp" => "image/webp",
-                ".heic" => "image/heic",
-                ".pdf" => "application/pdf",
-                _ => "application/octet-stream"
-            };
-        }
-
-        Response.Headers.Append("Content-Disposition", $"inline; filename=\"{asciiSafeName}\"; filename*=UTF-8''{utf8EncodedName}");
-        return File(fileData.Value.stream, contentType, enableRangeProcessing: true);
+        var attachment = await _projectFiles.AttachmentAsync(fileName,cancellationToken);
+        var file = await _fileStorage.GetFileAsync(attachment.StoredFileName,cancellationToken)
+            ?? throw new KeyNotFoundException("Không tìm thấy nội dung tệp đính kèm.");
+        return PrivateFileResponse.Create(this,file.stream,attachment.StoredFileName,attachment.OriginalName);
     }
 }

@@ -1,14 +1,22 @@
 using MediatR;
+using ConstructionProject.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace ConstructionProject.Application.Features.Inspections.Queries;
 
 public record GetInspectionSchemaQuery(string SchemaId = "default-inspection-schema") : IRequest<string>;
 
-public class GetInspectionSchemaQueryHandler : IRequestHandler<GetInspectionSchemaQuery, string>
+public class GetInspectionSchemaQueryHandler(IApplicationDbContext db) : IRequestHandler<GetInspectionSchemaQuery, string>
 {
-    public Task<string> Handle(GetInspectionSchemaQuery request, CancellationToken cancellationToken)
+    public async Task<string> Handle(GetInspectionSchemaQuery request, CancellationToken cancellationToken)
     {
+        if (Guid.TryParse(request.SchemaId, out var itemId))
+            return await db.ChecklistItems.Where(i => i.Id == itemId).Select(i => i.FormSchemaJson).SingleOrDefaultAsync(cancellationToken)
+                ?? throw new KeyNotFoundException("Không tìm thấy biểu mẫu.");
         var schemaName = string.IsNullOrWhiteSpace(request.SchemaId) ? "default-inspection-schema" : request.SchemaId.Trim();
+        if (schemaName.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) schemaName = schemaName[..^5];
+        if (!new[] { "default-inspection-schema", "rebar-inspection-schema", "concrete-inspection-schema" }.Contains(schemaName))
+            throw new KeyNotFoundException("Không tìm thấy biểu mẫu.");
         if (!schemaName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
         {
             schemaName += ".json";
@@ -31,7 +39,7 @@ public class GetInspectionSchemaQueryHandler : IRequestHandler<GetInspectionSche
             if (File.Exists(fullPath))
             {
                 var content = File.ReadAllText(fullPath);
-                return Task.FromResult(content);
+                return content;
             }
         }
 
@@ -89,6 +97,6 @@ public class GetInspectionSchemaQueryHandler : IRequestHandler<GetInspectionSche
         }
         """;
 
-        return Task.FromResult(fallbackSchema);
+        return fallbackSchema;
     }
 }

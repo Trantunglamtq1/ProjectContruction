@@ -5,6 +5,9 @@ namespace ConstructionProject.Application.Common.Interfaces;
 
 public interface IApplicationDbContext
 {
+    DbSet<Project> Projects { get; }
+    DbSet<ProjectMember> ProjectMembers { get; }
+    DbSet<ProjectAttachment> ProjectAttachments { get; }
     DbSet<DrawingFile> DrawingFiles { get; }
     DbSet<ConstructionObject> Objects { get; }
     DbSet<FormInspection> FormInspections { get; }

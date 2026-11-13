@@ -1,151 +1,60 @@
 using ConstructionProject.Application.Common.Interfaces;
+using ConstructionProject.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ConstructionProject.API.Controllers;
 
-public record NotificationItemDto(
-    Guid Id,
-    Guid? UserId,
-    string? RoleName,
-    string Title,
-    string Content,
-    string Type,
-    string? TargetUrl,
-    string? ReferenceId,
-    string? ReferenceType,
-    bool IsRead,
-    DateTime CreatedAt
-);
+public record NotificationItemDto(Guid Id, Guid? UserId, string? RoleName, string Title, string Content, string Type,
+    string? TargetUrl, string? ReferenceId, string? ReferenceType, bool IsRead, DateTime CreatedAt, Guid? ProjectId);
+public record NotificationsResponseDto(List<NotificationItemDto> Items, int UnreadCount);
 
-public record NotificationsResponseDto(
-    List<NotificationItemDto> Items,
-    int UnreadCount
-);
-
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]
-public class NotificationsController : ControllerBase
+[ApiController, Route("api/[controller]"), Authorize]
+public class NotificationsController(IApplicationDbContext db, ICurrentUserService current, IProjectAccessService access) : ControllerBase
 {
-    private readonly IApplicationDbContext _context;
-    private readonly ICurrentUserService _currentUserService;
+    private IQueryable<Notification> Visible => db.Notifications.Where(n => n.UserId == current.UserId &&
+        (n.ProjectId.HasValue ? access.AccessibleProjectIds.Contains(n.ProjectId.Value) : n.ReferenceId == null && n.ReferenceType == null && n.TargetUrl == null));
 
-    public NotificationsController(
-        IApplicationDbContext context,
-        ICurrentUserService currentUserService)
-    {
-        _context = context;
-        _currentUserService = currentUserService;
-    }
-
-    /// <summary>
-    /// Lấy danh sách 50 thông báo gần nhất và số lượng chưa đọc của người dùng hiện tại
-    /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(NotificationsResponseDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMyNotifications(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMyNotifications(CancellationToken ct)
     {
-        var currentUserId = _currentUserService.UserId;
-        var currentRole = _currentUserService.Role;
-
-        var query = _context.Notifications.AsNoTracking()
-            .Where(n => 
-                (currentUserId.HasValue && n.UserId == currentUserId.Value) ||
-                (!string.IsNullOrEmpty(currentRole) && n.RoleName == currentRole) ||
-                (n.UserId == null && n.RoleName == null)
-            );
-
-        var unreadCount = await query.CountAsync(n => !n.IsRead, cancellationToken);
-
-        var items = await query
-            .OrderByDescending(n => n.CreatedAt)
-            .Take(50)
-            .Select(n => new NotificationItemDto(
-                n.Id,
-                n.UserId,
-                n.RoleName,
-                n.Title,
-                n.Content,
-                n.Type,
-                n.TargetUrl,
-                n.ReferenceId,
-                n.ReferenceType,
-                n.IsRead,
-                n.CreatedAt
-            ))
-            .ToListAsync(cancellationToken);
-
-        return Ok(new NotificationsResponseDto(items, unreadCount));
+        await access.DemandIdentityAsync(ct);
+        var query = Visible.AsNoTracking();
+        var unread = await query.CountAsync(n => !n.IsRead, ct);
+        var items = await query.OrderByDescending(n => n.CreatedAt).Take(50).Select(n => new NotificationItemDto(
+            n.Id, n.UserId, n.RoleName, n.Title, n.Content, n.Type, n.TargetUrl, n.ReferenceId, n.ReferenceType, n.IsRead, n.CreatedAt, n.ProjectId)).ToListAsync(ct);
+        return Ok(new NotificationsResponseDto(items, unread));
     }
 
-    /// <summary>
-    /// Đánh dấu 1 thông báo là đã đọc
-    /// </summary>
     [HttpPut("{id:guid}/read")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> MarkAsRead(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> MarkAsRead(Guid id, CancellationToken ct)
     {
-        var notif = await _context.Notifications.FirstOrDefaultAsync(n => n.Id == id, cancellationToken);
-        if (notif == null)
-        {
-            return NotFound(new { message = "Không tìm thấy thông báo." });
-        }
-
-        notif.IsRead = true;
-        await _context.SaveChangesAsync(cancellationToken);
+        await access.DemandIdentityAsync(ct);
+        var item = await Visible.SingleOrDefaultAsync(n => n.Id == id, ct);
+        if (item == null) return NotFound();
+        item.IsRead = true;
+        await db.SaveChangesAsync(ct);
         return Ok(new { success = true });
     }
 
-    /// <summary>
-    /// Đánh dấu tất cả thông báo của người dùng là đã đọc
-    /// </summary>
     [HttpPut("read-all")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
+    public async Task<IActionResult> MarkAllAsRead(CancellationToken ct)
     {
-        var currentUserId = _currentUserService.UserId;
-        var currentRole = _currentUserService.Role;
-
-        var unreadList = await _context.Notifications
-            .Where(n => !n.IsRead && (
-                (currentUserId.HasValue && n.UserId == currentUserId.Value) ||
-                (!string.IsNullOrEmpty(currentRole) && n.RoleName == currentRole) ||
-                (n.UserId == null && n.RoleName == null)
-            ))
-            .ToListAsync(cancellationToken);
-
-        foreach (var notif in unreadList)
-        {
-            notif.IsRead = true;
-        }
-
-        await _context.SaveChangesAsync(cancellationToken);
-        return Ok(new { success = true, markedCount = unreadList.Count });
+        await access.DemandIdentityAsync(ct);
+        var items = await Visible.Where(n => !n.IsRead).ToListAsync(ct);
+        foreach (var item in items) item.IsRead = true;
+        await db.SaveChangesAsync(ct);
+        return Ok(new { success = true, markedCount = items.Count });
     }
 
-    /// <summary>
-    /// Xóa toàn bộ lịch sử thông báo của người dùng hiện tại
-    /// </summary>
     [HttpDelete]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> ClearAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> ClearAll(CancellationToken ct)
     {
-        var currentUserId = _currentUserService.UserId;
-        var currentRole = _currentUserService.Role;
-
-        var myNotifs = await _context.Notifications
-            .Where(n => 
-                (currentUserId.HasValue && n.UserId == currentUserId.Value) ||
-                (!string.IsNullOrEmpty(currentRole) && n.RoleName == currentRole)
-            )
-            .ToListAsync(cancellationToken);
-
-        _context.Notifications.RemoveRange(myNotifs);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return Ok(new { success = true, deletedCount = myNotifs.Count });
+        await access.DemandIdentityAsync(ct);
+        var items = await Visible.ToListAsync(ct);
+        db.Notifications.RemoveRange(items);
+        await db.SaveChangesAsync(ct);
+        return Ok(new { success = true, deletedCount = items.Count });
     }
 }

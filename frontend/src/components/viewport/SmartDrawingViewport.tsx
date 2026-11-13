@@ -25,7 +25,7 @@ import {
 } from 'antd';
 import * as pdfjsLib from 'pdfjs-dist';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import apiClient from '../../services/apiClient';
+import { fetchPrivateFile } from '../../services/privateFiles';
 
 // Cấu hình Polyfill cho các môi trường duyệt web hiện đại (TC39 Uint8Array proposal & Promise.withResolvers)
 if (typeof window !== 'undefined') {
@@ -357,6 +357,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
   // Tải Document với Token xác thực
   useEffect(() => {
     let isCancelled = false;
+    const requestController = new AbortController();
     let createdBlobUrl: string | null = null;
 
     if (!fileUrl) {
@@ -376,78 +377,18 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
         let arrayBuffer: ArrayBuffer;
         let contentType = '';
 
-        if (fileUrl.startsWith('data:') || fileUrl.startsWith('blob:')) {
-          const res = await fetch(fileUrl);
-          arrayBuffer = await res.arrayBuffer();
-          contentType = (res.headers.get('content-type') || '').toLowerCase();
-        } else {
-          const endpoint = fileUrl.startsWith('/api/') ? fileUrl.substring(4) : fileUrl;
-          try {
-            const res = await apiClient.get(endpoint, {
-              responseType: 'arraybuffer',
-            });
-            if (res.data instanceof ArrayBuffer) {
-              arrayBuffer = res.data;
-            } else if (res.data?.buffer instanceof ArrayBuffer) {
-              arrayBuffer = res.data.buffer;
-            } else {
-              throw new Error('Dữ liệu tải về không hợp lệ');
-            }
-            contentType = String(res.headers['content-type'] || '').toLowerCase();
-          } catch {
-            const token = localStorage.getItem('token');
-            const headers: Record<string, string> = {};
-            if (token) headers['Authorization'] = `Bearer ${token}`;
-            const targetUrl = fileUrl.startsWith('http')
-              ? fileUrl
-              : `${window.location.origin}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
-            const res = await fetch(targetUrl, { headers });
-            if (!res.ok) {
-              throw new Error(`Không thể tải tệp bản vẽ từ máy chủ (HTTP ${res.status})`);
-            }
-            arrayBuffer = await res.arrayBuffer();
-            contentType = (res.headers.get('content-type') || '').toLowerCase();
-          }
-        }
+        const file = await fetchPrivateFile(fileUrl, requestController.signal);
+        arrayBuffer = await file.arrayBuffer();
+        contentType = file.type.toLowerCase();
 
-        if (isCancelled) return;
-
-        // Kiểm tra xem phản hồi có phải là HTML báo lỗi từ SPA fallback không
-        if (arrayBuffer.byteLength >= 15) {
-          const headerPrefix = new TextDecoder('ascii').decode(new Uint8Array(arrayBuffer, 0, Math.min(64, arrayBuffer.byteLength))).toLowerCase();
-          if (headerPrefix.includes('<!doctype') || headerPrefix.includes('<html')) {
-            throw new Error('Không tìm thấy tệp bản vẽ trên hệ thống lưu trữ (máy chủ trả về trang HTML).');
-          }
-        }
-
-        // Nhận diện tệp PDF qua Magic Bytes '%PDF' hoặc Content-Type/Extension
-        const isPdf =
-          (arrayBuffer.byteLength >= 4 &&
-            new Uint8Array(arrayBuffer, 0, 4)[0] === 0x25 &&
-            new Uint8Array(arrayBuffer, 0, 4)[1] === 0x50 &&
-            new Uint8Array(arrayBuffer, 0, 4)[2] === 0x44 &&
-            new Uint8Array(arrayBuffer, 0, 4)[3] === 0x46) ||
-          contentType.includes('application/pdf') ||
-          fileName.toLowerCase().endsWith('.pdf') ||
-          fileUrl.toLowerCase().split('?')[0].endsWith('.pdf');
-
+        const isPdf = contentType.includes('application/pdf') || fileName.toLowerCase().endsWith('.pdf') ||
+          new TextDecoder('ascii').decode(new Uint8Array(arrayBuffer, 0, Math.min(4, arrayBuffer.byteLength))) === '%PDF';
         if (isPdf) {
           setIsImageFormat(false);
           imageElementRef.current = null;
-
-          if (arrayBuffer.byteLength < 50) {
-            throw new Error(`Tệp PDF bị rỗng hoặc lỗi cấu trúc (${arrayBuffer.byteLength} bytes). Vui lòng tải lên lại bản vẽ.`);
-          }
-
-          const loadingTask = pdfjsLib.getDocument({
-            data: new Uint8Array(arrayBuffer),
-            cMapUrl: '/pdfjs/cmaps/',
-            cMapPacked: true,
-            standardFontDataUrl: '/pdfjs/standard_fonts/',
-            useSystemFonts: true,
-            disableFontFace: false,
-          });
-
+          if (arrayBuffer.byteLength < 50) throw new Error('Tệp PDF rỗng hoặc không hợp lệ.');
+          const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), cMapUrl: '/pdfjs/cmaps/',
+            cMapPacked: true, standardFontDataUrl: '/pdfjs/standard_fonts/', useSystemFonts: true, disableFontFace: false });
           const doc = await loadingTask.promise;
           if (isCancelled) return;
 
@@ -508,6 +449,7 @@ export const SmartDrawingViewport: React.FC<SmartDrawingViewportProps> = ({
 
     return () => {
       isCancelled = true;
+      requestController.abort();
       if (createdBlobUrl) {
         URL.revokeObjectURL(createdBlobUrl);
       }

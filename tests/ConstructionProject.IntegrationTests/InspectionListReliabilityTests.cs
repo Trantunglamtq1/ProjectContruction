@@ -94,7 +94,7 @@ public class InspectionListReliabilityTests
         await using var db = new ApplicationDbContext(options);
         await db.Database.MigrateAsync();
         await InspectionListTestData.SeedAsync(db);
-        var handler = new GetInspectionsQueryHandler(db);
+        var handler = new GetInspectionsQueryHandler(db, ProjectTestAccess.ForAdmin(db));
 
         var first = await handler.Handle(new GetInspectionsQuery(PageSize: 2), default);
         var last = await handler.Handle(new GetInspectionsQuery(PageNumber: 7, PageSize: 2), default);

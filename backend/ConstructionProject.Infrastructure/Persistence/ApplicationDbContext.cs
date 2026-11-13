@@ -13,6 +13,9 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     }
 
     public DbSet<DrawingFile> DrawingFiles => Set<DrawingFile>();
+    public DbSet<Project> Projects => Set<Project>();
+    public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
+    public DbSet<ProjectAttachment> ProjectAttachments => Set<ProjectAttachment>();
     public DbSet<ConstructionObject> Objects => Set<ConstructionObject>();
     public DbSet<FormInspection> FormInspections => Set<FormInspection>();
     public DbSet<InspectionAuditHistory> InspectionAuditHistories => Set<InspectionAuditHistory>();

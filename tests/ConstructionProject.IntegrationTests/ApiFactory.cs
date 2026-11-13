@@ -18,6 +18,9 @@ namespace ConstructionProject.IntegrationTests;
 /// </summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {
+    private readonly Action<IServiceCollection>? _configure;
+    public ApiFactory() { }
+    internal ApiFactory(Action<IServiceCollection>? configure) => _configure = configure;
     public const string Password = "Test@12345";
 
     private readonly string _databaseName = $"integration-tests-{Guid.NewGuid()}";
@@ -31,6 +34,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
             services.RemoveAll<ApplicationDbContext>();
             services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(_databaseName));
+            _configure?.Invoke(services);
         });
     }
 
@@ -55,6 +59,15 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             );
             db.SaveChanges();
         }
+
+        // Existing workflow fixtures explicitly work in the migration project.
+        // Production migration deliberately creates no memberships.
+        foreach (var actor in db.Users.Where(u => u.Username == "submitter" || u.Username == "reviewer" || u.Username == "approver"))
+        {
+            if (!db.ProjectMembers.Any(m => m.ProjectId == Project.LegacyId && m.UserId == actor.Id))
+                db.ProjectMembers.Add(new ProjectMember { ProjectId = Project.LegacyId, UserId = actor.Id });
+        }
+        db.SaveChanges();
 
         _initialized = true;
     }

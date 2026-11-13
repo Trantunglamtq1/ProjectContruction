@@ -9,9 +9,12 @@ public static class DependencyInjection
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        services.AddScoped<Common.Interfaces.IProjectAccessService, Common.Security.ProjectAccessService>();
+        services.AddScoped<Common.Security.ProjectFileAccess>();
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+            cfg.AddOpenBehavior(typeof(Common.Security.ProjectAuthorizationBehavior<,>));
             cfg.AddOpenBehavior(typeof(ConstructionProject.Application.Common.Behaviors.ValidationBehavior<,>));
         });
 

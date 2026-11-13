@@ -1,3 +1,4 @@
+import { getSelectedProjectId } from '../../services/projectScope';
 import {
   AppstoreOutlined,
   CheckCircleOutlined,
@@ -81,7 +82,7 @@ export const ItemInspectionModal: React.FC<ItemInspectionModalProps> = ({
     error: loadError,
     refetch: reloadInspection,
   } = useQuery<InspectionDto>({
-    queryKey: ['inspection-detail', item?.linkedInspectionId],
+    queryKey: ['inspection-detail', item?.linkedInspectionId, getSelectedProjectId()],
     queryFn: () => inspectionApi.getInspectionById(item!.linkedInspectionId!),
     enabled: open && !!item?.linkedInspectionId,
   });

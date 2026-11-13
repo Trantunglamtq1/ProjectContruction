@@ -65,6 +65,8 @@ public class LinkInspectionToChecklistItemCommandHandler : IRequestHandler<LinkI
             throw new KeyNotFoundException($"Không tìm thấy Form Inspection với Id = {request.InspectionId}.");
         }
 
+        if (inspection.ObjectId != checklist.ObjectId)
+            throw new InvalidOperationException("Hồ sơ nghiệm thu không thuộc cấu kiện của kế hoạch này.");
         item.LinkedInspectionId = inspection.Id;
 
         // Nếu FormInspection đã được Approve từ trước -> Đổi trạng thái Item sang Done ngay

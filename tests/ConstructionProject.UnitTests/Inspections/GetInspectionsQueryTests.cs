@@ -16,7 +16,7 @@ public class GetInspectionsQueryTests
         foreach (var status in Enum.GetValues<InspectionStatus>())
             db.Context.FormInspections.Add(new FormInspection { ObjectId = seed.Object.Id, Status = status });
         await db.Context.SaveChangesAsync();
-        var handler = new GetInspectionsQueryHandler(db.Context);
+        var handler = new GetInspectionsQueryHandler(db.Context, ProjectTestAccess.ForLegacy(db.Context));
 
         var first = await handler.Handle(new GetInspectionsQuery(PageSize: 2), default);
         var last = await handler.Handle(new GetInspectionsQuery(PageNumber: 4, PageSize: 2), default);
@@ -40,7 +40,7 @@ public class GetInspectionsQueryTests
         target.Inspection.ChecklistItemId = target.LinkedItem.Id;
         InspectionSeed.Create(db.Context, InspectionStatus.Approved);
         await db.Context.SaveChangesAsync();
-        var handler = new GetInspectionsQueryHandler(db.Context);
+        var handler = new GetInspectionsQueryHandler(db.Context, ProjectTestAccess.ForLegacy(db.Context));
         var query = new GetInspectionsQuery(ObjectId: target.Object.Id, DrawingFileId: target.Drawing.Id,
             ChecklistId: target.Checklist.Id, ChecklistItemId: target.LinkedItem.Id,
             Status: InspectionStatus.Reviewed, Search: " TARGET ");
@@ -74,7 +74,7 @@ public class GetInspectionsQueryTests
         db.Context.FormInspections.Add(target);
         await db.Context.SaveChangesAsync();
 
-        var result = await new GetInspectionsQueryHandler(db.Context)
+        var result = await new GetInspectionsQueryHandler(db.Context, ProjectTestAccess.ForLegacy(db.Context))
             .Handle(new GetInspectionsQuery(Search: search), default);
 
         result.Items.Should().ContainSingle(x => x.Id == target.Id);
@@ -90,7 +90,7 @@ public class GetInspectionsQueryTests
             new FormInspection { Id = Guid.Parse("a1b2c3d4-0000-0000-0000-000000000001"), ObjectId = seed.Object.Id },
             new FormInspection { Id = Guid.Parse("a1b2c3d4-0000-0000-0000-000000000002"), ObjectId = seed.Object.Id, Status = InspectionStatus.Approved });
         await db.Context.SaveChangesAsync();
-        var handler = new GetInspectionsQueryHandler(db.Context);
+        var handler = new GetInspectionsQueryHandler(db.Context, ProjectTestAccess.ForLegacy(db.Context));
 
         var all = await handler.Handle(new GetInspectionsQuery(Search: "#A1B2C3D4"), default);
         var approved = await handler.Handle(new GetInspectionsQuery(Search: "#A1B2C3D4", Status: InspectionStatus.Approved), default);
@@ -108,7 +108,7 @@ public class GetInspectionsQueryTests
     {
         using var db = new TestDb();
         var target = InspectionSeed.Create(db.Context);
-        var result = await new GetInspectionsQueryHandler(db.Context)
+        var result = await new GetInspectionsQueryHandler(db.Context, ProjectTestAccess.ForLegacy(db.Context))
             .Handle(new GetInspectionsQuery(Search: search), default);
 
         result.Items.Should().ContainSingle(x => x.Id == target.Inspection.Id);

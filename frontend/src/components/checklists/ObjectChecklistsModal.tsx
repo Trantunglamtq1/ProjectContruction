@@ -1,3 +1,4 @@
+import { getSelectedProjectId } from '../../services/projectScope';
 import {
   CheckSquareOutlined,
   DeleteOutlined,
@@ -64,7 +65,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
     refetch: refetchSummary,
     isLoading: summaryLoading,
   } = useQuery<ChecklistSummaryDto>({
-    queryKey: ['checklist-summary-object', objectId],
+    queryKey: ['checklist-summary-object', objectId, getSelectedProjectId()],
     queryFn: () => checklistApi.getChecklistSummaryByObject(objectId!),
     enabled: open && !!objectId,
   });
@@ -75,7 +76,7 @@ export const ObjectChecklistsModal: React.FC<ObjectChecklistsModalProps> = ({
     refetch: refetchList,
     isLoading: listLoading,
   } = useQuery<ChecklistDto[]>({
-    queryKey: ['checklists-for-object', objectId],
+    queryKey: ['checklists-for-object', objectId, getSelectedProjectId()],
     queryFn: () => checklistApi.getChecklists({ objectId: objectId! }),
     enabled: open && !!objectId,
   });

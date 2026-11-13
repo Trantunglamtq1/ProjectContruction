@@ -18,7 +18,10 @@ public record CreateInspectionCommand(
     bool SubmitImmediately = false,
     Guid? SubmitterId = null,
     string? SubmitterName = null
-) : IRequest<InspectionDto>;
+) : IRequest<InspectionDto>
+{
+    public string? FormDataJson { get; set; } = FormDataJson;
+}
 
 public class CreateInspectionCommandValidator : AbstractValidator<CreateInspectionCommand>
 {
@@ -92,6 +95,8 @@ public class CreateInspectionCommandHandler : IRequestHandler<CreateInspectionCo
         }
 
         var constructionObject = checklist.Object;
+        if (request.ObjectId.HasValue && request.ObjectId.Value != checklist.ObjectId)
+            throw new InvalidOperationException("Cấu kiện không thuộc kế hoạch kiểm tra đã chọn.");
         if (constructionObject == null)
         {
             throw new InvalidOperationException("Checklist chưa được liên kết với cấu kiện Object hợp lệ.");

@@ -1,3 +1,5 @@
+import { downloadPrivateFile } from '../../services/privateFiles';
+import { getSelectedProjectId } from '../../services/projectScope';
 import {
   CompassOutlined,
   DownloadOutlined,
@@ -6,7 +8,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Card, Input, Space, Table, Tag, Typography } from 'antd';
+import { Button, Card, Input, Space, Table, Tag, Typography, message } from 'antd';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
@@ -30,7 +32,7 @@ export const ApproverDrawingListPage: React.FC = () => {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ['approver-drawings', searchText],
+    queryKey: ['approver-drawings', searchText, getSelectedProjectId()],
     queryFn: () => drawingApi.getDrawings(searchText),
   });
 
@@ -97,15 +99,7 @@ export const ApproverDrawingListPage: React.FC = () => {
           <Button
             size="small"
             icon={<DownloadOutlined />}
-            onClick={() => {
-              const link = document.createElement('a');
-              link.href = record.fileUrl;
-              link.download = record.fileName;
-              link.target = '_blank';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }}
+            onClick={() => { void downloadPrivateFile(record.fileUrl, record.fileName).catch(() => message.error('Không thể tải tệp.')); }}
           >
             Tải về
           </Button>

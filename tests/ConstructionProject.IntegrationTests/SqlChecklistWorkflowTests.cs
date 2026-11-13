@@ -180,8 +180,10 @@ public class SqlChecklistWorkflowTests
         info.Environment["ConnectionStrings__DefaultConnection"] = connection;
         info.Environment["ASPNETCORE_URLS"] = $"http://127.0.0.1:{port}";
         var process = Process.Start(info) ?? throw new InvalidOperationException("Không thể khởi động backend kiểm thử.");
-        process.OutputDataReceived += (_, _) => { };
-        process.ErrorDataReceived += (_, _) => { };
+        var logLock = new object();
+        void Log(object sender, DataReceivedEventArgs args) { if (args.Data != null) lock (logLock) File.AppendAllText(Path.Combine(AppContext.BaseDirectory,$"backend-{process.Id}.log"),args.Data + Environment.NewLine); }
+        process.OutputDataReceived += Log;
+        process.ErrorDataReceived += Log;
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         return process;
@@ -370,6 +372,7 @@ VALUES ({auditId}, {checklistId}, 'Draft', 'PendingSupervisor', 'SubmitForApprov
             var obj = new ConstructionObject { DrawingFile = drawing, MarkerCoordinates = "{}", Name = "C01", CreatedBy = "test" };
             var checklist = new Checklist { Object = obj, Name = "Kiểm tra", CreatedBy = "submitter", CreatedById = submitter.Id };
             db.Users.AddRange(submitter, reviewer, approver);
+            db.ProjectMembers.AddRange(new[] { submitter, reviewer, approver }.Select(u => new ProjectMember { ProjectId = Project.LegacyId, UserId = u.Id }));
             db.ChecklistItems.Add(new ChecklistItem { Checklist = checklist, Name = "Tiêu chí", IsRequired = true });
             await db.SaveChangesAsync();
             return checklist.Id;

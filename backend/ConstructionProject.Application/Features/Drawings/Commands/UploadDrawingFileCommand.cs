@@ -12,13 +12,15 @@ public record UploadDrawingFileCommand(
     string ContentType,
     long FileSize,
     string UploadedBy,
-    Guid? UploadedById = null
+    Guid? UploadedById = null,
+    Guid ProjectId = default
 ) : IRequest<DrawingFileDto>;
 
 public class UploadDrawingFileCommandValidator : AbstractValidator<UploadDrawingFileCommand>
 {
     public UploadDrawingFileCommandValidator()
     {
+        RuleFor(x => x.ProjectId).NotEmpty().WithMessage("Vui lòng chọn dự án.");
         RuleFor(x => x.FileName)
             .NotEmpty().WithMessage("Tên file không được để trống.")
             .Must(x => Path.GetExtension(x).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
@@ -57,6 +59,7 @@ public class UploadDrawingFileCommandHandler : IRequestHandler<UploadDrawingFile
         var entity = new DrawingFile
         {
             Id = Guid.NewGuid(),
+            ProjectId = request.ProjectId,
             FileName = request.FileName,
             StoredFileName = storedFileName,
             FileType = "pdf",

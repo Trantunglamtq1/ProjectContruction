@@ -1,3 +1,4 @@
+import { getSelectedProjectId } from '../../services/projectScope';
 import {
   AimOutlined,
   AppstoreOutlined,
@@ -121,7 +122,7 @@ export const DrawingViewportModal: React.FC<DrawingViewportModalProps> = ({
 
   // Query danh sách objects của bản vẽ từ SQL Server
   const { data: objects = [] } = useQuery({
-    queryKey: ['drawing-objects', drawing?.id],
+    queryKey: ['drawing-objects', drawing?.id, getSelectedProjectId()],
     queryFn: () => (drawing ? objectApi.getObjectsByDrawing(drawing.id) : Promise.resolve([])),
     enabled: !!drawing && open,
   });

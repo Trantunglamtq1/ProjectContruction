@@ -1,3 +1,5 @@
+using ConstructionProject.Application.Common.Security;
+using ConstructionProject.API.Helpers;
 using ConstructionProject.Application.Common.Interfaces;
 using ConstructionProject.Application.DTOs;
 using ConstructionProject.Application.Features.Drawings.Commands;
@@ -11,6 +13,7 @@ namespace ConstructionProject.API.Controllers;
 
 public class UploadDrawingForm
 {
+    public Guid ProjectId { get; set; }
     public IFormFile File { get; set; } = null!;
     public string? UploadedBy { get; set; }
 }
@@ -20,15 +23,17 @@ public class UploadDrawingForm
 public class DrawingsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ProjectFileAccess _projectFiles;
     private readonly IFileStorageService _fileStorage;
     private readonly ICurrentUserService _currentUserService;
 
     public DrawingsController(
         IMediator mediator, 
         IFileStorageService fileStorage,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService, ProjectFileAccess projectFiles)
     {
         _mediator = mediator;
+        _projectFiles = projectFiles;
         _fileStorage = fileStorage;
         _currentUserService = currentUserService;
     }
@@ -69,7 +74,8 @@ public class DrawingsController : ControllerBase
             file.ContentType,
             file.Length,
             uploader,
-            _currentUserService.UserId
+            _currentUserService.UserId,
+            form.ProjectId
         );
 
         var result = await _mediator.Send(command, cancellationToken);
@@ -84,9 +90,9 @@ public class DrawingsController : ControllerBase
     [ProducesResponseType(typeof(List<DrawingFileDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetDrawings([FromQuery] string? search, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDrawings([FromQuery] string? search, [FromQuery] Guid? projectId, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetDrawingFilesQuery(search), cancellationToken);
+        var result = await _mediator.Send(new GetDrawingFilesQuery(search, projectId), cancellationToken);
         return Ok(result);
     }
 
@@ -118,9 +124,9 @@ public class DrawingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetDrawingByName(string fileName, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDrawingByName(string fileName, [FromQuery] Guid? projectId, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetDrawingFileByNameQuery(fileName), cancellationToken);
+        var result = await _mediator.Send(new GetDrawingFileByNameQuery(fileName, projectId), cancellationToken);
         if (result == null)
         {
             return NotFound(new { message = $"Không tìm thấy bản vẽ với tên file = '{fileName}'." });
@@ -148,34 +154,12 @@ public class DrawingsController : ControllerBase
     /// Tải / Xem trực tiếp file PDF bản vẽ (chấp nhận cả tên file gốc hoặc StoredFileName có Guid)
     /// </summary>
     [HttpGet("files/{fileName}")]
-    [AllowAnonymous]
-    public async Task<IActionResult> GetDrawingFileStream(string fileName, CancellationToken cancellationToken)
+    [Authorize]
+    public async Task<IActionResult> GetDrawingFileStream(string fileName,[FromQuery] Guid? projectId,CancellationToken cancellationToken)
     {
-        // 1. Thử lấy trực tiếp từ FileStorage
-        var fileData = await _fileStorage.GetFileAsync(fileName, cancellationToken);
-
-        // 2. Nếu không tìm thấy trực tiếp, tra cứu DB để lấy fileUrl/StoredFileName chính xác
-        if (fileData == null)
-        {
-            var drawing = await _mediator.Send(new GetDrawingFileByNameQuery(fileName), cancellationToken);
-            if (drawing != null && !string.IsNullOrEmpty(drawing.FileUrl))
-            {
-                var storedName = Path.GetFileName(drawing.FileUrl);
-                fileData = await _fileStorage.GetFileAsync(storedName, cancellationToken);
-            }
-        }
-
-        if (fileData == null)
-        {
-            return NotFound(new { message = $"Không tìm thấy file bản vẽ '{fileName}' trên hệ thống lưu trữ." });
-        }
-
-        var ext = Path.GetExtension(fileData.Value.fileName);
-        var baseName = Path.GetFileNameWithoutExtension(fileData.Value.fileName);
-        var asciiSafeName = System.Text.RegularExpressions.Regex.Replace(baseName, @"[^\u0020-\u007E]", "_") + ext;
-        var utf8EncodedName = Uri.EscapeDataString(fileData.Value.fileName);
-
-        Response.Headers.Append("Content-Disposition", $"inline; filename=\"{asciiSafeName}\"; filename*=UTF-8''{utf8EncodedName}");
-        return File(fileData.Value.stream, fileData.Value.contentType, enableRangeProcessing: true);
+        var drawing = await _projectFiles.DrawingAsync(fileName,projectId,cancellationToken);
+        var file = await _fileStorage.GetFileAsync(drawing.StoredFileName,cancellationToken)
+            ?? throw new KeyNotFoundException("Không tìm thấy nội dung tệp bản vẽ.");
+        return PrivateFileResponse.Create(this,file.stream,drawing.StoredFileName,drawing.FileName);
     }
 }
